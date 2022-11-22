@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\RenderInterface">
+      <UniqueIdentifier>{5c8c02b0-64ed-4bbf-8811-80f1956be92f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SharedMemory">
+      <UniqueIdentifier>{a0396837-c3fd-4fd9-be1d-f60fa20a9a45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SharedMemory\Events">
+      <UniqueIdentifier>{f1daded4-e871-4398-9ccc-de1b836ec174}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Source Files\RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedMemory\SharedMemory.cpp">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedMemory\SyncData.cpp">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedMemory\EventBuffer.cpp">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SharedMemory\Events\EventHandler.cpp">
+      <Filter>Source Files\SharedMemory\Events</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Renderer.h">
+      <Filter>Source Files\RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedMemory\SharedMemory.h">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedMemory\SyncData.h">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedMemory\EventBuffer.hpp">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SharedMemory\Events\EventHandler.hpp">
+      <Filter>Source Files\SharedMemory\Events</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

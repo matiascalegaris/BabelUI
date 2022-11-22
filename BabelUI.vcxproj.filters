@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{453c8431-c32a-47b9-9248-7d66914a2872}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SharedMemory">
+      <UniqueIdentifier>{9a272f58-06fe-4bbd-8108-89ee7537833e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SharedMemory\Events">
+      <UniqueIdentifier>{958eec0f-7d0b-4c06-b450-d220dc9be676}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Definitions.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ProcessHandler.hpp">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Tunnel.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedMemory\SharedMemory.h">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedMemory\SyncData.h">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedMemory\EventBuffer.hpp">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedMemory\Events\EventHandler.h">
+      <Filter>Source Files\SharedMemory\Events</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ProcessHandler.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Tunnel.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedMemory\SharedMemory.cpp">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedMemory\SyncData.cpp">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedMemory\EventBuffer.cpp">
+      <Filter>Source Files\SharedMemory</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedMemory\Events\EventHandler.cpp">
+      <Filter>Source Files\SharedMemory\Events</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
