@@ -8,7 +8,10 @@ namespace Babel
 	enum class EventType : uint32_t
 	{
 		MouseData,
-		Close
+		KeyData,
+		Close,
+		DebugMouseData,
+		EnableDebugWindow,
 	};
 
 	struct Event
@@ -23,6 +26,21 @@ namespace Babel
 		uint8_t TypeFlags;
 		int PosX;
 		int PosY;
+	};
+
+	struct KeyEvent : public Event
+	{
+		int16_t KeyCode;
+		bool CapsState;
+		bool ShiftState;
+		int8_t Type;
+		bool Inspector;
+	};
+
+	struct WindowInfo : public Event
+	{
+		int Width;
+		int Height;
 	};
 
 	class EventListener

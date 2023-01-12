@@ -20,12 +20,19 @@ namespace Babel
 	private:
 		void Update();
 		void UpdateRemoteFrame();
+
+		void EnableDebugWindow(int width, int height);
+
+		void HandlekeyData(const KeyEvent& keyData);
 	private:
 		std::unique_ptr<Renderer> mRenderer;
 		std::unique_ptr<SyncData> mSyncData;
 		std::unique_ptr<SharedMemory> mSharedMemory;
 		std::unique_ptr<EventHandler> mEventHandler;
+		std::unique_ptr<SyncData> mDebugSyncData;
+		std::unique_ptr<SharedMemory> mDebugSharedMemory;
 		bool mRun{ false };
+		bool mActiveDebugView{ false };
 		int64_t expectedFrameTime{ 16 };
 	};
 }

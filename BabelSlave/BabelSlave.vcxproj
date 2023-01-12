@@ -163,6 +163,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Core\Logger.cpp" />
     <ClCompile Include="..\SharedMemory\EventBuffer.cpp" />
     <ClCompile Include="..\SharedMemory\Events\EventHandler.cpp" />
     <ClCompile Include="..\SharedMemory\SharedMemory.cpp" />
@@ -172,6 +173,7 @@
     <ClCompile Include="Renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Core\Logger.hpp" />
     <ClInclude Include="..\SharedMemory\EventBuffer.hpp" />
     <ClInclude Include="..\SharedMemory\Events\EventHandler.hpp" />
     <ClInclude Include="..\SharedMemory\SharedMemory.h" />

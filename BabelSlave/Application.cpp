@@ -3,7 +3,7 @@
 #include <chrono>
 #include <thread>
 
-
+#include "Core/Logger.hpp"
 
 namespace Babel
 {
@@ -48,6 +48,24 @@ namespace Babel
 			mRenderer->SendMouseEvent(mouseEvtdata.PosX, mouseEvtdata.PosY, (mouseEvtdata.TypeFlags >> 4) & 0x0f, mouseEvtdata.TypeFlags & 0x0f);
 			break;
 		}
+		case EventType::DebugMouseData:
+		{
+			const MouseData& mouseEvtdata = static_cast<const MouseData&>(eventData);
+			mRenderer->SendInpectorMouseEvent(mouseEvtdata.PosX, mouseEvtdata.PosY, (mouseEvtdata.TypeFlags >> 4) & 0x0f, mouseEvtdata.TypeFlags & 0x0f);
+			break;
+		}
+		case EventType::EnableDebugWindow:
+		{
+			const WindowInfo& windowEvtdata = static_cast<const WindowInfo&>(eventData);
+			EnableDebugWindow(windowEvtdata.Width, windowEvtdata.Height);
+			break;
+		}
+		case EventType::KeyData:
+		{
+			const KeyEvent& keyData = static_cast<const KeyEvent&>(eventData);
+			HandlekeyData(keyData);
+			break;
+		}
 		case EventType::Close:
 			mRun = false;
 		default:
@@ -74,8 +92,56 @@ namespace Babel
 			uint32_t stride = bmp->row_bytes();
 			mSyncData->WriteCurrentImage(pixels, width * height * 4);
 			bmp->UnlockPixels();
-
 			bitmap_surface->ClearDirtyBounds();
+		}
+		if (mActiveDebugView)
+		{
+			bitmap_surface = mRenderer->GetInspectorSurface();
+			auto bmp = bitmap_surface->bitmap();
+			void* pixels = bmp->LockPixels();
+			uint32_t width = bmp->width();
+			uint32_t height = bmp->height();
+			uint32_t stride = bmp->row_bytes();
+			mDebugSyncData->WriteCurrentImage(pixels, width * height * 4);
+			bmp->UnlockPixels();
+			bitmap_surface->ClearDirtyBounds();
+		}
+	}
+	void Application::EnableDebugWindow(int width, int height)
+	{
+		mRenderer->EnableInspector(width, height);
+		mDebugSyncData = std::make_unique<SyncData>(width, height, 4, 3);
+		mDebugSharedMemory = std::make_unique<SharedMemory>(mDebugSyncData->GetTotalSize());
+		mDebugSharedMemory->Connect("Local\\TestMemShare2Debug");
+		mDebugSyncData->GetSharedFileViews(*mDebugSharedMemory);
+		mActiveDebugView = true;
+	}
+	void Application::HandlekeyData(const KeyEvent& keyData)
+	{
+		ultralight::KeyEvent evt;
+		LOGGER->log("Got ket event " + std::to_string(keyData.Type));
+		evt.type = static_cast<ultralight::KeyEvent::Type>(keyData.Type);
+		switch (keyData.Type)
+		{
+		case ultralight::KeyEvent::kType_KeyDown:
+			evt.type = ultralight::KeyEvent::kType_RawKeyDown;
+		case ultralight::KeyEvent::kType_RawKeyDown:
+		case ultralight::KeyEvent::kType_KeyUp:
+			evt.virtual_key_code = keyData.KeyCode;
+			evt.native_key_code = 0;
+			evt.modifiers = 0;
+			GetKeyIdentifierFromVirtualKeyCode(evt.virtual_key_code, evt.key_identifier);
+			mRenderer->SendKeyEvent(evt, keyData.Inspector);
+			break;
+		case ultralight::KeyEvent::kType_Char:
+		{
+			char key = static_cast<char>(keyData.KeyCode);
+			evt.text = std::string(1,key).c_str();
+			evt.unmodified_text = evt.text;
+			mRenderer->SendKeyEvent(evt, keyData.Inspector);
+		}
+		default:
+			break;
 		}
 	}
 }

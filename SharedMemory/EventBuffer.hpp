@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <Windows.h>
 
 namespace Babel
 {
@@ -15,7 +16,7 @@ namespace Babel
 		int64_t GetBufferSize() { return mBufferSize; }
 	private:
 		struct BufferHeader {
-			int32_t Lock;
+			LONG Lock;
 			int32_t MessageCount;
 			int32_t UsedBytes;
 		};

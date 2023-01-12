@@ -37,6 +37,9 @@
     <ClCompile Include="..\SharedMemory\Events\EventHandler.cpp">
       <Filter>Source Files\SharedMemory\Events</Filter>
     </ClCompile>
+    <ClCompile Include="..\Core\Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -56,6 +59,9 @@
     </ClInclude>
     <ClInclude Include="..\SharedMemory\Events\EventHandler.hpp">
       <Filter>Source Files\SharedMemory\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Core\Logger.hpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

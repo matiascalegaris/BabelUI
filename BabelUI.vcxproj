@@ -175,6 +175,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Core\Logger.hpp" />
     <ClInclude Include="Core\ProcessHandler.hpp" />
     <ClInclude Include="Core\Tunnel.h" />
     <ClInclude Include="Definitions.h" />
@@ -185,6 +186,7 @@
     <ClInclude Include="SharedMemory\SyncData.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Logger.cpp" />
     <ClCompile Include="Core\ProcessHandler.cpp" />
     <ClCompile Include="Core\Tunnel.cpp" />
     <ClCompile Include="dllmain.cpp">
@@ -197,6 +199,9 @@
     <ClCompile Include="SharedMemory\Events\EventHandler.cpp" />
     <ClCompile Include="SharedMemory\SharedMemory.cpp" />
     <ClCompile Include="SharedMemory\SyncData.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

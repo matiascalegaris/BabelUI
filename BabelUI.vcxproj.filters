@@ -48,6 +48,9 @@
     <ClInclude Include="SharedMemory\Events\EventHandler.h">
       <Filter>Source Files\SharedMemory\Events</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Logger.hpp">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -71,5 +74,11 @@
     <ClCompile Include="SharedMemory\Events\EventHandler.cpp">
       <Filter>Source Files\SharedMemory\Events</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Logger.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

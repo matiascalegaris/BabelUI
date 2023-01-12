@@ -1,6 +1,8 @@
 #include "EventBuffer.hpp"
-#include <Windows.h>
+#include "Core/Logger.hpp"
 
+static int64_t MessagesSent = 0;
+static int64_t MessagesHandled = 0;
 enum class LockState : int32_t
 {
 	Clear = 0,
@@ -22,12 +24,15 @@ namespace Babel
 	void EventBuffer::AddEvent(uint8_t* eventData, int32_t eventSize)
 	{
 		volatile LONG* lock_ptr = (volatile LONG*)&(mHeader->Lock);
+		MessagesSent++;
+		LOGGER->log("Message sent: " + std::to_string(MessagesSent));
 		while (InterlockedExchange(lock_ptr, (LONG)LockState::Set) != (LONG)LockState::Clear)
 		{
 		}
 		CopyMemory((void*)(mSharedBufferStart + mHeader->UsedBytes), (void*)eventData, eventSize);
 		mHeader->UsedBytes += eventSize;
 		mHeader->MessageCount++;
+		
 		InterlockedExchange(lock_ptr, (LONG)LockState::Clear);
 	}
 	int64_t EventBuffer::GetAviableEvents(uint8_t* dest, int32_t masxBufferSize)
@@ -36,10 +41,15 @@ namespace Babel
 		while (InterlockedExchange(lock_ptr, (LONG)LockState::Set) != (LONG)LockState::Clear)
 		{
 		}
-		CopyMemory((void*)dest, (void*)mSharedBufferStart, mHeader->UsedBytes);
 		int64_t eventCount = mHeader->MessageCount;
-		mHeader->UsedBytes = 0;
-		mHeader->MessageCount = 0;
+		if (eventCount > 0)
+		{
+			CopyMemory((void*)dest, (void*)mSharedBufferStart, mHeader->UsedBytes);
+			mHeader->UsedBytes = 0;
+			mHeader->MessageCount = 0;
+			MessagesHandled += eventCount;
+			LOGGER->log("Message handled: " + std::to_string(MessagesHandled));
+		}
 		InterlockedExchange(lock_ptr, (LONG)LockState::Clear);
 		return eventCount;
 	}

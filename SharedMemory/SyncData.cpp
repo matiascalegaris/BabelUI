@@ -64,10 +64,8 @@ namespace Babel
 		header->LastWritteBuffer = 0;
 		uint8_t* MessageBufferStart = (uint8_t*)GetImageBufferPtr(3);
 
-		int32_t offset = MessageBufferStart - mFileView;
 		mApiWriteBuffer = std::make_unique<EventBuffer>(MessageBufferStart, MessageEventBufferSize);
 		MessageBufferStart = MessageBufferStart + MessageEventBufferSize;
-		offset = MessageBufferStart - mFileView;
 		mSlaveWriteBuffer = std::make_unique<EventBuffer>(MessageBufferStart, MessageEventBufferSize);
 	}
 

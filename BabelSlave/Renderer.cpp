@@ -10,7 +10,8 @@ namespace Babel
     namespace {
         std::filesystem::path GetWorkingPath()
         {
-            auto path = std::filesystem::current_path();
+            //auto path = std::filesystem::current_path();
+            auto path = std::filesystem::path("D:\\Proyectos/ao20/Recursos");
             path += "/../Recursos/BabelUI/";
             return path;
         }
@@ -40,12 +41,13 @@ namespace Babel
         Config config;
         config.device_scale = 1.0;
         config.font_family_standard = "Arial";
+        mLocalPath = GetWorkingPath().native();
 
         ///
         /// We need to tell config where our resources are so it can load our
         /// bundled certificate chain and make HTTPS requests.
         ///
-        config.resource_path = "../Recursos/BabelUI/";
+        config.resource_path = GetWorkingPath().u8string().c_str();
         //config.resource_path = "D:\\Proyectos/ao20/Recursos/BabelUI/";
 
         ///
@@ -77,7 +79,7 @@ namespace Babel
         /// You could replace this with your own to provide your own file loader
         /// (useful if you need to bundle encrypted / compressed HTML assets).
         ///
-        Platform::instance().set_file_system(GetPlatformFileSystem("."));
+        Platform::instance().set_file_system(GetPlatformFileSystem(GetWorkingPath().u8string().c_str()));
 
         ///
         /// Register our MyApp instance as a logger so we can handle the
@@ -108,23 +110,9 @@ namespace Babel
         ///
         mView->set_load_listener(this);
 
-        ///
-        /// Load a string of HTML into our View. (For code readability, the string
-        /// is defined in the htmlString() function at the bottom of this file)
-        ///
-        /// **Note**:
-        ///   This operation may not complete immediately-- we will call
-        ///   Renderer::Update continuously and wait for the OnFinishLoading event
-        ///   before rendering our View.
-        ///
-        /// Views can also load remote URLs, try replacing the code below with:
-        ///
-        ///    view_->LoadURL("https://en.wikipedia.org");
-        ///
-        auto fullPath = LocalPathForFile("/index.html");
-        mView->LoadURL({fullPath.c_str(), fullPath.length()});
-        //mView->LoadURL("file:///D:\\Proyectos/ao20/Recursos/BabelUI/test2.html");
-        //mView->LoadHTML(htmlString());
+        //auto fullPath = LocalPathForFile("/index.html");
+        //mView->LoadURL({fullPath.c_str(), fullPath.length()});
+        mView->LoadURL("file:///index.html");
         mView->Focus();
 	}
     Renderer::~Renderer()
@@ -162,8 +150,15 @@ namespace Babel
 
     ultralight::BitmapSurface* Renderer::GetSurface()
     {
-        return (BitmapSurface*)mView->surface();;
+        return (BitmapSurface*)mView->surface();
     }
+
+    ultralight::BitmapSurface* Renderer::GetInspectorSurface()
+    {
+        if (!mInspectorView) return nullptr;
+        return (BitmapSurface*)mInspectorView->surface();
+    }
+
     void Renderer::SendMouseEvent(int mouseX, int mouseY, uint8_t evtType, uint8_t button)
     {
         ultralight::MouseEvent mouseEvent;
@@ -172,6 +167,44 @@ namespace Babel
         mouseEvent.y = mouseY;
         mouseEvent.button = (MouseEvent::Button)button;
         mView->FireMouseEvent(mouseEvent);
+    }
+
+    void Renderer::SendInpectorMouseEvent(int mouseX, int mouseY, uint8_t evtType, uint8_t button)
+    {
+        if (!mInspectorView) return;
+        ultralight::MouseEvent mouseEvent;
+        mouseEvent.type = (MouseEvent::Type)evtType;
+        mouseEvent.x = mouseX;
+        mouseEvent.y = mouseY;
+        mouseEvent.button = (MouseEvent::Button)button;
+        mInspectorView->FireMouseEvent(mouseEvent);
+    }
+
+    void Renderer::EnableInspector(int width, int height)
+    {
+        if (!mInspectorView)
+        {
+            mInspectorView = mView->inspector();
+        }
+        mInspectorView->Resize(width, height);
+    }
+
+    void Renderer::SendKeyEvent(ultralight::KeyEvent& evt, bool isInspectorEvent)
+    {
+        if (isInspectorEvent)
+        {
+            //if (mInspectorView->HasInputFocus())
+            {
+                mInspectorView->FireKeyEvent(evt);
+            }            
+        }
+        else
+        {
+            if (mInspectorView->HasInputFocus())
+            {
+                mView->FireKeyEvent(evt);
+            }
+        }
     }
 
     ultralight::JSValue Renderer::GetMessage(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)

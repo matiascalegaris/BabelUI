@@ -11,9 +11,9 @@ namespace Babel
 	void EventHandler::HandleIncomingEvents()
 	{
 		auto eventCount = mEventBuffer.GetAviableEvents(mLocalBuffer.data(), mLocalBuffer.size());
+		uint8_t* next = (uint8_t*)mLocalBuffer.data();
 		while (eventCount > 0)
 		{
-			uint8_t* next = (uint8_t*)mLocalBuffer.data();
 			Event* evData = (Event*)next;
 			mEventListener.HandleEvent(*evData);
 			next += evData->Size;
