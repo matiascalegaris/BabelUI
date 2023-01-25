@@ -6,6 +6,7 @@
 
 namespace Babel
 {
+	class Communicator;
 	class Renderer : public ultralight::LoadListener,
 		public ultralight::Logger
 	{
@@ -36,12 +37,12 @@ namespace Babel
 		void SendInpectorMouseEvent(int mouseX, int mouseY, uint8_t evtType, uint8_t button);
 		void EnableInspector(int width, int height);
 		void SendKeyEvent(ultralight::KeyEvent& evt, bool isInspectorEvent);
-	public:
-		ultralight::JSValue GetMessage(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void SetCommunicator(Communicator* communicator) { mCommunicator = communicator; }
 	private:
 		ultralight::RefPtr<ultralight::Renderer> mRender;
 		ultralight::RefPtr<ultralight::View> mView;
 		ultralight::RefPtr<ultralight::View> mInspectorView;
+		Communicator* mCommunicator;
 		std::wstring mLocalPath;
 		bool mLoadComplete = false;
 	};

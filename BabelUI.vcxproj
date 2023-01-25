@@ -175,6 +175,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CallbackDefines.hpp" />
     <ClInclude Include="Core\Logger.hpp" />
     <ClInclude Include="Core\ProcessHandler.hpp" />
     <ClInclude Include="Core\Tunnel.h" />

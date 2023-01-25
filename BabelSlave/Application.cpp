@@ -18,7 +18,9 @@ namespace Babel
 		mSharedMemory = std::make_unique<SharedMemory>(mSyncData->GetTotalSize());
 		mSharedMemory->Connect("Local\\TestMemShare2");
 		mSyncData->GetSharedFileViews(*mSharedMemory);
-		mEventHandler = std::make_unique<EventHandler>(*this, mSyncData->GetApiMessenger());
+		mCommunicator = std::make_unique<Communicator>(mSyncData->GetSlaveMessenger(), *mRenderer, *this);
+		mEventHandler = std::make_unique<EventHandler>(*mCommunicator, mSyncData->GetApiMessenger());
+		mRenderer->SetCommunicator(mCommunicator.get());
 	}
 
 	void Application::Run()
@@ -38,39 +40,9 @@ namespace Babel
 		}
 	}
 
-	void Application::HandleEvent(const Event& eventData)
+	void Application::Stop()
 	{
-		switch (eventData.EventType)
-		{
-		case EventType::MouseData:
-		{
-			const MouseData& mouseEvtdata = static_cast<const MouseData&>(eventData);
-			mRenderer->SendMouseEvent(mouseEvtdata.PosX, mouseEvtdata.PosY, (mouseEvtdata.TypeFlags >> 4) & 0x0f, mouseEvtdata.TypeFlags & 0x0f);
-			break;
-		}
-		case EventType::DebugMouseData:
-		{
-			const MouseData& mouseEvtdata = static_cast<const MouseData&>(eventData);
-			mRenderer->SendInpectorMouseEvent(mouseEvtdata.PosX, mouseEvtdata.PosY, (mouseEvtdata.TypeFlags >> 4) & 0x0f, mouseEvtdata.TypeFlags & 0x0f);
-			break;
-		}
-		case EventType::EnableDebugWindow:
-		{
-			const WindowInfo& windowEvtdata = static_cast<const WindowInfo&>(eventData);
-			EnableDebugWindow(windowEvtdata.Width, windowEvtdata.Height);
-			break;
-		}
-		case EventType::KeyData:
-		{
-			const KeyEvent& keyData = static_cast<const KeyEvent&>(eventData);
-			HandlekeyData(keyData);
-			break;
-		}
-		case EventType::Close:
-			mRun = false;
-		default:
-			break;
-		}
+		mRun = false;
 	}
 
 	void Application::Update()
@@ -115,33 +87,5 @@ namespace Babel
 		mDebugSharedMemory->Connect("Local\\TestMemShare2Debug");
 		mDebugSyncData->GetSharedFileViews(*mDebugSharedMemory);
 		mActiveDebugView = true;
-	}
-	void Application::HandlekeyData(const KeyEvent& keyData)
-	{
-		ultralight::KeyEvent evt;
-		LOGGER->log("Got ket event " + std::to_string(keyData.Type));
-		evt.type = static_cast<ultralight::KeyEvent::Type>(keyData.Type);
-		switch (keyData.Type)
-		{
-		case ultralight::KeyEvent::kType_KeyDown:
-			evt.type = ultralight::KeyEvent::kType_RawKeyDown;
-		case ultralight::KeyEvent::kType_RawKeyDown:
-		case ultralight::KeyEvent::kType_KeyUp:
-			evt.virtual_key_code = keyData.KeyCode;
-			evt.native_key_code = 0;
-			evt.modifiers = 0;
-			GetKeyIdentifierFromVirtualKeyCode(evt.virtual_key_code, evt.key_identifier);
-			mRenderer->SendKeyEvent(evt, keyData.Inspector);
-			break;
-		case ultralight::KeyEvent::kType_Char:
-		{
-			char key = static_cast<char>(keyData.KeyCode);
-			evt.text = std::string(1,key).c_str();
-			evt.unmodified_text = evt.text;
-			mRenderer->SendKeyEvent(evt, keyData.Inspector);
-		}
-		default:
-			break;
-		}
 	}
 }

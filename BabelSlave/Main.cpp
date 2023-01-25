@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
     if (argc < 3) return -1;
     try
     {
-        LOGGER->init("Logs/BabelUI.log", "BabelUI");
+        Babel::LOGGER->init("Logs/BabelUI.log", "BabelUI");
         int width = std::atoi(argv[1]);
         int height = std::atoi(argv[2]);;
         Babel::Application app;

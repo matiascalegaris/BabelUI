@@ -20,4 +20,11 @@ namespace Babel
 			eventCount--;
 		}
 	}
+	void LoginInfoEvent::SetUserAndPassword(const char* user, int userSize, const char* password, int passwordSize)
+	{
+		this->userSize = userSize;
+		this->passwordSize = passwordSize;
+		memcpy_s(strData, sizeof(strData), user, userSize);
+		memcpy_s(strData+userSize, sizeof(strData)-userSize, password, passwordSize);
+	}
 }

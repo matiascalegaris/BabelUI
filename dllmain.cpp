@@ -3,6 +3,7 @@
 #include "Core/Tunnel.h"
 #include "SharedMemory/Events/EventHandler.hpp"
 #include "Core/Logger.hpp"
+#include "CallbackDefines.hpp"
 
 namespace {
 	Babel::Tunnel BabelTunnel;
@@ -29,6 +30,7 @@ bool _stdcall InitializeBabel(int width, int height)
 
 bool _stdcall GetImageBuffer(char* buffer, int size)
 {
+	BabelTunnel.CheckIncommingMessages();
 	return BabelTunnel.GetSyncData().GetLastBuffer(buffer, size);
 }
 
@@ -51,6 +53,14 @@ void _stdcall SendKeyEvent(int16_t keyCode, bool shift, int type, bool capsState
 	keyData.Size = sizeof(Babel::KeyEvent);
 	keyData.EventType = Babel::EventType::KeyData;
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&keyData, keyData.Size);
+}
+
+void _stdcall RegisterCallbacks(int loginCallback, int closeClient)
+{
+	Babel::CallbacksList callbacks;
+	callbacks.closeClient = (Babel::TCloseClient)(closeClient);
+	callbacks.login = (Babel::TLogInCallback)(loginCallback);
+	BabelTunnel.SetCallbacks(callbacks);
 }
 
 uint32_t _stdcall NextPowerOf2(uint32_t value)

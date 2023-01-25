@@ -2,6 +2,9 @@
 #include <thread>
 #include <chrono>
 #include <filesystem>
+#include "Core/Logger.hpp"
+#include "SharedMemory/Events/EventHandler.hpp"
+#include "Communicator.hpp"
 
 const char* htmlString();
 
@@ -110,9 +113,8 @@ namespace Babel
         ///
         mView->set_load_listener(this);
 
-        //auto fullPath = LocalPathForFile("/index.html");
-        //mView->LoadURL({fullPath.c_str(), fullPath.length()});
         mView->LoadURL("file:///index.html");
+        //mView->LoadHTML(htmlString());
         mView->Focus();
 	}
     Renderer::~Renderer()
@@ -128,16 +130,20 @@ namespace Babel
     }
     void Renderer::OnFailLoading(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const String& url, const String& description, const String& error_domain, int error_code)
     {
+        Babel::Logger::Get()->log(description.utf8().data());
     }
     void Renderer::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const ultralight::String& url)
     {
         Ref<JSContext> context = caller->LockJSContext();
         SetJSContext(context.get());
         JSObject global = JSGlobalObject();
-        global["GetMessage"] = BindJSCallbackWithRetval(&Renderer::GetMessage);
+        mCommunicator->RegisterJSApi(global);
     }
+
     void Renderer::LogMessage(ultralight::LogLevel log_level, const ultralight::String16& message)
     {
+        ultralight::String u8Str(message);
+        Babel::Logger::Get()->log(u8Str.utf8().data());
     }
     void Renderer::RenderFrame()
     {
@@ -193,23 +199,15 @@ namespace Babel
     {
         if (isInspectorEvent)
         {
-            //if (mInspectorView->HasInputFocus())
-            {
-                mInspectorView->FireKeyEvent(evt);
-            }            
+            mInspectorView->FireKeyEvent(evt);
         }
         else
         {
-            if (mInspectorView->HasInputFocus())
+            if (mView->HasInputFocus())
             {
                 mView->FireKeyEvent(evt);
             }
         }
-    }
-
-    ultralight::JSValue Renderer::GetMessage(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
-    {
-        return JSValue("Test input");
     }
 }
 

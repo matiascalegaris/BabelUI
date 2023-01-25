@@ -19,6 +19,7 @@ namespace Babel
         mSharedMemory = std::make_unique<SharedMemory>(mSyncData->GetTotalSize());
         if (!mSharedMemory->Create("Local\\TestMemShare2")) return false;
         mSyncData->GetSharedFileViews(*mSharedMemory);
+        mEventHandler = std::make_unique<EventHandler>(*this, mSyncData->GetSlaveMessenger());
         std::string commandLine = "BabelSlave.exe ";
         commandLine += std::to_string(width) + " " + std::to_string(height);
         return mProcess.StartProcess(commandLine.c_str());
@@ -48,6 +49,30 @@ namespace Babel
         windowData.Size = sizeof(Babel::WindowInfo);
         mSyncData->GetApiMessenger().AddEvent((uint8_t*)&windowData, windowData.Size);
         return true;
+    }
+
+    void Tunnel::HandleEvent(const Event& eventData)
+    {
+        switch (eventData.EventType)
+        {
+        case EventType::CloseClient:
+            mVBCallbacks.closeClient();
+            break;
+        case EventType::Login:
+            const LoginInfoEvent& loginevt = static_cast<const LoginInfoEvent&>(eventData);
+            LogInInfo loginInfo;
+            loginInfo.user = loginevt.strData;
+            loginInfo.password = loginevt.strData + loginevt.userSize;
+            loginInfo.userLen = loginevt.userSize;
+            loginInfo.passwordLen = loginevt.passwordSize;
+            mVBCallbacks.login(&loginInfo);
+            break;
+        }
+    }
+
+    void Tunnel::CheckIncommingMessages()
+    {
+        mEventHandler->HandleIncomingEvents();
     }
 
 }

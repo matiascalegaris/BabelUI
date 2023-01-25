@@ -21,11 +21,11 @@ namespace Babel
 		mHeader->MessageCount = 0;
 		mHeader->UsedBytes = 0;
 	}
+
 	void EventBuffer::AddEvent(uint8_t* eventData, int32_t eventSize)
 	{
 		volatile LONG* lock_ptr = (volatile LONG*)&(mHeader->Lock);
 		MessagesSent++;
-		LOGGER->log("Message sent: " + std::to_string(MessagesSent));
 		while (InterlockedExchange(lock_ptr, (LONG)LockState::Set) != (LONG)LockState::Clear)
 		{
 		}
@@ -48,7 +48,6 @@ namespace Babel
 			mHeader->UsedBytes = 0;
 			mHeader->MessageCount = 0;
 			MessagesHandled += eventCount;
-			LOGGER->log("Message handled: " + std::to_string(MessagesHandled));
 		}
 		InterlockedExchange(lock_ptr, (LONG)LockState::Clear);
 		return eventCount;

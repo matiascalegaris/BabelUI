@@ -12,6 +12,8 @@ namespace Babel
 		Close,
 		DebugMouseData,
 		EnableDebugWindow,
+		Login,
+		CloseClient
 	};
 
 	struct Event
@@ -43,10 +45,19 @@ namespace Babel
 		int Height;
 	};
 
+	struct LoginInfoEvent : public Event
+	{
+		int userSize;
+		int passwordSize;
+		char strData[255];
+		
+		void SetUserAndPassword(const char *user, int userSize, const char* password, int passwordSize);
+	};
+
 	class EventListener
 	{
 	public:
-		virtual void HandleEvent(const Event& evenData) = 0;
+		virtual void HandleEvent(const Event& eventData) = 0;
 	};
 	class EventBuffer;
 
