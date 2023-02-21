@@ -172,6 +172,8 @@
     <ClCompile Include="Communicator.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Utils\Encoding.cpp" />
+    <ClCompile Include="Utils\FileUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Core\Logger.hpp" />
@@ -182,6 +184,9 @@
     <ClInclude Include="Application.hpp" />
     <ClInclude Include="Communicator.hpp" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Utils\Encoding.h" />
+    <ClInclude Include="Utils\FileUtils.h" />
+    <ClInclude Include="Utils\IniReader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -26,6 +26,7 @@ namespace Babel {
 			bufferName);               // name of mapping object
 
 		if (mMapFile == nullptr) return false;
+		return true;
 	}
 
 	void* SharedMemory::MapFile(DWORD size, DWORD offset, DWORD accessMode)

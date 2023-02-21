@@ -55,12 +55,42 @@ void _stdcall SendKeyEvent(int16_t keyCode, bool shift, int type, bool capsState
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&keyData, keyData.Size);
 }
 
-void _stdcall RegisterCallbacks(int loginCallback, int closeClient)
+void _stdcall RegisterCallbacks(int loginCallback, int closeClient, int createAccount, int setHost, int validateCode,
+								int resendValidationCode, int requestPasswordReset, int newPasswordRequest)
 {
 	Babel::CallbacksList callbacks;
-	callbacks.closeClient = (Babel::TCloseClient)(closeClient);
-	callbacks.login = (Babel::TLogInCallback)(loginCallback);
+	callbacks.CloseClient = (Babel::TCloseClient)(closeClient);
+	callbacks.Login = (Babel::TLogInCallback)(loginCallback);
+	callbacks.CreateAccount = (Babel::TCreateAccountCallback)(createAccount);
+	callbacks.SetHost = (Babel::TSetHost)(setHost);
+	callbacks.ValidateAccount = (Babel::TValidateAccount)(validateCode);
+	callbacks.ResendValidationCode = (Babel::TResendValidationCode)(resendValidationCode);
+	callbacks.RequestPasswordReset = (Babel::TRequestPasswordReset)(requestPasswordReset);
+	callbacks.NewPasswordRequest = (Babel::TNewPasswordRequest)(newPasswordRequest);
 	BabelTunnel.SetCallbacks(callbacks);
+}
+
+void _stdcall SendErrorMessage(const char* str, int messageType, int action)
+{
+	Babel::ErrorMessageEvent message;
+	message.action = action;
+	message.messageType = messageType;
+	message.size = strnlen(str, sizeof(message.strData)-1);
+	message.Size = sizeof(Babel::ErrorMessageEvent);
+	strncpy_s(message.strData, sizeof(message.strData) - 1,str, message.size);
+	message.strData[message.size] = 0;
+	message.EventType = Babel::EventType::ErrorMessage;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&message, message.Size);
+}
+
+void _stdcall SetActiveScreen(const char* str)
+{	
+	BabelTunnel.SetActiveScreen(str);
+}
+
+void _stdcall SetLoadingMessage(const char* str, int localize)
+{
+	BabelTunnel.SetLoadingMessage(str, localize);
 }
 
 uint32_t _stdcall NextPowerOf2(uint32_t value)

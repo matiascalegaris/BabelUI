@@ -23,6 +23,10 @@ namespace Babel
 
 		void CheckIncommingMessages();
 		void SetCallbacks(const CallbacksList& callbacks) { mVBCallbacks = callbacks;  }
+
+	public:
+		void SetActiveScreen(const char* name);
+		void SetLoadingMessage(const char* message, bool localize);
 	private:
 		ProcessHandler mProcess;
 		std::unique_ptr<SharedMemory> mSharedMemory;

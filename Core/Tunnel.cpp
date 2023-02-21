@@ -4,6 +4,9 @@
 #include "Core/Logger.hpp"
 namespace Babel
 {
+    namespace {
+
+    }
     Tunnel::~Tunnel()
     {
         Event event;
@@ -56,23 +59,135 @@ namespace Babel
         switch (eventData.EventType)
         {
         case EventType::CloseClient:
-            mVBCallbacks.closeClient();
+            mVBCallbacks.CloseClient();
             break;
         case EventType::Login:
+        {
             const LoginInfoEvent& loginevt = static_cast<const LoginInfoEvent&>(eventData);
             LogInInfo loginInfo;
-            loginInfo.user = loginevt.strData;
-            loginInfo.password = loginevt.strData + loginevt.userSize;
-            loginInfo.userLen = loginevt.userSize;
-            loginInfo.passwordLen = loginevt.passwordSize;
-            mVBCallbacks.login(&loginInfo);
+            loginInfo.User = loginevt.strData;
+            loginInfo.Password = loginevt.strData + loginevt.UserSize;
+            loginInfo.UserLen = loginevt.UserSize;
+            loginInfo.PasswordLen = loginevt.PasswordSize;
+            loginInfo.StoreCredentials = loginevt.storeCredentials;
+            mVBCallbacks.Login(&loginInfo);
+        }
             break;
+        case EventType::CreateAccount:
+        {
+            const NewAccountEvent& accountEvt = static_cast<const NewAccountEvent&>(eventData);
+            NewAccountInfo newAccountInfo;
+            int32_t offset = 0;
+            newAccountInfo.User = accountEvt.strData;
+            offset += accountEvt.UserSize;
+            newAccountInfo.UserLen = accountEvt.UserSize;
+            newAccountInfo.Password = accountEvt.strData + offset;
+            offset += accountEvt.PasswordSize;
+            newAccountInfo.PasswordLen = accountEvt.PasswordSize;
+            newAccountInfo.Name = accountEvt.strData + offset;
+            offset += accountEvt.NameSize;
+            newAccountInfo.NameLen = accountEvt.NameSize;
+            newAccountInfo.Surname = accountEvt.strData + offset;
+            offset += accountEvt.SurnameSize;
+            newAccountInfo.SurnameLen = accountEvt.SurnameSize;
+            mVBCallbacks.CreateAccount(&newAccountInfo);
+        }
+        break;
+        case EventType::ResendValidationCode:
+        {
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(1);
+            const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Event), strInfo);
+            auto size = output - (char*)(&eventData);
+            SingleStringParam strParam;
+            strParam.Len = strInfo[0].Size;
+            strParam.Str = strInfo[0].StartPos;
+            mVBCallbacks.ResendValidationCode(&strParam);
+        }
+            break;
+        case EventType::ValidateCode:
+        {
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(2);
+            const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Event), strInfo);
+            auto size = output - (char*)(&eventData);
+            std::string name(strInfo[0].StartPos, strInfo[0].Size);
+            DoubleStringParam strParam;
+            strParam.FirstLen = strInfo[0].Size;
+            strParam.FirstStr = strInfo[0].StartPos;
+            strParam.SecondLen = strInfo[1].Size;
+            strParam.SecondStr = strInfo[1].StartPos;
+            mVBCallbacks.ValidateAccount(&strParam);
+        }
+            break;
+        case EventType::SetHost:
+        {
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(2);
+            const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Event), strInfo);
+            auto size = output - (char*)(&eventData);
+            std::string name(strInfo[0].StartPos, strInfo[0].Size);
+            SingleStringParam strParam;
+            strParam.Len = strInfo[0].Size;
+            strParam.Str = strInfo[0].StartPos;
+            mVBCallbacks.SetHost(&strParam);
+        }
+            break;
+        case EventType::RequestPasswordReset:
+        {
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(1);
+            const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Event), strInfo);
+            auto size = output - (char*)(&eventData);
+            SingleStringParam strParam;
+            strParam.Len = strInfo[0].Size;
+            strParam.Str = strInfo[0].StartPos;
+            mVBCallbacks.RequestPasswordReset(&strParam);
+        }
+        break;
+        case EventType::NewPasswordRequest:
+        {
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(3);
+            const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Event), strInfo);
+            auto size = output - (char*)(&eventData);
+            TripleStringParam strParam;
+            strParam.FirstLen = strInfo[0].Size;
+            strParam.FirstStr = strInfo[0].StartPos;
+            strParam.SecondLen = strInfo[1].Size;
+            strParam.SecondStr = strInfo[1].StartPos;
+            strParam.ThirdLen = strInfo[2].Size;
+            strParam.ThirdStr = strInfo[2].StartPos;
+            mVBCallbacks.NewPasswordRequest(&strParam);
+        }
+        break;
         }
     }
 
     void Tunnel::CheckIncommingMessages()
     {
         mEventHandler->HandleIncomingEvents();
+    }
+
+    void Tunnel::SetActiveScreen(const char* name)
+    {
+        Babel::Event eventInfo;
+        eventInfo.EventType = Babel::EventType::SetActiveScreen;
+        std::vector<StringInBuffer> strInfo(1);
+        strInfo[0].StartPos = name;
+        eventInfo.Size = sizeof(eventInfo) + PrepareDynamicStrings(strInfo);
+        GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&eventInfo, sizeof(eventInfo), strInfo);
+    }
+
+    void Tunnel::SetLoadingMessage(const char* message, bool localize)
+    {
+        Babel::LoadingMessage eventInfo;
+        eventInfo.EventType = Babel::EventType::SetLoadingMessage;
+        std::vector<Babel::StringInBuffer> strInfo(1);
+        strInfo[0].StartPos = message;
+        eventInfo.localize = localize;
+        eventInfo.Size = sizeof(eventInfo) + Babel::PrepareDynamicStrings(strInfo);
+        GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&eventInfo, sizeof(eventInfo), strInfo);
     }
 
 }

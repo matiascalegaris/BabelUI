@@ -38,6 +38,7 @@ namespace Babel
 		void EnableInspector(int width, int height);
 		void SendKeyEvent(ultralight::KeyEvent& evt, bool isInspectorEvent);
 		void SetCommunicator(Communicator* communicator) { mCommunicator = communicator; }
+		ultralight::RefPtr<ultralight::View>& GetMainView() { return mView; }
 	private:
 		ultralight::RefPtr<ultralight::Renderer> mRender;
 		ultralight::RefPtr<ultralight::View> mView;

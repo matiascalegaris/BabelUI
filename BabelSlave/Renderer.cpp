@@ -5,33 +5,13 @@
 #include "Core/Logger.hpp"
 #include "SharedMemory/Events/EventHandler.hpp"
 #include "Communicator.hpp"
+#include "Utils/FileUtils.h"
 
 const char* htmlString();
 
 namespace Babel
 {
-    namespace {
-        std::filesystem::path GetWorkingPath()
-        {
-            //auto path = std::filesystem::current_path();
-            auto path = std::filesystem::path("D:\\Proyectos/ao20/Recursos");
-            path += "/../Recursos/BabelUI/";
-            return path;
-        }
 
-        std::filesystem::path GetFilePath(const char* fileName)
-        {
-            auto path = GetWorkingPath();
-            path += fileName;
-            return path;
-        }
-
-        std::wstring LocalPathForFile(const char* fileName)
-        {
-            auto path =  GetFilePath(fileName).native();
-            return std::wstring(L"file:///") + path;
-        }
-    }
     using namespace ultralight;
 	Renderer::Renderer(int width, int height)
 	{

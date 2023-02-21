@@ -13,7 +13,17 @@ namespace Babel
 		DebugMouseData,
 		EnableDebugWindow,
 		Login,
-		CloseClient
+		CloseClient,
+		ErrorMessage,
+		SetActiveScreen,
+		CreateAccount,
+		ResendValidationCode,
+		ValidateCode,
+		ValidatePrevCode,
+		SetHost,
+		RequestPasswordReset,
+		NewPasswordRequest,
+		SetLoadingMessage
 	};
 
 	struct Event
@@ -47,12 +57,46 @@ namespace Babel
 
 	struct LoginInfoEvent : public Event
 	{
-		int userSize;
-		int passwordSize;
+		int storeCredentials;
+		int UserSize;
+		int PasswordSize;
 		char strData[255];
 		
 		void SetUserAndPassword(const char *user, int userSize, const char* password, int passwordSize);
 	};
+
+	struct NewAccountEvent : public Event
+	{
+		int UserSize;
+		int PasswordSize;
+		int NameSize;
+		int SurnameSize;
+		char strData[512];
+
+		void SetUserAndPassword(const char* user, int userSize, const char* password, int passwordSize,
+								const char* userName, int userNameSize, const char* surname, int surnameSize);
+	};
+
+	struct ErrorMessageEvent : public Event
+	{
+		int action;
+		int messageType;
+		int size;
+		char strData[512];
+	};
+
+	struct LoadingMessage : public Event
+	{
+		bool localize;
+	};
+
+	struct StringInBuffer
+	{
+		int32_t Size;
+		const char* StartPos;
+	};
+	const char* GetStringPtrInEvent(const char* memPtr, int32_t eventSize, std::vector<StringInBuffer>& result);
+	int32_t PrepareDynamicStrings(std::vector<StringInBuffer>& result, size_t maxSize = 255);
 
 	class EventListener
 	{
