@@ -9,12 +9,13 @@
 #include "Utils/IniReader.h"
 #include "Utils/FileUtils.h"
 #include "Utils/Encoding.h"
-
+#include "AoResources/Resources.hpp"
 
 namespace Babel
 {
 	namespace {
-		std::string ascii_to_utf8(const std::string& ascii_string) {
+		std::string ascii_to_utf8(const std::string& ascii_string) 
+		{
 			int num_wchars = MultiByteToWideChar(CP_ACP, 0, ascii_string.c_str(), -1, NULL, 0);
 			std::unique_ptr<wchar_t[]> wide_string(new wchar_t[num_wchars]);
 			MultiByteToWideChar(CP_ACP, 0, ascii_string.c_str(), -1, wide_string.get(), num_wchars);
@@ -26,7 +27,8 @@ namespace Babel
 			return std::string(utf8_string.get());
 		}
 
-		std::string utf8_to_ascii(const std::string& utf8_string) {
+		std::string utf8_to_ascii(const std::string& utf8_string) 
+		{
 			int num_wchars = MultiByteToWideChar(CP_UTF8, 0, utf8_string.c_str(), -1, NULL, 0);
 			std::unique_ptr<wchar_t[]> wide_string(new wchar_t[num_wchars]);
 			MultiByteToWideChar(CP_UTF8, 0, utf8_string.c_str(), -1, wide_string.get(), num_wchars);
@@ -37,11 +39,49 @@ namespace Babel
 
 			return std::string(ascii_string.get());
 		}
+
+		void SetObjectString(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, const char* value)
+		{			
+			JSRetainPtr<JSStringRef> valueStr =
+				adopt(JSStringCreateWithUTF8CString(value));
+			JSRetainPtr<JSStringRef> paramStr =
+				adopt(JSStringCreateWithUTF8CString(paramName));
+			auto jparam = JSValueMakeString(ctx, paramStr.get());
+			auto jvalue = JSValueMakeString(ctx, valueStr.get());
+			JSObjectSetProperty(ctx, objectRef, paramStr.get(), jvalue, 0, nullptr);
+		}
+		template<typename T>
+		void SetObjectNumber(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, T& value)
+		{
+			JSRetainPtr<JSStringRef> paramStr =
+				adopt(JSStringCreateWithUTF8CString(paramName));
+			auto jparam = JSValueMakeString(ctx, paramStr.get());
+			auto jvalue = JSValueMakeNumber(ctx, value);
+			JSObjectSetProperty(ctx, objectRef, paramStr.get(), jvalue, 0, nullptr);
+		}
+
+		void SetChildObject(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, JSObjectRef& value)
+		{
+			JSRetainPtr<JSStringRef> paramStr =
+				adopt(JSStringCreateWithUTF8CString(paramName));
+			auto jparam = JSValueMakeString(ctx, paramStr.get());
+			JSObjectSetProperty(ctx, objectRef, paramStr.get(), value, 0, nullptr);
+		}
+
+		void SetGrhJsObject(JSContextRef& ctx, JSObjectRef& objectRef, const AO::GrhDetails& grhData)
+		{
+			SetObjectNumber(ctx, objectRef, "imageNumber", grhData.ImageNumber);
+			SetObjectNumber(ctx, objectRef, "startX", grhData.StartPos.X);
+			SetObjectNumber(ctx, objectRef, "startY", grhData.StartPos.Y);
+			SetObjectNumber(ctx, objectRef, "width", grhData.EndPos.X);
+			SetObjectNumber(ctx, objectRef, "height", grhData.EndPos.Y);
+		}
 	}
 	using namespace ultralight;
 	Communicator::Communicator(EventBuffer& eventBuffer, Renderer& renderer, Application& application) 
 		: mEventBuffer(eventBuffer), mRenderer(renderer), mApplication(application)
 	{
+		mResources = std::make_unique<AO::Resources>();
 	}
 
 	void Communicator::RegisterJSApi(ultralight::JSObject& global)
@@ -56,6 +96,7 @@ namespace Babel
 		Api["SetHost"] = BindJSCallbackWithRetval(&Communicator::SetHost);
 		Api["RequestPasswordReset"] = BindJSCallbackWithRetval(&Communicator::RequestPasswordReset);
 		Api["NewPasswordRequest"] = BindJSCallbackWithRetval(&Communicator::NewPasswordRequest);
+		Api["GetCharacterDrawInfo"] = BindJSCallbackWithRetval(&Communicator::GetCharacterDrawInfo);
 		global["BabelUI"] = JSValue(Api);
 	}
 	void Communicator::HandleEvent(const Event& eventData)
@@ -116,6 +157,12 @@ namespace Babel
 				SetLoadingMessage(message, loadingData.localize);
 			}
 			break;
+			case EventType::LoginCharList:
+			{
+				const CharacterListEvent& charListEvent = static_cast<const CharacterListEvent&>(eventData);
+				HandleLoginCharList(charListEvent);
+			}
+			break;
 			default:
 				break;
 		}
@@ -131,12 +178,12 @@ namespace Babel
 		ultralight::String password = args[1];
 		bool storeCredentials = args[2];
 
-		LoginInfoEvent loginEvent;
+		LoginCredentialsEvent loginEvent;
 		auto usr = user.utf8();
 		auto pwd = password.utf8();
 		loginEvent.SetUserAndPassword(usr.data(), static_cast<int>((int)usr.length()), pwd.data(), (int)pwd.length());
 		loginEvent.storeCredentials = storeCredentials;
-		loginEvent.Size = sizeof(LoginInfoEvent);
+		loginEvent.Size = sizeof(LoginCredentialsEvent);
 		loginEvent.EventType = EventType::Login;
 		mEventBuffer.AddEvent((uint8_t*)&loginEvent, loginEvent.Size);
 		return JSValue(true);
@@ -173,7 +220,7 @@ namespace Babel
 	}
 	ultralight::JSValue Communicator::GetStoredCredentials(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
-		auto path = GetFilePath("../OUTPUT/Cuenta.ini");
+		auto path = GetFilePath("OUTPUT/Cuenta.ini");
 		INIReader Reader(path.u8string());
 		auto account = Reader.Get("CUENTA", "Nombre", "");
 		auto password = Reader.Get("CUENTA", "Password", "");
@@ -295,6 +342,46 @@ namespace Babel
 		mEventBuffer.AddEvent((uint8_t*)&eventInfo, sizeof(eventInfo), strInfo);
 		return JSValue(true);
 	}
+
+	ultralight::JSValue Communicator::GetCharacterDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 5)
+		{
+			return "invalid params";
+		}
+
+		int body = args[0];
+		int head = args[1];
+		int helm = args[2];
+		int shield = args[3];
+		int weapon = args[4];
+		AO::CharacterRenderInfo charData;
+		mResources->GetBodyInfo(charData, body, head, helm, shield, weapon);
+
+		Ref<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context.get();
+		JSObjectRef character = JSObjectMake(ctx, nullptr, nullptr);
+		JSObjectRef bodyObj = JSObjectMake(ctx, nullptr, nullptr);
+		JSObjectRef bodyGrh = JSObjectMake(ctx, nullptr, nullptr);
+		JSObjectRef headGrh = JSObjectMake(ctx, nullptr, nullptr);
+		JSObjectRef helmGrh = JSObjectMake(ctx, nullptr, nullptr);
+		JSObjectRef waponGrh = JSObjectMake(ctx, nullptr, nullptr);
+		JSObjectRef shieldGrh = JSObjectMake(ctx, nullptr, nullptr);
+		SetGrhJsObject(ctx, bodyGrh, charData.Body.image);
+		SetChildObject(ctx, bodyObj, "body", bodyGrh);
+		SetObjectNumber(ctx, bodyObj, "HeadOffsetY", charData.Body.HeadOffset.Y);
+		SetObjectNumber(ctx, bodyObj, "HeadOffsetX", charData.Body.HeadOffset.X);
+		SetChildObject(ctx, character, "body", bodyObj);
+		SetGrhJsObject(ctx, headGrh, charData.Head);
+		SetGrhJsObject(ctx, helmGrh, charData.Helm);
+		SetGrhJsObject(ctx, waponGrh, charData.Weapon);
+		SetGrhJsObject(ctx, shieldGrh, charData.Shield);
+		SetChildObject(ctx, character, "head", headGrh);
+		SetChildObject(ctx, character, "helm", helmGrh);
+		SetChildObject(ctx, character, "weapon", waponGrh);
+		SetChildObject(ctx, character, "shield", shieldGrh);
+		return character;
+	}
 	
 	void Communicator::HandlekeyData(const KeyEvent& keyData)
 	{
@@ -406,7 +493,6 @@ namespace Babel
 		JSRetainPtr<JSStringRef> str = adopt(
 			JSStringCreateWithUTF8CString("APicallbacks.SetLoadingMessage"));
 
-		// Evaluate the string "ShowMessage"
 		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
 		if (JSValueIsObject(ctx, func))
 		{
@@ -416,11 +502,9 @@ namespace Babel
 			// Check if 'funcObj' is a Function and not null
 			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
 
-				// Create a JS string from null-terminated UTF8 C-string, store it
-				// in a smart pointer to release it when it goes out of scope.
+				
 				JSRetainPtr<JSStringRef> msg =
-					adopt(JSStringCreateWithUTF8CString(message.c_str()));
-
+					adopt(JSStringCreateWithUTF8CString(ascii_to_utf8(message).c_str()));
 				// Create our list of arguments (we only have one)
 				const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()),
 											JSValueMakeBoolean(ctx, localize)};
@@ -435,6 +519,46 @@ namespace Babel
 				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
 					num_args, args,
 					&exception);
+			}
+		}
+	}
+	void Communicator::HandleLoginCharList(const CharacterListEvent& messageData)
+	{
+		Ref<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context.get();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.SetCharacter"));
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			// Cast 'func' to an Object, will return null if typecast failed.
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+
+			// Check if 'funcObj' is a Function and not null
+			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
+
+				// Create a JS string from null-terminated UTF8 C-string, store it
+				// in a smart pointer to release it when it goes out of scope.
+				
+				for (int i = 0; i < messageData.CharacterCount; i++)
+				{
+					JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+					SetObjectString(ctx, ret, "name", ascii_to_utf8(messageData.CharacterList[i].Name).c_str());
+					SetObjectNumber(ctx, ret, "head", messageData.CharacterList[i].Head);
+					SetObjectNumber(ctx, ret, "body", messageData.CharacterList[i].Body);
+					SetObjectNumber(ctx, ret, "helm", messageData.CharacterList[i].Helm);
+					SetObjectNumber(ctx, ret, "shield", messageData.CharacterList[i].Shield);
+					SetObjectNumber(ctx, ret, "weapon", messageData.CharacterList[i].Weapon);
+					SetObjectNumber(ctx, ret, "level", messageData.CharacterList[i].Level);
+					SetObjectNumber(ctx, ret, "status", messageData.CharacterList[i].Status);
+					SetObjectNumber(ctx, ret, "index", messageData.CharacterList[i].Index);
+					const JSValueRef args[] = { ret };
+					size_t num_args = 1;
+					JSValueRef exception = 0;
+					JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+						num_args, args,
+						&exception);
+				}
 			}
 		}
 	}

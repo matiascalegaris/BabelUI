@@ -3,6 +3,7 @@
 #include <Ultralight/platform/Logger.h>
 #include <AppCore/Platform.h>
 #include <AppCore/JSHelpers.h>
+#include "FileSystem.h"
 
 namespace Babel
 {
@@ -44,6 +45,7 @@ namespace Babel
 		ultralight::RefPtr<ultralight::View> mView;
 		ultralight::RefPtr<ultralight::View> mInspectorView;
 		Communicator* mCommunicator;
+		std::unique_ptr<BabelFileSystemWin> mFileSystem;
 		std::wstring mLocalPath;
 		bool mLoadComplete = false;
 	};

@@ -63,7 +63,7 @@ namespace Babel
             break;
         case EventType::Login:
         {
-            const LoginInfoEvent& loginevt = static_cast<const LoginInfoEvent&>(eventData);
+            const LoginCredentialsEvent& loginevt = static_cast<const LoginCredentialsEvent&>(eventData);
             LogInInfo loginInfo;
             loginInfo.User = loginevt.strData;
             loginInfo.Password = loginevt.strData + loginevt.UserSize;

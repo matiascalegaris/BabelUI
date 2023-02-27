@@ -23,7 +23,8 @@ namespace Babel
 		SetHost,
 		RequestPasswordReset,
 		NewPasswordRequest,
-		SetLoadingMessage
+		SetLoadingMessage,
+		LoginCharList
 	};
 
 	struct Event
@@ -55,14 +56,32 @@ namespace Babel
 		int Height;
 	};
 
-	struct LoginInfoEvent : public Event
+	struct LoginCredentialsEvent : public Event
 	{
 		int storeCredentials;
 		int UserSize;
 		int PasswordSize;
-		char strData[255];
-		
+		char strData[255];		
 		void SetUserAndPassword(const char *user, int userSize, const char* password, int passwordSize);
+	};
+
+	struct CharacterInfo
+	{
+		char Name[255];
+		int Head;
+		int Body;
+		int Helm;
+		int Shield;
+		int Weapon;
+		int Level;
+		int Status;
+		int Index;
+	};
+
+	struct CharacterListEvent : public Event
+	{
+		int CharacterCount;
+		CharacterInfo CharacterList[10];
 	};
 
 	struct NewAccountEvent : public Event

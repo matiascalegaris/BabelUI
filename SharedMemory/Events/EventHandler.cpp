@@ -21,7 +21,7 @@ namespace Babel
 		}
 	}
 
-	void LoginInfoEvent::SetUserAndPassword(const char* user, int userSize, const char* password, int passwordSize)
+	void LoginCredentialsEvent::SetUserAndPassword(const char* user, int userSize, const char* password, int passwordSize)
 	{
 		this->UserSize = userSize;
 		this->PasswordSize = passwordSize;

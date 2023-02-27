@@ -4,7 +4,7 @@ std::filesystem::path GetWorkingPath()
 {
     //auto path = std::filesystem::current_path();
     auto path = std::filesystem::path("D:\\Proyectos/ao20/Recursos");
-    path += "/../Recursos/BabelUI/";
+    path += "/../Recursos/";
     return path;
 }
 

@@ -17,6 +17,9 @@
     <Filter Include="Source Files\Utils">
       <UniqueIdentifier>{509cb295-f8f1-4f5d-b096-29ce231984e7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\AoResources">
+      <UniqueIdentifier>{53a29c4b-b641-4406-8755-33dbcb2d7007}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -52,6 +55,12 @@
     <ClCompile Include="Utils\Encoding.cpp">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="FileSystem.cpp">
+      <Filter>Source Files\RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="AoResources\Resources.cpp">
+      <Filter>Source Files\AoResources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -86,6 +95,12 @@
     </ClInclude>
     <ClInclude Include="Utils\Encoding.h">
       <Filter>Source Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem.h">
+      <Filter>Source Files\RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="AoResources\Resources.hpp">
+      <Filter>Source Files\AoResources</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

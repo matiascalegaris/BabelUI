@@ -30,7 +30,7 @@ namespace Babel
         /// We need to tell config where our resources are so it can load our
         /// bundled certificate chain and make HTTPS requests.
         ///
-        config.resource_path = GetWorkingPath().u8string().c_str();
+        config.resource_path = GetFilePath("BabelUI").u8string().c_str();
         //config.resource_path = "D:\\Proyectos/ao20/Recursos/BabelUI/";
 
         ///
@@ -62,7 +62,9 @@ namespace Babel
         /// You could replace this with your own to provide your own file loader
         /// (useful if you need to bundle encrypted / compressed HTML assets).
         ///
-        Platform::instance().set_file_system(GetPlatformFileSystem(GetWorkingPath().u8string().c_str()));
+        mFileSystem = std::make_unique<BabelFileSystemWin>(GetWorkingPath().c_str());
+        Platform::instance().set_file_system(mFileSystem.get());
+        //Platform::instance().set_file_system(GetPlatformFileSystem(GetWorkingPath().u8string().c_str()));
 
         ///
         /// Register our MyApp instance as a logger so we can handle the
@@ -93,7 +95,7 @@ namespace Babel
         ///
         mView->set_load_listener(this);
 
-        mView->LoadURL("file:///index.html");
+        mView->LoadURL("file:///BabelUI/index.html");
         //mView->LoadHTML(htmlString());
         mView->Focus();
 	}

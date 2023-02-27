@@ -1,11 +1,13 @@
 #pragma once
 #include <AppCore/JSHelpers.h>
 #include "SharedMemory/Events/EventHandler.hpp"
+#include "AoResources/Resources.hpp"
 
 namespace Babel
 {
 	class Renderer;
 	class Application;
+	
 	// handles the comunication between c++ and js
 	class Communicator : public EventListener
 	{
@@ -24,14 +26,17 @@ namespace Babel
 		ultralight::JSValue SetHost(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue RequestPasswordReset(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue NewPasswordRequest(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue GetCharacterDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
 		void SendErrorMessage(const ErrorMessageEvent& messageData);
 		void SetActiveScreen(const std::string& name);
 		void SetLoadingMessage(const std::string& message, bool localize);
+		void HandleLoginCharList(const CharacterListEvent& messageData);
 	private:
 		EventBuffer& mEventBuffer;
 		Renderer& mRenderer;
 		Application& mApplication;
+		std::unique_ptr<AO::Resources> mResources;
 	};
 }

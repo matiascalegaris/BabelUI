@@ -8,6 +8,8 @@
 namespace {
 	Babel::Tunnel BabelTunnel;
 
+	Babel::CharacterListEvent LoginCharList;
+
 	void FillMouseData(Babel::MouseData& mouseData, int mouseX, int mouseY, int type, int buttonState)
 	{
 		mouseData.PosX = mouseX;
@@ -91,6 +93,34 @@ void _stdcall SetActiveScreen(const char* str)
 void _stdcall SetLoadingMessage(const char* str, int localize)
 {
 	BabelTunnel.SetLoadingMessage(str, localize);
+}
+
+void _stdcall LoginCharacterListPrepare(int characterCount)
+{
+	LoginCharList.CharacterCount = characterCount;
+	memset(&LoginCharList.CharacterList, 0, sizeof(LoginCharList.CharacterList));
+}
+
+void _stdcall LoginAddCharacter(const char* name, int head, int body, int helm, int shield, int weapon, int level, int status, int index)
+{
+	int len = strnlen(name, sizeof(LoginCharList.CharacterList[index].Name));
+	strncpy_s(LoginCharList.CharacterList[index].Name, sizeof(LoginCharList.CharacterList[index].Name) - 1l, name, len);
+	LoginCharList.CharacterList[index].Name[sizeof(LoginCharList.CharacterList[index].Name) - 1] = 0;
+	LoginCharList.CharacterList[index].Head = head;
+	LoginCharList.CharacterList[index].Body = body;
+	LoginCharList.CharacterList[index].Helm = helm;
+	LoginCharList.CharacterList[index].Shield = shield;
+	LoginCharList.CharacterList[index].Weapon = weapon;
+	LoginCharList.CharacterList[index].Level = level;
+	LoginCharList.CharacterList[index].Status = status;
+	LoginCharList.CharacterList[index].Index = index;
+}
+
+void _stdcall LoginSendCharacters()
+{
+	LoginCharList.EventType = Babel::EventType::LoginCharList;
+	LoginCharList.Size = sizeof(LoginCharList);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&LoginCharList, LoginCharList.Size);
 }
 
 uint32_t _stdcall NextPowerOf2(uint32_t value)
