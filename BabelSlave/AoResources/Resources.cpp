@@ -106,7 +106,7 @@ namespace AO
         void StartLoading();
 
         void GetBodyInfo(CharacterRenderInfo& charInfo, int bodyIndex, int headIndex, int helmIndex, int shieldIndex, int weaponIndex);
-
+        void GetHeadInfo(GrhDetails& headInfo, int headIndex);
         void SetGrhDetails(GrhDetails& dest, int grhIndex);
     private:
         void InitGrh(Grh& grhObj, int GrhIndex, int Started = -1, int16_t Loops = -1);
@@ -645,6 +645,15 @@ namespace AO
         }
     }
 
+    void ResourceLoader::GetHeadInfo(GrhDetails& headInfo, int headIndex)
+    {
+        if (mLoadingThread.joinable()) mLoadingThread.join();
+        if (headIndex > 0)
+        {
+            SetGrhDetails(headInfo, mHeadData[headIndex - 1].Head[E_Heading_SOUTH].GrhIndex);
+        }
+    }
+
     void ResourceLoader::SetGrhDetails(GrhDetails& dest, int grhIndex)
     {
         if (grhIndex < 0)
@@ -681,6 +690,11 @@ namespace AO
     void Resources::GetBodyInfo(CharacterRenderInfo& charInfo, int bodyIndex, int headIndex, int helmIndex, int shieldIndex, int weaponIndex)
     {
         mResources->GetBodyInfo(charInfo, bodyIndex, headIndex, helmIndex, shieldIndex, weaponIndex);
+    }
+
+    void Resources::GetHeadInfo(GrhDetails& headInfo, int headIndex)
+    {
+
     }
 
 }

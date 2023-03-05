@@ -97,6 +97,9 @@ namespace Babel
 		Api["RequestPasswordReset"] = BindJSCallbackWithRetval(&Communicator::RequestPasswordReset);
 		Api["NewPasswordRequest"] = BindJSCallbackWithRetval(&Communicator::NewPasswordRequest);
 		Api["GetCharacterDrawInfo"] = BindJSCallbackWithRetval(&Communicator::GetCharacterDrawInfo);
+		Api["SelectCharacter"] = BindJSCallbackWithRetval(&Communicator::SelectCharacter);
+		Api["LoginCharacter"] = BindJSCallbackWithRetval(&Communicator::LoginCharacter);
+		Api["GetHeadDrawInfo"] = BindJSCallbackWithRetval(&Communicator::GetHeadDrawInfo);
 		global["BabelUI"] = JSValue(Api);
 	}
 	void Communicator::HandleEvent(const Event& eventData)
@@ -154,7 +157,7 @@ namespace Babel
 				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(LoadingMessage), strInfo);
 				auto size = output - (char*)(&eventData);
 				std::string message(strInfo[0].StartPos, strInfo[0].Size);
-				SetLoadingMessage(message, loadingData.localize);
+				SetLoadingMessage(message, loadingData.Localize);
 			}
 			break;
 			case EventType::LoginCharList:
@@ -382,6 +385,53 @@ namespace Babel
 		SetChildObject(ctx, character, "shield", shieldGrh);
 		return character;
 	}
+
+	ultralight::JSValue Communicator::GetHeadDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return "invalid params";
+		}
+
+		AO::GrhDetails headInfo;
+
+		mResources->GetHeadInfo(headInfo, args[0]);
+		Ref<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context.get();
+		JSObjectRef headGrh = JSObjectMake(ctx, nullptr, nullptr);
+		SetGrhJsObject(ctx, headGrh, headInfo);
+		return headGrh;
+	}
+
+	ultralight::JSValue Communicator::SelectCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return "invalid params";
+		}
+
+		SelectCharacterEvent selectCharEvent;
+		selectCharEvent.CharIndex = args[0];
+		selectCharEvent.EventType = EventType::SelectCharacter;
+		selectCharEvent.Size = sizeof(SelectCharacterEvent);
+		mEventBuffer.AddEvent((uint8_t*)&selectCharEvent, sizeof(selectCharEvent));
+		return ultralight::JSValue();
+	}
+
+	ultralight::JSValue Communicator::LoginCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return "invalid params";
+		}
+
+		SelectCharacterEvent selectCharEvent;
+		selectCharEvent.CharIndex = args[0];
+		selectCharEvent.EventType = EventType::LoginCharacter;
+		selectCharEvent.Size = sizeof(SelectCharacterEvent);
+		mEventBuffer.AddEvent((uint8_t*)&selectCharEvent, sizeof(selectCharEvent));
+		return ultralight::JSValue();
+	}
 	
 	void Communicator::HandlekeyData(const KeyEvent& keyData)
 	{
@@ -426,14 +476,14 @@ namespace Babel
 
 			// Check if 'funcObj' is a Function and not null
 			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
-				std::string utf8_string = ascii_to_utf8(messageData.strData);
+				std::string utf8_string = ascii_to_utf8(messageData.StrData);
 				JSRetainPtr<JSStringRef> msg =
 					adopt(JSStringCreateWithUTF8CString(utf8_string.c_str()));
 
 				// Create our list of arguments (we only have one)
 				const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()),
-											JSValueMakeNumber(ctx, static_cast<double>(messageData.messageType)),
-											JSValueMakeNumber(ctx, static_cast<double>(messageData.action)) };
+											JSValueMakeNumber(ctx, static_cast<double>(messageData.MessageType)),
+											JSValueMakeNumber(ctx, static_cast<double>(messageData.Action)) };
 
 				// Count the number of arguments in the array.
 				size_t num_args = sizeof(args) / sizeof(JSValueRef*);

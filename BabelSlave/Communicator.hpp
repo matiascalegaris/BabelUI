@@ -27,6 +27,10 @@ namespace Babel
 		ultralight::JSValue RequestPasswordReset(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue NewPasswordRequest(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue GetCharacterDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue GetHeadDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue SelectCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue LoginCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
 		void SendErrorMessage(const ErrorMessageEvent& messageData);

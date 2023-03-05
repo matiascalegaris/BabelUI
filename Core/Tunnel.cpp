@@ -65,8 +65,8 @@ namespace Babel
         {
             const LoginCredentialsEvent& loginevt = static_cast<const LoginCredentialsEvent&>(eventData);
             LogInInfo loginInfo;
-            loginInfo.User = loginevt.strData;
-            loginInfo.Password = loginevt.strData + loginevt.UserSize;
+            loginInfo.User = loginevt.StrData;
+            loginInfo.Password = loginevt.StrData + loginevt.UserSize;
             loginInfo.UserLen = loginevt.UserSize;
             loginInfo.PasswordLen = loginevt.PasswordSize;
             loginInfo.StoreCredentials = loginevt.storeCredentials;
@@ -78,16 +78,16 @@ namespace Babel
             const NewAccountEvent& accountEvt = static_cast<const NewAccountEvent&>(eventData);
             NewAccountInfo newAccountInfo;
             int32_t offset = 0;
-            newAccountInfo.User = accountEvt.strData;
+            newAccountInfo.User = accountEvt.StrData;
             offset += accountEvt.UserSize;
             newAccountInfo.UserLen = accountEvt.UserSize;
-            newAccountInfo.Password = accountEvt.strData + offset;
+            newAccountInfo.Password = accountEvt.StrData + offset;
             offset += accountEvt.PasswordSize;
             newAccountInfo.PasswordLen = accountEvt.PasswordSize;
-            newAccountInfo.Name = accountEvt.strData + offset;
+            newAccountInfo.Name = accountEvt.StrData + offset;
             offset += accountEvt.NameSize;
             newAccountInfo.NameLen = accountEvt.NameSize;
-            newAccountInfo.Surname = accountEvt.strData + offset;
+            newAccountInfo.Surname = accountEvt.StrData + offset;
             offset += accountEvt.SurnameSize;
             newAccountInfo.SurnameLen = accountEvt.SurnameSize;
             mVBCallbacks.CreateAccount(&newAccountInfo);
@@ -161,6 +161,18 @@ namespace Babel
             mVBCallbacks.NewPasswordRequest(&strParam);
         }
         break;
+        case EventType::SelectCharacter:
+        {
+            const SelectCharacterEvent& selectEvt = static_cast<const SelectCharacterEvent&>(eventData);
+            mVBCallbacks.SelectCharacter(selectEvt.CharIndex);
+        }
+        break;
+        case EventType::LoginCharacter:
+        {
+            const SelectCharacterEvent& selectEvt = static_cast<const SelectCharacterEvent&>(eventData);
+            mVBCallbacks.LoginWithCharacter(selectEvt.CharIndex);
+        }
+        break;
         }
     }
 
@@ -185,7 +197,7 @@ namespace Babel
         eventInfo.EventType = Babel::EventType::SetLoadingMessage;
         std::vector<Babel::StringInBuffer> strInfo(1);
         strInfo[0].StartPos = message;
-        eventInfo.localize = localize;
+        eventInfo.Localize = localize;
         eventInfo.Size = sizeof(eventInfo) + Babel::PrepareDynamicStrings(strInfo);
         GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&eventInfo, sizeof(eventInfo), strInfo);
     }

@@ -57,8 +57,8 @@ void _stdcall SendKeyEvent(int16_t keyCode, bool shift, int type, bool capsState
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&keyData, keyData.Size);
 }
 
-void _stdcall RegisterCallbacks(int loginCallback, int closeClient, int createAccount, int setHost, int validateCode,
-								int resendValidationCode, int requestPasswordReset, int newPasswordRequest)
+void _stdcall RegisterCallbacks(int loginCallback, int closeClient, int createAccount, int setHost, int validateCode, int resendValidationCode,
+								int requestPasswordReset, int newPasswordRequest, int selectCharacter, int loginCharacter)
 {
 	Babel::CallbacksList callbacks;
 	callbacks.CloseClient = (Babel::TCloseClient)(closeClient);
@@ -69,18 +69,20 @@ void _stdcall RegisterCallbacks(int loginCallback, int closeClient, int createAc
 	callbacks.ResendValidationCode = (Babel::TResendValidationCode)(resendValidationCode);
 	callbacks.RequestPasswordReset = (Babel::TRequestPasswordReset)(requestPasswordReset);
 	callbacks.NewPasswordRequest = (Babel::TNewPasswordRequest)(newPasswordRequest);
+	callbacks.SelectCharacter = (Babel::TSelectCharacter)(selectCharacter);
+	callbacks.LoginWithCharacter = (Babel::TLoginCharacterIndex)(loginCharacter);
 	BabelTunnel.SetCallbacks(callbacks);
 }
 
 void _stdcall SendErrorMessage(const char* str, int messageType, int action)
 {
 	Babel::ErrorMessageEvent message;
-	message.action = action;
-	message.messageType = messageType;
-	message.size = strnlen(str, sizeof(message.strData)-1);
+	message.Action = action;
+	message.MessageType = messageType;
+	message.Size = strnlen(str, sizeof(message.StrData)-1);
 	message.Size = sizeof(Babel::ErrorMessageEvent);
-	strncpy_s(message.strData, sizeof(message.strData) - 1,str, message.size);
-	message.strData[message.size] = 0;
+	strncpy_s(message.StrData, sizeof(message.StrData) - 1,str, message.Size);
+	message.StrData[message.Size] = 0;
 	message.EventType = Babel::EventType::ErrorMessage;
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&message, message.Size);
 }

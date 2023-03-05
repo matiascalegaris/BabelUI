@@ -24,7 +24,10 @@ namespace Babel
 		RequestPasswordReset,
 		NewPasswordRequest,
 		SetLoadingMessage,
-		LoginCharList
+		LoginCharList,
+		SelectCharacter,
+		LoginCharacter,
+		CreateCharacter
 	};
 
 	struct Event
@@ -61,7 +64,7 @@ namespace Babel
 		int storeCredentials;
 		int UserSize;
 		int PasswordSize;
-		char strData[255];		
+		char StrData[255];		
 		void SetUserAndPassword(const char *user, int userSize, const char* password, int passwordSize);
 	};
 
@@ -90,7 +93,7 @@ namespace Babel
 		int PasswordSize;
 		int NameSize;
 		int SurnameSize;
-		char strData[512];
+		char StrData[512];
 
 		void SetUserAndPassword(const char* user, int userSize, const char* password, int passwordSize,
 								const char* userName, int userNameSize, const char* surname, int surnameSize);
@@ -98,15 +101,20 @@ namespace Babel
 
 	struct ErrorMessageEvent : public Event
 	{
-		int action;
-		int messageType;
-		int size;
-		char strData[512];
+		int Action;
+		int MessageType;
+		int Size;
+		char StrData[512];
 	};
 
 	struct LoadingMessage : public Event
 	{
-		bool localize;
+		bool Localize;
+	};
+
+	struct SelectCharacterEvent : public Event
+	{
+		int CharIndex;
 	};
 
 	struct StringInBuffer

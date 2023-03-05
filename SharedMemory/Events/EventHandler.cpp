@@ -25,8 +25,8 @@ namespace Babel
 	{
 		this->UserSize = userSize;
 		this->PasswordSize = passwordSize;
-		memcpy_s(strData, sizeof(strData), user, userSize);
-		memcpy_s(strData + userSize, sizeof(strData)-userSize, password, passwordSize);
+		memcpy_s(StrData, sizeof(StrData), user, userSize);
+		memcpy_s(StrData + userSize, sizeof(StrData)-userSize, password, passwordSize);
 	}
 
 	void NewAccountEvent::SetUserAndPassword(const char* user, int userSize, const char* password, int passwordSize,
@@ -37,13 +37,13 @@ namespace Babel
 		this->NameSize = userNameSize;
 		this->SurnameSize = surnameSize;
 		int32_t offset = 0;
-		memcpy_s(strData, sizeof(strData), user, userSize);
+		memcpy_s(StrData, sizeof(StrData), user, userSize);
 		offset += userSize;
-		memcpy_s(strData + offset, sizeof(strData) - offset, password, passwordSize);
+		memcpy_s(StrData + offset, sizeof(StrData) - offset, password, passwordSize);
 		offset += passwordSize;
-		memcpy_s(strData + offset, sizeof(strData) - offset, userName, userNameSize);
+		memcpy_s(StrData + offset, sizeof(StrData) - offset, userName, userNameSize);
 		offset += userNameSize;
-		memcpy_s(strData + offset, sizeof(strData) - offset, surname, passwordSize);
+		memcpy_s(StrData + offset, sizeof(StrData) - offset, surname, passwordSize);
 	}
 
 	const char* GetStringPtrInEvent(const char* memPtr, int32_t eventSize, std::vector<StringInBuffer>& result)

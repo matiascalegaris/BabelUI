@@ -50,6 +50,8 @@ namespace Babel
 	typedef void(__stdcall* TResendValidationCode)(SingleStringParam* host);
 	typedef void(__stdcall* TRequestPasswordReset)(SingleStringParam* host);
 	typedef void(__stdcall* TNewPasswordRequest)(TripleStringParam* host);
+	typedef void(__stdcall* TSelectCharacter)(int);
+	typedef void(__stdcall* TLoginCharacterIndex)(int);
 	
 
 	struct CallbacksList
@@ -62,6 +64,8 @@ namespace Babel
 		TResendValidationCode ResendValidationCode;
 		TRequestPasswordReset RequestPasswordReset;
 		TNewPasswordRequest NewPasswordRequest;
+		TSelectCharacter SelectCharacter;
+		TLoginCharacterIndex LoginWithCharacter;
 	};
 
 }

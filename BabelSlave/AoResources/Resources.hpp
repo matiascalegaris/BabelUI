@@ -38,6 +38,7 @@ namespace AO
 		~Resources();
 
 		void GetBodyInfo(CharacterRenderInfo& charInfo, int bodyIndex, int headIndex, int helmIndex, int shieldIndex, int weaponIndex);
+		void GetHeadInfo(GrhDetails& headInfo, int headIndex);
 	private:
 		std::unique_ptr<ResourceLoader> mResources;
 	};
