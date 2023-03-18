@@ -13,7 +13,7 @@ namespace Babel
 {
 
     using namespace ultralight;
-	Renderer::Renderer(int width, int height)
+	Renderer::Renderer(int width, int height, bool compressedResources)
 	{
         ///
     /// Setup our config. The config can be used to customize various
@@ -22,22 +22,7 @@ namespace Babel
     /// Our config uses 2x DPI scale and "Arial" as the default font.
     ///
         Config config;
-        config.device_scale = 1.0;
-        config.font_family_standard = "Arial";
         mLocalPath = GetWorkingPath().native();
-
-        ///
-        /// We need to tell config where our resources are so it can load our
-        /// bundled certificate chain and make HTTPS requests.
-        ///
-        config.resource_path = GetFilePath("BabelUI").u8string().c_str();
-        //config.resource_path = "D:\\Proyectos/ao20/Recursos/BabelUI/";
-
-        ///
-        /// Make sure the GPU renderer is disabled so we can render to an offscreen
-        /// pixel buffer surface.
-        ///
-        config.use_gpu_renderer = false;
 
         ///
         /// Pass our configuration to the Platform singleton so that the library
@@ -62,7 +47,7 @@ namespace Babel
         /// You could replace this with your own to provide your own file loader
         /// (useful if you need to bundle encrypted / compressed HTML assets).
         ///
-        mFileSystem = std::make_unique<BabelFileSystemWin>(GetWorkingPath().c_str());
+        mFileSystem = std::make_unique<BabelFileSystemWin>(GetWorkingPath().c_str(), compressedResources);
         Platform::instance().set_file_system(mFileSystem.get());
         //Platform::instance().set_file_system(GetPlatformFileSystem(GetWorkingPath().u8string().c_str()));
 
@@ -81,19 +66,24 @@ namespace Babel
         /// You should set up the Platform singleton before creating this.
         ///
         mRender = ultralight::Renderer::Create();
-
+        ViewConfig view_config;
+        view_config.initial_device_scale = 1.0;
+        view_config.font_family_standard = "Arial";
+        view_config.is_accelerated = false;
+        view_config.is_transparent = true;
         ///
         /// Create our View.
         ///
         /// Views are sized containers for loading and displaying web content.
         ///
-        mView = mRender->CreateView(width, height, true, nullptr);
+        mView = mRender->CreateView(width, height, view_config, nullptr);
 
         ///
         /// Register our MyApp instance as a load listener so we can handle the
         /// View's OnFinishLoading event below.
         ///
         mView->set_load_listener(this);
+        mView->set_view_listener(this);
 
         mView->LoadURL("file:///BabelUI/index.html");
         //mView->LoadHTML(htmlString());
@@ -116,16 +106,25 @@ namespace Babel
     }
     void Renderer::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const ultralight::String& url)
     {
-        Ref<JSContext> context = caller->LockJSContext();
-        SetJSContext(context.get());
+        RefPtr<JSContext> context = caller->LockJSContext();
+        SetJSContext(context->ctx());
         JSObject global = JSGlobalObject();
         mCommunicator->RegisterJSApi(global);
     }
 
-    void Renderer::LogMessage(ultralight::LogLevel log_level, const ultralight::String16& message)
+    void Renderer::LogMessage(ultralight::LogLevel log_level, const ultralight::String& message)
     {
-        ultralight::String u8Str(message);
-        Babel::Logger::Get()->log(u8Str.utf8().data());
+        Babel::Logger::Get()->log(message.utf8().data());
+    }
+    ultralight::RefPtr<ultralight::View> Renderer::OnCreateInspectorView(ultralight::View* caller, bool is_local, const ultralight::String& inspected_url)
+    {
+        ViewConfig view_config;
+        view_config.initial_device_scale = 1.0;
+        view_config.font_family_standard = "Arial";
+        view_config.is_accelerated = false;
+        view_config.is_transparent = true;
+        mInspectorView = mRender->CreateView(mInspectorWidth, mInspectorHeight, view_config, nullptr);
+        return mInspectorView;
     }
     void Renderer::RenderFrame()
     {
@@ -172,14 +171,15 @@ namespace Babel
     {
         if (!mInspectorView)
         {
-            mInspectorView = mView->inspector();
+            mInspectorWidth = width;
+            mInspectorHeight = height;
+            mView->CreateLocalInspectorView();
         }
-        mInspectorView->Resize(width, height);
     }
 
     void Renderer::SendKeyEvent(ultralight::KeyEvent& evt, bool isInspectorEvent)
     {
-        if (isInspectorEvent)
+        if (isInspectorEvent && mInspectorView.get() != nullptr)
         {
             mInspectorView->FireKeyEvent(evt);
         }

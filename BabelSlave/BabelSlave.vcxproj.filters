@@ -61,6 +61,15 @@
     <ClCompile Include="AoResources\Resources.cpp">
       <Filter>Source Files\AoResources</Filter>
     </ClCompile>
+    <ClCompile Include="AoResources\Compresor.cpp">
+      <Filter>Source Files\AoResources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\md5.cpp">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\StringUtils.cpp">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -101,6 +110,15 @@
     </ClInclude>
     <ClInclude Include="AoResources\Resources.hpp">
       <Filter>Source Files\AoResources</Filter>
+    </ClInclude>
+    <ClInclude Include="AoResources\Compresor.hpp">
+      <Filter>Source Files\AoResources</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\md5.h">
+      <Filter>Source Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\StringUtils.hpp">
+      <Filter>Source Files\Utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

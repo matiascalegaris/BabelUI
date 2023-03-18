@@ -69,7 +69,7 @@ extern "C" {
 #define INI_ALLOW_INLINE_COMMENTS 1
 #endif
 #ifndef INI_INLINE_COMMENT_PREFIXES
-#define INI_INLINE_COMMENT_PREFIXES ";"
+#define INI_INLINE_COMMENT_PREFIXES "'"
 #endif
 
              /* Nonzero to use stack, zero to use heap (malloc/free). */
@@ -113,16 +113,16 @@ https://github.com/benhoyt/inih
 #define MAX_NAME 50
 
 /* Strip whitespace chars off end of given string, in place. Return s. */
-inline static char* rstrip(char* s)
+inline static char* rstrip(char* s, int len = 0)
 {
-    char* p = s + strlen(s);
+    char* p = s + (len == 0 ? strlen(s) : len);
     while (p > s && isspace((unsigned char)(*--p)))
         *p = '\0';
     return s;
 }
 
 /* Return pointer to first non-whitespace char in given string. */
-inline static char* lskip(const char* s)
+inline static char* lskip(const char* s, int len = 0)
 {
     while (*s && isspace((unsigned char)(*s)))
         s++;
@@ -132,12 +132,12 @@ inline static char* lskip(const char* s)
 /* Return pointer to first char (of chars) or inline comment in given string,
    or pointer to null at end of string if neither found. Inline comment must
    be prefixed by a whitespace character to register as a comment. */
-inline static char* find_chars_or_comment(const char* s, const char* chars)
+inline static char* find_chars_or_comment(const char* s, const char* chars, const char* limit = nullptr)
 {
 #if INI_ALLOW_INLINE_COMMENTS
     int was_space = 0;
     while (*s && (!chars || !strchr(chars, *s)) &&
-        !(was_space && strchr(INI_INLINE_COMMENT_PREFIXES, *s))) {
+        !(was_space && strchr(INI_INLINE_COMMENT_PREFIXES, *s)) && (limit == nullptr || s < limit)) {
         was_space = isspace((unsigned char)(*s));
         s++;
     }
@@ -269,6 +269,119 @@ inline int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler
     return error;
 }
 
+inline char* GetLineEnd(char* str)
+{
+    while (*str != '\r' && *str != '\n' && *str != '\0') str++;
+    return str;
+}
+inline char* GetNextLine(char* str, char* limit)
+{
+    while ((*str == '\n' || *str == '\0' || *str == '\r') && str < limit) str++;
+    return str;
+}
+
+inline int ini_parse_buffer(char* buffer, int size, ini_handler handler, void* user)
+{
+    /* Uses a fair bit of stack (use heap instead if you need to) */
+    char section[MAX_SECTION] = "";
+    char prev_name[MAX_NAME] = "";
+
+    char* start;
+    char* end;
+    char* name;
+    char* value;
+    int lineno = 0;
+    int error = 0;
+    char* currentPtr = buffer;
+    char* endPtr;
+    char* bufferEnd = buffer + size;
+
+    /* Scan through stream line by line */
+    while (currentPtr < bufferEnd) {
+        endPtr = GetLineEnd(currentPtr);
+        lineno++;
+        auto len = endPtr - currentPtr;
+        start = currentPtr;
+#if INI_ALLOW_BOM
+        if (lineno == 1 && (unsigned char)start[0] == 0xEF &&
+            (unsigned char)start[1] == 0xBB &&
+            (unsigned char)start[2] == 0xBF) {
+            start += 3;
+        }
+#endif
+        start = lskip(rstrip(start, len));
+
+        if (*start == ';' || *start == '#' || *start == '\'') {
+            /* Per Python configparser, allow both ; and # comments at the
+               start of a line */
+        }
+#if INI_ALLOW_MULTILINE
+        else if (*prev_name && *start && start > currentPtr) {
+
+#if INI_ALLOW_INLINE_COMMENTS
+            end = find_chars_or_comment(start, NULL, endPtr);
+            if (*end)
+                *end = '\0';
+            rstrip(start, len);
+#endif
+
+            /* Non-blank line with leading whitespace, treat as continuation
+               of previous name's value (as per Python configparser). */
+            if (!handler(user, section, prev_name, start) && !error)
+                error = lineno;
+        }
+#endif
+        else if (*start == '[') {
+            /* A "[section]" line */
+            end = find_chars_or_comment(start + 1, "]", endPtr);
+            if (*end == ']') {
+                *end = '\0';
+                strncpy0(section, start + 1, sizeof(section));
+                *prev_name = '\0';
+            }
+            else if (!error) {
+                /* No ']' found on section line */
+                error = lineno;
+            }
+        }
+        else if (*start) {
+            /* Not a comment, must be a name[=:]value pair */
+            end = find_chars_or_comment(start, "=:", endPtr);
+            if (*end == '=' || *end == ':') {
+                *end = '\0';
+                name = rstrip(start, len);
+                value = lskip(end + 1);
+#if INI_ALLOW_INLINE_COMMENTS
+                end = find_chars_or_comment(value, NULL, endPtr);
+                if (*end)
+                    *end = '\0';
+#endif
+                rstrip(value, len);
+
+                /* Valid name[=:]value pair found, call handler */
+                strncpy0(prev_name, name, sizeof(prev_name));
+                if (!handler(user, section, name, value) && !error)
+                    error = lineno;
+            }
+            else if (!error) {
+                /* No '=' or ':' found on name[=:]value line */
+                error = lineno;
+            }
+        }
+        currentPtr = GetNextLine(endPtr, bufferEnd);
+#if INI_STOP_ON_FIRST_ERROR
+        if (error)
+            break;
+#endif
+    }
+
+#if !INI_USE_STACK
+    free(line);
+#endif
+
+    return error;
+}
+
 /* See documentation in header file. */
 inline int ini_parse_file(FILE* file, ini_handler handler, void* user)
 {
@@ -314,6 +427,8 @@ public:
     // Construct INIReader and parse given file. See ini.h for more info
     // about the parsing.
     explicit INIReader(FILE* file);
+
+    explicit INIReader(char* data, int size);
 
     // Return the result of ini_parse(), i.e., 0 on success, line number of
     // first error on parse error, or -1 on file open error.
@@ -372,6 +487,11 @@ inline INIReader::INIReader(const std::string& filename)
 inline INIReader::INIReader(FILE* file)
 {
     _error = ini_parse_file(file, ValueHandler, this);
+}
+
+inline INIReader::INIReader(char* data, int size)
+{
+    _error = ini_parse_buffer(data, size, ValueHandler, this);
 }
 
 inline int INIReader::ParseError() const

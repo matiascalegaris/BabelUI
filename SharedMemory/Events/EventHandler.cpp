@@ -49,7 +49,7 @@ namespace Babel
 	const char* GetStringPtrInEvent(const char* memPtr, int32_t eventSize, std::vector<StringInBuffer>& result)
 	{
 		memPtr += eventSize;
-		for (int i = 0; i < result.size(); i++)
+		for (size_t i = 0; i < result.size(); i++)
 		{
 			result[i].Size = *((int32_t*)(memPtr));
 			memPtr += sizeof(int32_t);
@@ -62,7 +62,7 @@ namespace Babel
 	int32_t PrepareDynamicStrings(std::vector<StringInBuffer>& result, size_t maxSize)
 	{
 		int32_t totalSize = 0;
-		for (int i = 0; i < result.size(); i++)
+		for (size_t i = 0; i < result.size(); i++)
 		{
 			result[i].Size = strnlen(result[i].StartPos, maxSize);
 			totalSize += result[i].Size + sizeof(int32_t);

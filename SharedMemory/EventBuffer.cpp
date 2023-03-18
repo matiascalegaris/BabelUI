@@ -49,14 +49,14 @@ namespace Babel
 	{
 		AddEvent(eventData, eventSize, [&extraData](void* dest) {
 			char* writePos = (char*)dest;
-			for (int i = 0; i < extraData.size(); i++)
+			for (size_t i = 0; i < extraData.size(); i++)
 			{
 				CopyMemory(writePos, &extraData[i].Size, sizeof(int32_t));
 				writePos += sizeof(int32_t);
 				CopyMemory(writePos, (void*)extraData[i].StartPos, extraData[i].Size);
 				writePos += extraData[i].Size;
 			}
-			int32_t writedData = writePos - dest;
+			int32_t writedData = writePos - (char*)dest;
 			return writedData;
 		});
 	}

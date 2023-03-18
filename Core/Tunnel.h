@@ -5,6 +5,7 @@
 #include "SharedMemory/Events/EventHandler.hpp"
 #include <memory>
 #include "CallbackDefines.hpp"
+#include "CommonDefines.hpp"
 
 namespace Babel
 {
@@ -12,7 +13,7 @@ namespace Babel
 	{
 	public:
 		~Tunnel();
-		bool Initialize(int width, int height);
+		bool Initialize(const Settings& settings);
 		void Terminate();
 
 		bool InitializeDebugWindows(int width, int height);
@@ -28,6 +29,7 @@ namespace Babel
 		void SetActiveScreen(const char* name);
 		void SetLoadingMessage(const char* message, bool localize);
 	private:
+		Settings mSettings;
 		ProcessHandler mProcess;
 		std::unique_ptr<SharedMemory> mSharedMemory;
 		std::unique_ptr<SyncData> mSyncData;

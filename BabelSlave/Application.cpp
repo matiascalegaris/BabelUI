@@ -11,10 +11,11 @@ namespace Babel
 	{
 	}
 
-	void Application::Initialize(int width, int height)
+	void Application::Initialize(const AppSettings& settings)
 	{
-		mRenderer = std::make_unique<Renderer>(width, height);
-		mSyncData = std::make_unique<SyncData>(width, height, 4, 3);
+		mSettings = settings;
+		mRenderer = std::make_unique<Renderer>(mSettings.Width, mSettings.Height, mSettings.CompressedResources);
+		mSyncData = std::make_unique<SyncData>(mSettings.Width, mSettings.Height, 4, 3);
 		mSharedMemory = std::make_unique<SharedMemory>(mSyncData->GetTotalSize());
 		mSharedMemory->Connect("Local\\TestMemShare2");
 		mSyncData->GetSharedFileViews(*mSharedMemory);
@@ -69,18 +70,22 @@ namespace Babel
 		if (mActiveDebugView)
 		{
 			bitmap_surface = mRenderer->GetInspectorSurface();
-			auto bmp = bitmap_surface->bitmap();
-			void* pixels = bmp->LockPixels();
-			uint32_t width = bmp->width();
-			uint32_t height = bmp->height();
-			uint32_t stride = bmp->row_bytes();
-			mDebugSyncData->WriteCurrentImage(pixels, width * height * 4);
-			bmp->UnlockPixels();
-			bitmap_surface->ClearDirtyBounds();
+			if (bitmap_surface != nullptr)
+			{
+				auto bmp = bitmap_surface->bitmap();
+				void* pixels = bmp->LockPixels();
+				uint32_t width = bmp->width();
+				uint32_t height = bmp->height();
+				uint32_t stride = bmp->row_bytes();
+				mDebugSyncData->WriteCurrentImage(pixels, width * height * 4);
+				bmp->UnlockPixels();
+				bitmap_surface->ClearDirtyBounds();
+			}			
 		}
 	}
 	void Application::EnableDebugWindow(int width, int height)
 	{
+		if (!mSettings.EnableDebug) return;
 		mRenderer->EnableInspector(width, height);
 		mDebugSyncData = std::make_unique<SyncData>(width, height, 4, 3);
 		mDebugSharedMemory = std::make_unique<SharedMemory>(mDebugSyncData->GetTotalSize());

@@ -29,7 +29,7 @@
 
 
 
-std::string Encode(const std::string source, const std::string password)
+std::string Encode(const std::string& source, const std::string& password)
 {
     if (password.empty())
     {
@@ -39,14 +39,22 @@ std::string Encode(const std::string source, const std::string password)
     for (int i = 0; i < source.length(); i++)
     {
         uint8_t value = source[i];
-        uint8_t enc = password[i % password.length()];
+        uint8_t enc;
+        if (i < password.length())
+        {
+            enc = password[i];
+        }
+        else
+        {
+            enc = password[(i + 1) % password.length()];
+        }
         value += enc + 64;
         ret += value;
     }
     return ret;
 }
 
-std::string Decode(const std::string source, const std::string password)
+std::string Decode(const std::string& source, const std::string& password)
 {
     std::string ret;
 
@@ -57,7 +65,16 @@ std::string Decode(const std::string source, const std::string password)
     for (int i = 0; i < source.length(); i++)
     {
         uint8_t value = source[i];
-        uint8_t enc = password[i % password.length()];
+        uint8_t enc;
+        if (i < password.length())
+        {
+            enc = password[i];
+        }
+        else
+        {
+            enc = password[(i+1) % password.length()];
+        }
+        
         value = value - enc - 64;
         ret += value;
     }

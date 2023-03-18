@@ -2,8 +2,21 @@
 #include <Ultralight/platform/FileSystem.h>
 #include <Windows.h>
 #include <memory>
+#include <map>
+#include <vector>
 
+namespace AO
+{
+	class Compressor;
+}
 namespace Babel {
+	
+	struct CompressedData
+	{
+		int Id;
+		std::vector<uint8_t> data;
+	};
+	
 	class BabelFileSystemWin : public ultralight::FileSystem {
 	public:
 		// Construct FileSystemWin instance.
@@ -11,25 +24,25 @@ namespace Babel {
 		// @note You can pass a valid baseDir here which will be prepended to
 		//       all file paths. This is useful for making all File URLs relative
 		//       to your HTML asset directory.
-		BabelFileSystemWin(LPCWSTR baseDir);
+		BabelFileSystemWin(LPCWSTR baseDir, bool compressedResources);
 
 		virtual ~BabelFileSystemWin();
 
-		virtual bool FileExists(const ultralight::String16& path) override;
+		virtual bool FileExists(const ultralight::String& file_path) override;
 
-		virtual bool GetFileSize(ultralight::FileHandle handle, int64_t& result) override;
+		virtual ultralight::String GetFileMimeType(const ultralight::String& file_path) override;
 
-		virtual bool GetFileMimeType(const ultralight::String16& path, ultralight::String16& result) override;
+		virtual ultralight::String GetFileCharset(const ultralight::String& file_path) override;
 
-		virtual ultralight::FileHandle OpenFile(const ultralight::String16& path, bool open_for_writing) override;
-
-		virtual void CloseFile(ultralight::FileHandle& handle) override;
-
-		virtual int64_t ReadFromFile(ultralight::FileHandle handle, char* data, int64_t length) override;
-
-	protected:
-		std::unique_ptr<WCHAR[]> GetRelative(const ultralight::String16& path);
-
+		virtual ultralight::RefPtr<ultralight::Buffer> OpenFile(const ultralight::String& file_path) override;
+		void ReleaseDecompressedId(int id);
+		
+	private:
+		std::unique_ptr<WCHAR[]> GetRelative(const ultralight::String& path);
 		std::unique_ptr<WCHAR[]> baseDir_;
+		bool mCompressedResources = {0};
+		std::unique_ptr<AO::Compressor> mCompressedGraphics;
+		int mNextIndex = { 0 };
+		std::map<int, std::unique_ptr<CompressedData>> mOpenFileMap;
 	};
 }

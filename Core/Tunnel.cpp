@@ -15,16 +15,18 @@ namespace Babel
         mSyncData->GetApiMessenger().AddEvent((uint8_t*)&event, event.Size);
     }
 
-    bool Tunnel::Initialize(int width, int height)
+    bool Tunnel::Initialize(const Settings& settings)
     {
+        mSettings = settings;
         LOGGER->init("Logs/BabelAPI.log", "BabelAPI");
-        mSyncData = std::make_unique<SyncData>(width, height, 4, 3);
+        mSyncData = std::make_unique<SyncData>(mSettings.Width, mSettings.Height, 4, 3);
         mSharedMemory = std::make_unique<SharedMemory>(mSyncData->GetTotalSize());
         if (!mSharedMemory->Create("Local\\TestMemShare2")) return false;
         mSyncData->GetSharedFileViews(*mSharedMemory);
         mEventHandler = std::make_unique<EventHandler>(*this, mSyncData->GetSlaveMessenger());
         std::string commandLine = "BabelSlave.exe ";
-        commandLine += std::to_string(width) + " " + std::to_string(height);
+        commandLine += std::to_string(mSettings.Width) + " " + std::to_string(mSettings.Height) 
+                       + " " + std::to_string(mSettings.Compmpressed) + " " + std::to_string(mSettings.EnableDebug);
         return mProcess.StartProcess(commandLine.c_str());
     }
 
@@ -171,6 +173,26 @@ namespace Babel
         {
             const SelectCharacterEvent& selectEvt = static_cast<const SelectCharacterEvent&>(eventData);
             mVBCallbacks.LoginWithCharacter(selectEvt.CharIndex);
+        }
+        break;
+        case EventType::ReturnToLogin:
+            mVBCallbacks.ReturnToLogin();
+        break;
+        case EventType::CreateCharacter:
+        {
+            const NewCharacterEvent& createChar = static_cast<const NewCharacterEvent&>(eventData);
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(1);
+            const char* output = GetStringPtrInEvent((char*)(&createChar), sizeof(NewCharacterEvent), strInfo);
+            NewCharacterInfo createCharacter;
+            createCharacter.City = createChar.HomeCity;
+            createCharacter.Class = createChar.Class;
+            createCharacter.Gender = createChar.Gender;
+            createCharacter.Head = createChar.Head;
+            createCharacter.Race = createChar.Race;
+            createCharacter.NameStr = strInfo[0].StartPos;
+            createCharacter.NameLen = strInfo[0].Size;
+            mVBCallbacks.CreateCharacter(&createCharacter);
         }
         break;
         }

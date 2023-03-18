@@ -81,7 +81,7 @@ namespace Babel
 	Communicator::Communicator(EventBuffer& eventBuffer, Renderer& renderer, Application& application) 
 		: mEventBuffer(eventBuffer), mRenderer(renderer), mApplication(application)
 	{
-		mResources = std::make_unique<AO::Resources>();
+		mResources = std::make_unique<AO::Resources>(application.GetSettings().CompressedResources);
 	}
 
 	void Communicator::RegisterJSApi(ultralight::JSObject& global)
@@ -100,6 +100,10 @@ namespace Babel
 		Api["SelectCharacter"] = BindJSCallbackWithRetval(&Communicator::SelectCharacter);
 		Api["LoginCharacter"] = BindJSCallbackWithRetval(&Communicator::LoginCharacter);
 		Api["GetHeadDrawInfo"] = BindJSCallbackWithRetval(&Communicator::GetHeadDrawInfo);
+		Api["ExitCharacterSelection"] = BindJSCallback(&Communicator::ExitCharacterSelection);
+		Api["CreateCharacter"] = BindJSCallbackWithRetval(&Communicator::CreateCharacter);
+		Api["GetStoredLocale"] = BindJSCallbackWithRetval(&Communicator::GetStoredLocale);
+		Api["EnableDebug"] = BindJSCallbackWithRetval(&Communicator::EnableDebug);
 		global["BabelUI"] = JSValue(Api);
 	}
 	void Communicator::HandleEvent(const Event& eventData)
@@ -229,8 +233,8 @@ namespace Babel
 		auto password = Reader.Get("CUENTA", "Password", "");
 		password = Decode(password, "9256");
 
-		Ref<JSContext> context = mRenderer.GetMainView()->LockJSContext();
-		JSContextRef ctx = context.get();
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
 		JSRetainPtr<JSStringRef> user =
 			adopt(JSStringCreateWithUTF8CString(account.c_str()));
 		JSRetainPtr<JSStringRef> pwd =
@@ -361,8 +365,8 @@ namespace Babel
 		AO::CharacterRenderInfo charData;
 		mResources->GetBodyInfo(charData, body, head, helm, shield, weapon);
 
-		Ref<JSContext> context = mRenderer.GetMainView()->LockJSContext();
-		JSContextRef ctx = context.get();
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
 		JSObjectRef character = JSObjectMake(ctx, nullptr, nullptr);
 		JSObjectRef bodyObj = JSObjectMake(ctx, nullptr, nullptr);
 		JSObjectRef bodyGrh = JSObjectMake(ctx, nullptr, nullptr);
@@ -396,8 +400,8 @@ namespace Babel
 		AO::GrhDetails headInfo;
 
 		mResources->GetHeadInfo(headInfo, args[0]);
-		Ref<JSContext> context = mRenderer.GetMainView()->LockJSContext();
-		JSContextRef ctx = context.get();
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
 		JSObjectRef headGrh = JSObjectMake(ctx, nullptr, nullptr);
 		SetGrhJsObject(ctx, headGrh, headInfo);
 		return headGrh;
@@ -432,6 +436,68 @@ namespace Babel
 		mEventBuffer.AddEvent((uint8_t*)&selectCharEvent, sizeof(selectCharEvent));
 		return ultralight::JSValue();
 	}
+
+	ultralight::JSValue Communicator::CreateCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 6)
+		{
+			return "invalid params";
+		}
+		ultralight::String jName = args[0];
+		NewCharacterEvent charInfo;
+		charInfo.Gender = args[1];
+		charInfo.Race = args[2];
+		charInfo.Head = args[3];
+		charInfo.Class = args[4];
+		charInfo.HomeCity = args[5];
+		auto name = utf8_to_ascii(jName.utf8().data());
+		charInfo.EventType = Babel::EventType::CreateCharacter;
+		std::vector<StringInBuffer> strInfo(1);
+		strInfo[0].StartPos = name.c_str();
+		charInfo.Size = sizeof(charInfo) + PrepareDynamicStrings(strInfo);
+		mEventBuffer.AddEvent((uint8_t*)&charInfo, sizeof(charInfo), strInfo);
+		return ultralight::JSValue();
+	}
+
+	ultralight::JSValue Communicator::GetStoredLocale(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 0)
+		{
+			return "invalid params";
+		}
+		auto path = GetFilePath("OUTPUT/Configuracion.ini");
+		INIReader Reader(path.u8string());
+		auto activeLanguange = Reader.GetInteger("OPCIONES", "Localization", 1);
+
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> lang;
+		if (activeLanguange == 2)
+		{
+			return "en";
+		}
+		else
+		{
+			return "es";
+		}
+	}
+
+	ultralight::JSValue Communicator::EnableDebug(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		return mApplication.GetSettings().EnableDebug;
+	}
+
+	void Communicator::ExitCharacterSelection(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 0)
+		{
+			return;
+		}
+		Event evt;
+		evt.EventType = EventType::ReturnToLogin;
+		evt.Size = sizeof(Event);
+		mEventBuffer.AddEvent((uint8_t*)&evt, evt.Size);
+	}
 	
 	void Communicator::HandlekeyData(const KeyEvent& keyData)
 	{
@@ -462,8 +528,8 @@ namespace Babel
 	}
 	void Communicator::SendErrorMessage(const ErrorMessageEvent& messageData)
 	{
-		Ref<JSContext> context = mRenderer.GetMainView()->LockJSContext();
-		JSContextRef ctx = context.get();
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
 		JSRetainPtr<JSStringRef> str = adopt(
 			JSStringCreateWithUTF8CString("APicallbacks.ErrorMessage"));
 
@@ -500,8 +566,8 @@ namespace Babel
 	}
 	void Communicator::SetActiveScreen(const std::string& name)
 	{
-		Ref<JSContext> context = mRenderer.GetMainView()->LockJSContext();
-		JSContextRef ctx = context.get();
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
 		JSRetainPtr<JSStringRef> str = adopt(
 			JSStringCreateWithUTF8CString("APicallbacks.SetActiveDialog"));
 
@@ -538,8 +604,8 @@ namespace Babel
 	}
 	void Communicator::SetLoadingMessage(const std::string& message, bool localize)
 	{
-		Ref<JSContext> context = mRenderer.GetMainView()->LockJSContext();
-		JSContextRef ctx = context.get();
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
 		JSRetainPtr<JSStringRef> str = adopt(
 			JSStringCreateWithUTF8CString("APicallbacks.SetLoadingMessage"));
 
@@ -574,8 +640,8 @@ namespace Babel
 	}
 	void Communicator::HandleLoginCharList(const CharacterListEvent& messageData)
 	{
-		Ref<JSContext> context = mRenderer.GetMainView()->LockJSContext();
-		JSContextRef ctx = context.get();
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
 		JSRetainPtr<JSStringRef> str = adopt(
 			JSStringCreateWithUTF8CString("APicallbacks.SetCharacter"));
 		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);

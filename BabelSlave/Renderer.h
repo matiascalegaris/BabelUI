@@ -9,10 +9,11 @@ namespace Babel
 {
 	class Communicator;
 	class Renderer : public ultralight::LoadListener,
+		public ultralight::ViewListener,
 		public ultralight::Logger
 	{
 	public:
-		Renderer(int width, int height);
+		Renderer(int width, int height, bool compressedResources);
 		virtual ~Renderer();
 
 		virtual void OnFinishLoading(ultralight::View* caller,
@@ -28,8 +29,9 @@ namespace Babel
 			uint64_t frame_id,
 			bool is_main_frame,
 			const ultralight::String& url) override;
-		virtual void LogMessage(ultralight::LogLevel log_level, const ultralight::String16& message) override;
-
+		virtual void LogMessage(ultralight::LogLevel log_level, const ultralight::String& message) override;
+		virtual ultralight::RefPtr<ultralight::View> OnCreateInspectorView(ultralight::View* caller, bool is_local,
+			const ultralight::String& inspected_url) override;
 		void RenderFrame();
 		void PerformUpdate();
 		ultralight::BitmapSurface* GetSurface();
@@ -48,5 +50,7 @@ namespace Babel
 		std::unique_ptr<BabelFileSystemWin> mFileSystem;
 		std::wstring mLocalPath;
 		bool mLoadComplete = false;
+		int mInspectorWidth;
+		int mInspectorHeight;
 	};
 }

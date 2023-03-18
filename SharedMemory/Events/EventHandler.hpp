@@ -27,7 +27,8 @@ namespace Babel
 		LoginCharList,
 		SelectCharacter,
 		LoginCharacter,
-		CreateCharacter
+		CreateCharacter,
+		ReturnToLogin
 	};
 
 	struct Event
@@ -103,7 +104,7 @@ namespace Babel
 	{
 		int Action;
 		int MessageType;
-		int Size;
+		int StrSize;
 		char StrData[512];
 	};
 
@@ -115,6 +116,15 @@ namespace Babel
 	struct SelectCharacterEvent : public Event
 	{
 		int CharIndex;
+	};
+
+	struct NewCharacterEvent : public Event
+	{
+		int Head;
+		int Gender;
+		int Race;
+		int Class;
+		int HomeCity;
 	};
 
 	struct StringInBuffer

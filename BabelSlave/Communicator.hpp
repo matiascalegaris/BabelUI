@@ -30,7 +30,11 @@ namespace Babel
 		ultralight::JSValue GetHeadDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue SelectCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue LoginCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
-
+		ultralight::JSValue CreateCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue GetStoredLocale(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue EnableDebug(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void ExitCharacterSelection(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
 		void SendErrorMessage(const ErrorMessageEvent& messageData);

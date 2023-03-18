@@ -2,16 +2,20 @@
 #include <filesystem>
 #include "Core/Logger.hpp"
 #include "AoResources/Resources.hpp"
+
 int main(int argc, char* argv[])
 {
-    if (argc < 3) return -1;
+    if (argc < 4) return -1;
     try
     {
+        Babel::AppSettings settings;
         Babel::LOGGER->init("Logs/BabelUI.log", "BabelUI");
-        int width = std::atoi(argv[1]);
-        int height = std::atoi(argv[2]);;
+        settings.Width = std::atoi(argv[1]);
+        settings.Height = std::atoi(argv[2]);
+        settings.CompressedResources = std::atoi(argv[3]) > 0;
+        settings.EnableDebug = std::atoi(argv[4]) > 0;
         Babel::Application app;
-        app.Initialize(width, height);
+        app.Initialize(settings);
         app.Run();
     }
     catch (std::exception& err)

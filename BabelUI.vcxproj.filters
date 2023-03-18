@@ -54,6 +54,9 @@
     <ClInclude Include="CallbackDefines.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="CommonDefines.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

@@ -5,11 +5,11 @@
 ///
 /// @author
 ///
-/// This file is a part of Ultralight, a fast, lightweight, HTML UI engine
+/// This file is a part of Ultralight, a next-generation HTML renderer.
 ///
 /// Website: <http://ultralig.ht>
 ///
-/// Copyright (C) 2019 Ultralight, Inc. All rights reserved.
+/// Copyright (C) 2021 Ultralight, Inc. All rights reserved.
 ///
 #pragma once
 #include "Defines.h"
@@ -107,7 +107,7 @@ public:
   /// @note  Certain Config options may be overridden during App creation,
   ///        most commonly Config::face_winding and Config::device_scale_hint.
   ///
-  static Ref<App> Create(Settings settings = Settings(), Config config = Config());
+  static RefPtr<App> Create(Settings settings = Settings(), Config config = Config());
 
   ///
   /// Get the App singleton.
@@ -118,21 +118,6 @@ public:
   /// Get the settings this App was created with.
   ///
   virtual const Settings& settings() const = 0;
-
-  ///
-  /// Set the main window. You must set this before calling Run.
-  ///
-  /// @param  window  The window to use for all rendering.
-  ///
-  /// @note  We currently only support one Window per App, this will change
-  ///        later once we add support for multiple driver instances.
-  ///
-  virtual void set_window(Ref<Window> window) = 0;
-
-  ///
-  /// Get the main window.
-  ///
-  virtual RefPtr<Window> window() = 0;
 
   ///
   /// Set an AppListener to receive callbacks for app-related events.
@@ -161,12 +146,10 @@ public:
   ///
   /// Get the underlying Renderer instance.
   ///
-  virtual Ref<Renderer> renderer() = 0;
+  virtual RefPtr<Renderer> renderer() = 0;
 
   ///
   /// Run the main loop.
-  ///
-  /// @note  Make sure to call set_window before calling this.
   ///
   virtual void Run() = 0;
 

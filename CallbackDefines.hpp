@@ -42,16 +42,27 @@ namespace Babel
 		int ThirdLen;
 	};
 
-	typedef void(__stdcall* TLogInCallback)(LogInInfo* loginInfo);
-	typedef void(__stdcall* TCreateAccountCallback)(NewAccountInfo* accountInfo);
+	struct NewCharacterInfo {
+		const char* NameStr;
+		int NameLen;
+		int Gender;
+		int Race;
+		int Class;
+		int Head;
+		int City;
+	};
+
+	typedef void(__stdcall* TLogInCallback)(LogInInfo*);
+	typedef void(__stdcall* TCreateAccountCallback)(NewAccountInfo*);
 	typedef void(__stdcall* TCloseClient)(void);
-	typedef void(__stdcall* TSetHost)(SingleStringParam* host);
-	typedef void(__stdcall* TValidateAccount)(DoubleStringParam* host);
-	typedef void(__stdcall* TResendValidationCode)(SingleStringParam* host);
-	typedef void(__stdcall* TRequestPasswordReset)(SingleStringParam* host);
-	typedef void(__stdcall* TNewPasswordRequest)(TripleStringParam* host);
+	typedef void(__stdcall* TSetHost)(SingleStringParam*);
+	typedef void(__stdcall* TValidateAccount)(DoubleStringParam* );
+	typedef void(__stdcall* TResendValidationCode)(SingleStringParam*);
+	typedef void(__stdcall* TRequestPasswordReset)(SingleStringParam*);
+	typedef void(__stdcall* TNewPasswordRequest)(TripleStringParam*);
 	typedef void(__stdcall* TSelectCharacter)(int);
 	typedef void(__stdcall* TLoginCharacterIndex)(int);
+	typedef void(__stdcall* TCreateCharacter)(NewCharacterInfo*);
 	
 
 	struct CallbacksList
@@ -66,6 +77,8 @@ namespace Babel
 		TNewPasswordRequest NewPasswordRequest;
 		TSelectCharacter SelectCharacter;
 		TLoginCharacterIndex LoginWithCharacter;
+		TCloseClient ReturnToLogin;
+		TCreateCharacter CreateCharacter;
 	};
 
 }

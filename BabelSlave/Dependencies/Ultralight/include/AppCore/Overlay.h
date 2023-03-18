@@ -5,11 +5,11 @@
 ///
 /// @author
 ///
-/// This file is a part of Ultralight, a fast, lightweight, HTML UI engine
+/// This file is a part of Ultralight, a next-generation HTML renderer.
 ///
 /// Website: <http://ultralig.ht>
 ///
-/// Copyright (C) 2019 Ultralight, Inc. All rights reserved.
+/// Copyright (C) 2021 Ultralight, Inc. All rights reserved.
 ///
 #pragma once
 #include "Window.h"
@@ -28,8 +28,7 @@ public:
   ///
   /// Create a new Overlay.
   ///
-  /// @param  window  The window to create the Overlay in. (we currently only
-  ///                 support one window per application)
+  /// @param  window  The window to create the Overlay in.
   ///
   /// @param  width   The width in pixels.
   ///
@@ -41,14 +40,13 @@ public:
   /// @param  y       The y-position (offset from the top of the Window), in
   ///                 pixels.
   ///
-  static Ref<Overlay> Create(Ref<Window> window, uint32_t width,
+  static RefPtr<Overlay> Create(RefPtr<Window> window, uint32_t width,
                              uint32_t height, int x, int y);
 
   ///
   /// Create a new Overlay, wrapping an existing View.
   ///
-  /// @param  window  The window to create the Overlay in. (we currently only
-  ///                 support one window per application)
+  /// @param  window  The window to create the Overlay in.
   ///
   /// @param  view    The View to wrap (will use its width and height).
   ///
@@ -58,12 +56,12 @@ public:
   /// @param  y       The y-position (offset from the top of the Window), in
   ///                 pixels.
   ///
-  static Ref<Overlay> Create(Ref<Window> window, Ref<View> view, int x, int y);
+  static RefPtr<Overlay> Create(RefPtr<Window> window, RefPtr<View> view, int x, int y);
 
   ///
   /// Get the underlying View.
   ///
-  virtual ultralight::Ref<ultralight::View> view() = 0;
+  virtual ultralight::RefPtr<ultralight::View> view() = 0;
 
   ///
   /// Get the width (in pixels).
@@ -134,7 +132,7 @@ public:
 
 protected:
   virtual ~Overlay();
-  virtual void Draw() = 0;
+  virtual void Paint() = 0;
   friend class OverlayManager;
 };
 

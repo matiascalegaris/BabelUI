@@ -34,7 +34,7 @@ namespace AO
 	class Resources
 	{
 	public:
-		Resources();
+		Resources(bool compresed);
 		~Resources();
 
 		void GetBodyInfo(CharacterRenderInfo& charInfo, int bodyIndex, int headIndex, int helmIndex, int shieldIndex, int weaponIndex);

@@ -6,6 +6,7 @@
 #include "Utils/IniReader.h"
 #include <thread>
 #include "Resources.hpp"
+#include "Compresor.hpp"
 
 using namespace std;
 namespace AO
@@ -32,9 +33,6 @@ namespace AO
     }
 #pragma pack(push, 1)
 
-#pragma pack(push, 1)
-
-#pragma pack(pop)
     struct GrhData {
         int16_t sX;
         int16_t sY;
@@ -103,7 +101,8 @@ namespace AO
 
     class ResourceLoader {
     public:
-        void StartLoading();
+        ~ResourceLoader() { if (mLoadingThread.joinable()) mLoadingThread.join(); }
+        void StartLoading(bool compressed);
 
         void GetBodyInfo(CharacterRenderInfo& charInfo, int bodyIndex, int headIndex, int helmIndex, int shieldIndex, int weaponIndex);
         void GetHeadInfo(GrhDetails& headInfo, int headIndex);
@@ -118,6 +117,8 @@ namespace AO
         void LoadBodies();
         void LoadWeaponAnimations();
         void LoadShields();
+        bool GetFile(const char* fileName, std::vector<uint8_t>& fileData);
+        void UnloadCompressedFiles();
     private:
         std::vector<GrhData> mGrhData;
         std::vector<MoldeCuerpo> mBodyStructData;
@@ -127,7 +128,9 @@ namespace AO
         std::vector<BodyData> mBodyData;
         std::vector<WeaponAnimData> mWeaponAnimData;
         std::vector<ShieldAnimData> mShieldAnimData;
+        std::map<std::string, std::unique_ptr<Compressor>> mCompressedFiles;
         E_Heading mBodyHeading[4];
+        bool mCompressed;
 
         std::thread mLoadingThread;
     };
@@ -197,57 +200,76 @@ namespace AO
 
     void ResourceLoader::LoadGrhIni()
     {
-        fstream f;
         long grh = 0, Frame = 0;
         char SeparadorClave = '=';
         char SeparadorGrh = '-';
-        std::string CurrentLine;
-        std::vector<std::string> Fields;
-
+        std::vector<uint8_t> fileData;
         // Abrimos el archivo. No uso FileManager porque obliga a cargar todo el archivo en memoria
         // y es demasiado grande. En cambio leo linea por linea y procesamos de a una.
-        f.open(GetFilePath(GrhIniPath).u8string(), ios_base::in);
-        // Leemos el total de Grhs
-        while (std::getline(f, CurrentLine))
+        if (!GetFile(GrhIniPath, fileData))
         {
-            Fields = splitString(CurrentLine, SeparadorClave);
+            return;
+        }
+        char* lineStart = reinterpret_cast<char*>(fileData.data());
+        char* lineEnd;
+        char* fileEnd = lineStart + fileData.size();
+        // Leemos el total de Grhs
+        while (lineStart < fileEnd)
+        {
+            lineEnd = GetLineEnd(lineStart);
+            char* value = strchr(lineStart, SeparadorClave);
+            *lineEnd = 0;
 
             // Buscamos la clave "NumGrh"
-            if (Fields[0] == "NumGrh")
+            if ( std::string(lineStart, value - lineStart) == "NumGrh")
             {
+                lineEnd = GetLineEnd(lineStart);
+                value++;
                 // Asignamos el tamano al array de Grhs
-                auto MaxGrh = std::stoi(Fields[1]);
+                auto MaxGrh = stoi(value);
 
                 mGrhData.resize(MaxGrh);
+                lineStart = GetNextLine(lineEnd, fileEnd);
                 break;
             }
+            lineStart = GetNextLine(lineEnd, fileEnd);
         }
         // Chequeamos si pudimos leer la cantidad de Grhs
         if (mGrhData.size() <= 0) return;
         // Buscamos la posicion del primer Grh
-        while (std::getline(f, CurrentLine))
+        while (lineStart < fileEnd)
         {
-            if (to_uppercase(CurrentLine) == "[GRAPHICS]") // Buscamos el nodo "[Graphics]"
+            lineEnd = GetLineEnd(lineStart);
+            *lineEnd = 0;
+            if (to_uppercase(lineStart) == "[GRAPHICS]") // Buscamos el nodo "[Graphics]"
             {
+                lineStart = GetNextLine(lineEnd, fileEnd);
                 break;
             }
+            lineStart = GetNextLine(lineEnd, fileEnd);
         }
 
         // Recorremos todos los Grhs
-        while (std::getline(f, CurrentLine))
+        while (lineStart < fileEnd)
         {
+            lineEnd = GetLineEnd(lineStart);
+            *lineEnd = 0;
             Frame = 0;
-            // Ignoramos lineas vacias
-            if (CurrentLine == "") continue;
-            // Divimos por el "="
-            Fields = splitString(CurrentLine, SeparadorClave);
+            char* value = strchr(lineStart, SeparadorClave);
+            // there is no value separator, skip the line
+            if (value == nullptr) continue;
+            *value = 0;
+            value++;
+            //skip grh part
+            lineStart += 3;
             // Leemos el numero de Grh (el numero a la derecha de la palabra "Grh")
-            grh = std::stol(Fields[0].substr(3)) - 1;
+            grh = stol(lineStart) - 1;
             // Leemos los campos de datos del Grh
-            Fields = splitString(Fields[1], SeparadorGrh);
+            char* valueEnd = strchr(value, SeparadorGrh);
+            *valueEnd = 0;
             auto& gd = mGrhData[grh];
             // Primer lugar: cantidad de frames.
-            gd.NumFrames = std::stoi(Fields[0]);
+            gd.NumFrames = stoi(value);
             gd.Frames.resize(gd.NumFrames);
             // Tiene mas de un frame entonces es una animacion
             if (gd.NumFrames > 1)
@@ -255,12 +277,15 @@ namespace AO
                 // Segundo lugar: Leemos los numeros de grh de la animacion
                 for (Frame = 1; Frame <= gd.NumFrames; Frame++)
                 {
-                    gd.Frames[Frame - 1] = std::stoi(Fields[Frame]) - 1;
+                    value = ++valueEnd;
+                    valueEnd = strchr(value, SeparadorGrh);
+                    *valueEnd = 0;
+                    gd.Frames[Frame - 1] = stoi(value) - 1;
                     if (gd.Frames[Frame - 1] <= 0 || gd.Frames[Frame - 1] > mGrhData.size()) return;
                 }
-
+                value = ++valueEnd;
                 // Tercer lugar: leemos la velocidad de la animacion
-                gd.speed = std::stoi(Fields[Frame]);
+                gd.speed = stoi(value);
                 if (gd.speed <= 0) return;
 
                 // Por ultimo, copiamos las dimensiones del primer frame
@@ -272,26 +297,35 @@ namespace AO
             {
                 // Si es un solo frame lo asignamos a si mismo
                 gd.Frames[0] = grh;
-
+                value = ++valueEnd;
+                valueEnd = strchr(value, SeparadorGrh);
+                *valueEnd = 0;
                 // Segundo lugar: NumeroDelGrafico.bmp, pero sin el ".bmp"
-                gd.FileNum = std::stoi(Fields[1]);
-
+                gd.FileNum = stoi(value);
+                value = ++valueEnd;
+                valueEnd = strchr(value, SeparadorGrh);
+                *valueEnd = 0;
                 // Tercer Lugar: La coordenada X del grafico
-                gd.sX = std::stoi(Fields[2]);
-
+                gd.sX = stoi(value);
+                value = ++valueEnd;
+                valueEnd = strchr(value, SeparadorGrh);
+                *valueEnd = 0;
                 // Cuarto Lugar: La coordenada Y del grafico
-                gd.sY = std::stoi(Fields[3]);
-
+                gd.sY = stoi(value);
+                value = ++valueEnd;
+                valueEnd = strchr(value, SeparadorGrh);
+                *valueEnd = 0;
                 // Quinto lugar: El ancho del grafico
-                gd.pixelWidth = std::stoi(Fields[4]);
-
+                gd.pixelWidth = stoi(value);
+                value = ++valueEnd;
                 // Sexto lugar: La altura del grafico
-                gd.pixelHeight = std::stoi(Fields[5]);
+                gd.pixelHeight = std::stoi(value);
 
                 //Calculamos el ancho y alto en tiles
                 gd.TileWidth = gd.pixelWidth / TilePixelWidth;
                 gd.TileHeight = gd.pixelHeight / TilePixelHeight;
             }
+            lineStart = GetNextLine(lineEnd, fileEnd);
         }
     }
 
@@ -303,19 +337,21 @@ namespace AO
         Header MiCabecera;
         // cabecera
         char* buf = reinterpret_cast<char*>(&MiCabecera);
-        fstream f;
-        f.open(GetFilePath(HeadDataPath).u8string(), ios_base::in | ios_base::binary);
-        f.read(buf, sizeof(Header));
-
-        // num de cabezas
-        f.read(reinterpret_cast<char*>(&Numheads), sizeof(int16_t));
-
+        int currentPos = 0;
+        std::vector<uint8_t> fileData;
+        if (!GetFile(HeadDataPath, fileData))
+        {
+            return;
+        }
+        memcpy_s(buf, sizeof(MiCabecera), fileData.data(), sizeof(MiCabecera));
+        currentPos += sizeof(MiCabecera);
+        memcpy_s(&Numheads, sizeof(int16_t), fileData.data() + currentPos, sizeof(int16_t));
+        currentPos += sizeof(int16_t);
         // Resize array
         mHeadData.resize(Numheads);
         mHeadList.resize(Numheads);
-        f.read(reinterpret_cast<char*>(mHeadList.data()), sizeof(HeadIndex) * Numheads);
+        memcpy_s(mHeadList.data(), sizeof(HeadIndex) * Numheads, fileData.data() + currentPos, fileData.size() - currentPos);
 
-        bool complete = f.eof();
         for (i = 0; i < Numheads; i++) {
             for (int j = 0; j < 4; j++) mHeadList[i].Head[j] = mHeadList[i].Head[j] - 1;
             if (mHeadList[i].Head[0] >= 0)
@@ -334,8 +370,12 @@ namespace AO
         mBodyHeading[1] = E_Heading_NORTH;
         mBodyHeading[2] = E_Heading::E_Heading_WEST;
         mBodyHeading[3] = E_Heading::E_Heading_EAST;
-
-        INIReader Loader(GetFilePath(BodyStructPath).u8string());
+        std::vector<uint8_t> fileData;
+        if (!GetFile(BodyStructPath, fileData))
+        {
+            return;
+        }
+        INIReader Loader(reinterpret_cast<char*>(fileData.data()), fileData.size());
 
         int NumMoldes = Loader.GetInteger("INIT", "Moldes", 0);
         mBodyStructData.resize(NumMoldes);
@@ -363,18 +403,21 @@ namespace AO
         int16_t HelmCount = 0;
         std::vector<HeadIndex> headData;
         Header MyHeader;
-
-        std::ifstream file(GetFilePath(HelmDataPath).u8string(), std::ios::in | std::ios::binary);
-        // header
-        file.read(reinterpret_cast<char*>(&MyHeader), sizeof(MyHeader));
-
-        // head count
-        file.read(reinterpret_cast<char*>(&HelmCount), sizeof(HelmCount));
-
+        std::vector<uint8_t> fileData;
+        int currentPos = 0;
+        if (!GetFile(HelmDataPath, fileData))
+        {
+            return;
+        }
+        memcpy_s(&MyHeader, sizeof(Header), fileData.data(), sizeof(Header));
+        currentPos += sizeof(MyHeader);
+        memcpy_s(&HelmCount, sizeof(int16_t), fileData.data() + currentPos, sizeof(int16_t));
+        currentPos += sizeof(int16_t);
+       
         // Resize array
         headData.resize(HelmCount);
         mHelmAnimData.resize(HelmCount);
-        file.read(reinterpret_cast<char*>(headData.data()), sizeof(HeadIndex) * HelmCount);
+        memcpy_s(headData.data(), sizeof(HeadIndex) * HelmCount, fileData.data() + currentPos, fileData.size() - currentPos);
         for (i = 0; i < HelmCount; i++) {
             for (int j = 0; j < 4; j++) headData[i].Head[j] = headData[i].Head[j] - 1;
             if (headData[i].Head[0] >= 0)
@@ -389,12 +432,16 @@ namespace AO
                 for (int j = 0; j < 4; j++) mHelmAnimData[i].Head[j].GrhIndex = headData[i].Head[j];
             }
         }
-        file.close();
     }
 
     void ResourceLoader::LoadBodies()
     {
-        INIReader Loader(GetFilePath(BodyDataPath).u8string());
+        std::vector<uint8_t> fileData;
+        if (!GetFile(BodyDataPath, fileData))
+        {
+            return;
+        }
+        INIReader Loader(reinterpret_cast<char*>(fileData.data()), fileData.size());
         int i, LastGrh, AnimStart, x, y, FileNum;
         int j, Heading, Std;
         int k, NumCuerpos;
@@ -479,7 +526,12 @@ namespace AO
     }
 
     void ResourceLoader::LoadWeaponAnimations() {
-        INIReader Loader(GetFilePath(WeaponDataPath).u8string());
+        std::vector<uint8_t> fileData;
+        if (!GetFile(WeaponDataPath, fileData))
+        {
+            return;
+        }
+        INIReader Loader(reinterpret_cast<char*>(fileData.data()), fileData.size());
         int i = 0;
         int k = 0;
         std::string ArmaKey = "";
@@ -544,7 +596,12 @@ namespace AO
 
     void ResourceLoader::LoadShields()
     {
-        INIReader Loader(GetFilePath(ShieldDataPath).u8string());
+        std::vector<uint8_t> fileData;
+        if (!GetFile(ShieldDataPath, fileData))
+        {
+            return;
+        }
+        INIReader Loader(reinterpret_cast<char*>(fileData.data()), fileData.size());
         int i = 0;
         int k = 0;
         std::string ElentKey = "";
@@ -607,8 +664,52 @@ namespace AO
         }
     }
 
-    void ResourceLoader::StartLoading()
+    std::string GetCompressedPath(const std::string& fileName)
     {
+        return std::string("OUTPUT/") + fileName;
+    }
+
+    bool ResourceLoader::GetFile(const char* fileName, std::vector<uint8_t>& fileData)
+    {
+        if (mCompressed)
+        {
+            auto paths = splitString(fileName, '/');
+            auto it = mCompressedFiles.find(paths[0]);
+            if (it == mCompressedFiles.end())
+            {
+                mCompressedFiles.insert(std::make_pair(paths[0], std::make_unique<Compressor>()));
+                it = mCompressedFiles.find(paths[0]);
+                auto filePath = GetCompressedPath(paths[0]);
+                it->second->Open( GetFilePath(filePath.c_str()).u8string().c_str(),
+                                "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
+            }
+            it->second->GetFileData(paths[1].c_str(), fileData);
+            return true;
+        }
+        else
+        {
+            auto path = GetFilePath(fileName).u8string();
+            std::ifstream file(path, std::ios::in | std::ios::binary);
+            if (!file.is_open())
+            {
+                return false;
+            }
+            file.seekg(0, std::ios::end);
+            std::streampos file_size = file.tellg();
+            file.seekg(0, std::ios::beg);
+            fileData.resize(file_size);
+            file.read(reinterpret_cast<char*>(fileData.data()), file_size);
+            return true;
+        }
+    }
+
+    void ResourceLoader::UnloadCompressedFiles()
+    {
+    }
+
+    void ResourceLoader::StartLoading(bool compressed)
+    {
+        mCompressed = compressed;
         mLoadingThread = std::thread([this]() {
             LoadGrhIni();
             LoadBodyStruct();
@@ -677,10 +778,10 @@ namespace AO
     }
 
 
-    Resources::Resources()
+    Resources::Resources(bool compressed)
     {
         mResources = std::make_unique<ResourceLoader>();
-        mResources->StartLoading();
+        mResources->StartLoading(compressed);
     }
 
     Resources::~Resources()
@@ -694,7 +795,7 @@ namespace AO
 
     void Resources::GetHeadInfo(GrhDetails& headInfo, int headIndex)
     {
-
+        mResources->GetHeadInfo(headInfo, headIndex);
     }
 
 }

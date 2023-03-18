@@ -19,10 +19,11 @@ namespace {
 	}
 }
 
-bool _stdcall InitializeBabel(int width, int height)
+bool _stdcall InitializeBabel(void* settings)
 {
+	Babel::Settings* settingsPtr = static_cast<Babel::Settings*>(settings);
 	try {
-		return BabelTunnel.Initialize(width, height);
+		return BabelTunnel.Initialize(*settingsPtr);
 	}
 	catch (const std::exception& )
 	{
@@ -58,7 +59,7 @@ void _stdcall SendKeyEvent(int16_t keyCode, bool shift, int type, bool capsState
 }
 
 void _stdcall RegisterCallbacks(int loginCallback, int closeClient, int createAccount, int setHost, int validateCode, int resendValidationCode,
-								int requestPasswordReset, int newPasswordRequest, int selectCharacter, int loginCharacter)
+								int requestPasswordReset, int newPasswordRequest, int selectCharacter, int loginCharacter, int returnToLogin, int createCharacter)
 {
 	Babel::CallbacksList callbacks;
 	callbacks.CloseClient = (Babel::TCloseClient)(closeClient);
@@ -71,6 +72,8 @@ void _stdcall RegisterCallbacks(int loginCallback, int closeClient, int createAc
 	callbacks.NewPasswordRequest = (Babel::TNewPasswordRequest)(newPasswordRequest);
 	callbacks.SelectCharacter = (Babel::TSelectCharacter)(selectCharacter);
 	callbacks.LoginWithCharacter = (Babel::TLoginCharacterIndex)(loginCharacter);
+	callbacks.ReturnToLogin = (Babel::TCloseClient)(returnToLogin);
+	callbacks.CreateCharacter = (Babel::TCreateCharacter)(createCharacter);
 	BabelTunnel.SetCallbacks(callbacks);
 }
 
@@ -79,10 +82,10 @@ void _stdcall SendErrorMessage(const char* str, int messageType, int action)
 	Babel::ErrorMessageEvent message;
 	message.Action = action;
 	message.MessageType = messageType;
-	message.Size = strnlen(str, sizeof(message.StrData)-1);
+	message.StrSize = strnlen(str, sizeof(message.StrData)-1);
+	strncpy_s(message.StrData, sizeof(message.StrData) - 1,str, message.StrSize);
 	message.Size = sizeof(Babel::ErrorMessageEvent);
-	strncpy_s(message.StrData, sizeof(message.StrData) - 1,str, message.Size);
-	message.StrData[message.Size] = 0;
+	message.StrData[message.StrSize] = 0;
 	message.EventType = Babel::EventType::ErrorMessage;
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&message, message.Size);
 }
