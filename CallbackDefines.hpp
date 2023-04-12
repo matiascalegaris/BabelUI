@@ -63,6 +63,7 @@ namespace Babel
 	typedef void(__stdcall* TSelectCharacter)(int);
 	typedef void(__stdcall* TLoginCharacterIndex)(int);
 	typedef void(__stdcall* TCreateCharacter)(NewCharacterInfo*);
+	typedef void(__stdcall* TIntStringF)(int, SingleStringParam*);
 	
 
 	struct CallbacksList
@@ -79,6 +80,9 @@ namespace Babel
 		TLoginCharacterIndex LoginWithCharacter;
 		TCloseClient ReturnToLogin;
 		TCreateCharacter CreateCharacter;
+		TSelectCharacter RequestDeleteCharacter;
+		TIntStringF ConfirmDeleteCharacter;
+		TIntStringF TransferCharacter;
 	};
 
 }

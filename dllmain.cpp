@@ -1,4 +1,4 @@
-#include "Definitions.h"
+#include "dllmain.h"
 #include <Windows.h>
 #include "Core/Tunnel.h"
 #include "SharedMemory/Events/EventHandler.hpp"
@@ -19,7 +19,7 @@ namespace {
 	}
 }
 
-bool _stdcall InitializeBabel(void* settings)
+bool InitializeBabel(void* settings)
 {
 	Babel::Settings* settingsPtr = static_cast<Babel::Settings*>(settings);
 	try {
@@ -31,7 +31,7 @@ bool _stdcall InitializeBabel(void* settings)
 	}
 }
 
-bool _stdcall GetImageBuffer(char* buffer, int size)
+bool GetImageBuffer(char* buffer, int size)
 {
 	BabelTunnel.CheckIncommingMessages();
 	return BabelTunnel.GetSyncData().GetLastBuffer(buffer, size);
@@ -59,7 +59,8 @@ void _stdcall SendKeyEvent(int16_t keyCode, bool shift, int type, bool capsState
 }
 
 void _stdcall RegisterCallbacks(int loginCallback, int closeClient, int createAccount, int setHost, int validateCode, int resendValidationCode,
-								int requestPasswordReset, int newPasswordRequest, int selectCharacter, int loginCharacter, int returnToLogin, int createCharacter)
+								int requestPasswordReset, int newPasswordRequest, int selectCharacter, int loginCharacter, int returnToLogin, int createCharacter,
+								int requestDeleteCharater, int confirmDeleteCharacter, int transferCharacter)
 {
 	Babel::CallbacksList callbacks;
 	callbacks.CloseClient = (Babel::TCloseClient)(closeClient);
@@ -74,6 +75,9 @@ void _stdcall RegisterCallbacks(int loginCallback, int closeClient, int createAc
 	callbacks.LoginWithCharacter = (Babel::TLoginCharacterIndex)(loginCharacter);
 	callbacks.ReturnToLogin = (Babel::TCloseClient)(returnToLogin);
 	callbacks.CreateCharacter = (Babel::TCreateCharacter)(createCharacter);
+	callbacks.RequestDeleteCharacter = (Babel::TSelectCharacter)(requestDeleteCharater);
+	callbacks.ConfirmDeleteCharacter = (Babel::TIntStringF)(confirmDeleteCharacter);
+	callbacks.TransferCharacter = (Babel::TIntStringF)(transferCharacter);
 	BabelTunnel.SetCallbacks(callbacks);
 }
 
@@ -121,11 +125,28 @@ void _stdcall LoginAddCharacter(const char* name, int head, int body, int helm, 
 	LoginCharList.CharacterList[index].Index = index;
 }
 
+void _stdcall RemoveCharacterFromList(int index)
+{
+	Babel::SelectCharacterEvent eventData;
+	eventData.CharIndex = index - 1;
+	eventData.EventType = Babel::EventType::RemoveCharacterFromList;
+	eventData.Size = sizeof(eventData);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&eventData, eventData.Size);
+}
+
 void _stdcall LoginSendCharacters()
 {
 	LoginCharList.EventType = Babel::EventType::LoginCharList;
 	LoginCharList.Size = sizeof(LoginCharList);
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&LoginCharList, LoginCharList.Size);
+}
+
+void _stdcall RequestDeleteCode()
+{
+	Babel::Event eventData;
+	eventData.EventType = Babel::EventType::RequestDeleteCode;
+	eventData.Size = sizeof(eventData);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&eventData, eventData.Size);
 }
 
 uint32_t _stdcall NextPowerOf2(uint32_t value)

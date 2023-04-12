@@ -1,4 +1,4 @@
-#include "Communicator.hpp"
+#include "JSBridge.hpp"
 #include <locale>
 #include <codecvt>
 #include <Ultralight/Ultralight.h>
@@ -78,35 +78,38 @@ namespace Babel
 		}
 	}
 	using namespace ultralight;
-	Communicator::Communicator(EventBuffer& eventBuffer, Renderer& renderer, Application& application) 
+	JSBridge::JSBridge(EventBuffer& eventBuffer, Renderer& renderer, Application& application) 
 		: mEventBuffer(eventBuffer), mRenderer(renderer), mApplication(application)
 	{
 		mResources = std::make_unique<AO::Resources>(application.GetSettings().CompressedResources);
 	}
 
-	void Communicator::RegisterJSApi(ultralight::JSObject& global)
+	void JSBridge::RegisterJSApi(ultralight::JSObject& global)
 	{
 		JSObject Api;
-		Api["Login"] = BindJSCallbackWithRetval(&Communicator::LogIn);
-		Api["CloseClient"] = BindJSCallback(&Communicator::CloseClient);
-		Api["GetCredentials"] = BindJSCallbackWithRetval(&Communicator::GetStoredCredentials);
-		Api["CreateAccount"] = BindJSCallbackWithRetval(&Communicator::CreateAccount);
-		Api["ResendValidationCode"] = BindJSCallbackWithRetval(&Communicator::ResendValidationCode);
-		Api["ValidateCode"] = BindJSCallbackWithRetval(&Communicator::ValidateCode);
-		Api["SetHost"] = BindJSCallbackWithRetval(&Communicator::SetHost);
-		Api["RequestPasswordReset"] = BindJSCallbackWithRetval(&Communicator::RequestPasswordReset);
-		Api["NewPasswordRequest"] = BindJSCallbackWithRetval(&Communicator::NewPasswordRequest);
-		Api["GetCharacterDrawInfo"] = BindJSCallbackWithRetval(&Communicator::GetCharacterDrawInfo);
-		Api["SelectCharacter"] = BindJSCallbackWithRetval(&Communicator::SelectCharacter);
-		Api["LoginCharacter"] = BindJSCallbackWithRetval(&Communicator::LoginCharacter);
-		Api["GetHeadDrawInfo"] = BindJSCallbackWithRetval(&Communicator::GetHeadDrawInfo);
-		Api["ExitCharacterSelection"] = BindJSCallback(&Communicator::ExitCharacterSelection);
-		Api["CreateCharacter"] = BindJSCallbackWithRetval(&Communicator::CreateCharacter);
-		Api["GetStoredLocale"] = BindJSCallbackWithRetval(&Communicator::GetStoredLocale);
-		Api["EnableDebug"] = BindJSCallbackWithRetval(&Communicator::EnableDebug);
+		Api["Login"] = BindJSCallbackWithRetval(&JSBridge::LogIn);
+		Api["CloseClient"] = BindJSCallback(&JSBridge::CloseClient);
+		Api["GetCredentials"] = BindJSCallbackWithRetval(&JSBridge::GetStoredCredentials);
+		Api["CreateAccount"] = BindJSCallbackWithRetval(&JSBridge::CreateAccount);
+		Api["ResendValidationCode"] = BindJSCallbackWithRetval(&JSBridge::ResendValidationCode);
+		Api["ValidateCode"] = BindJSCallbackWithRetval(&JSBridge::ValidateCode);
+		Api["SetHost"] = BindJSCallbackWithRetval(&JSBridge::SetHost);
+		Api["RequestPasswordReset"] = BindJSCallbackWithRetval(&JSBridge::RequestPasswordReset);
+		Api["NewPasswordRequest"] = BindJSCallbackWithRetval(&JSBridge::NewPasswordRequest);
+		Api["GetCharacterDrawInfo"] = BindJSCallbackWithRetval(&JSBridge::GetCharacterDrawInfo);
+		Api["SelectCharacter"] = BindJSCallbackWithRetval(&JSBridge::SelectCharacter);
+		Api["LoginCharacter"] = BindJSCallbackWithRetval(&JSBridge::LoginCharacter);
+		Api["GetHeadDrawInfo"] = BindJSCallbackWithRetval(&JSBridge::GetHeadDrawInfo);
+		Api["ExitCharacterSelection"] = BindJSCallback(&JSBridge::ExitCharacterSelection);
+		Api["CreateCharacter"] = BindJSCallbackWithRetval(&JSBridge::CreateCharacter);
+		Api["GetStoredLocale"] = BindJSCallbackWithRetval(&JSBridge::GetStoredLocale);
+		Api["EnableDebug"] = BindJSCallbackWithRetval(&JSBridge::EnableDebug);
+		Api["RequestDeleteCharacter"] = BindJSCallbackWithRetval(&JSBridge::RequestDeleteCharacter);
+		Api["ConfirmDeleteCharacter"] = BindJSCallbackWithRetval(&JSBridge::ConfirmDeleteCharacter);
+		Api["RequestCharacterTransfer"] = BindJSCallbackWithRetval(&JSBridge::RequestCharacterTransfer);
 		global["BabelUI"] = JSValue(Api);
 	}
-	void Communicator::HandleEvent(const Event& eventData)
+	void JSBridge::HandleEvent(const Event& eventData)
 	{
 		switch (eventData.EventType)
 		{
@@ -170,12 +173,23 @@ namespace Babel
 				HandleLoginCharList(charListEvent);
 			}
 			break;
+			case EventType::RequestDeleteCode:
+			{
+				RequestDeleteCode();
+			}
+			break;
+			case EventType::RemoveCharacterFromList:
+			{
+				const SelectCharacterEvent& charEvent = static_cast<const SelectCharacterEvent&>(eventData);
+				DeleteCharacterFromList(charEvent.CharIndex);
+			}
+			break;
 			default:
 				break;
 		}
 	}
 
-	ultralight::JSValue Communicator::LogIn(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::LogIn(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 3)
 		{
@@ -195,7 +209,7 @@ namespace Babel
 		mEventBuffer.AddEvent((uint8_t*)&loginEvent, loginEvent.Size);
 		return JSValue(true);
 	}
-	ultralight::JSValue Communicator::CreateAccount(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::CreateAccount(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 4)
 		{
@@ -218,14 +232,14 @@ namespace Babel
 		mEventBuffer.AddEvent((uint8_t*)&newAccountEvent, newAccountEvent.Size);
 		return JSValue(true);
 	}
-	void Communicator::CloseClient(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	void JSBridge::CloseClient(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		Event closeClient;
 		closeClient.EventType = EventType::CloseClient;
 		closeClient.Size = sizeof(Event);
 		mEventBuffer.AddEvent((uint8_t*)&closeClient, closeClient.Size);
 	}
-	ultralight::JSValue Communicator::GetStoredCredentials(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::GetStoredCredentials(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		auto path = GetFilePath("OUTPUT/Cuenta.ini");
 		INIReader Reader(path.u8string());
@@ -250,7 +264,7 @@ namespace Babel
 		JSObjectSetProperty(ctx, ret, pwdParam.get(), jpwd, 0, nullptr);
 		return ret;
 	}
-	ultralight::JSValue Communicator::ResendValidationCode(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::ResendValidationCode(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 1)
 		{
@@ -268,7 +282,7 @@ namespace Babel
 		return JSValue(true);
 	}
 
-	ultralight::JSValue Communicator::ValidateCode(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::ValidateCode(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 2)
 		{
@@ -290,7 +304,7 @@ namespace Babel
 		return JSValue(true);
 	}
 
-	ultralight::JSValue Communicator::SetHost(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::SetHost(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 1)
 		{
@@ -307,7 +321,7 @@ namespace Babel
 		return JSValue(true);
 	}
 
-	ultralight::JSValue Communicator::RequestPasswordReset(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::RequestPasswordReset(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 1)
 		{
@@ -325,7 +339,7 @@ namespace Babel
 		return JSValue(true);
 	}
 
-	ultralight::JSValue Communicator::NewPasswordRequest(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::NewPasswordRequest(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 3)
 		{
@@ -350,7 +364,7 @@ namespace Babel
 		return JSValue(true);
 	}
 
-	ultralight::JSValue Communicator::GetCharacterDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::GetCharacterDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 5)
 		{
@@ -390,7 +404,7 @@ namespace Babel
 		return character;
 	}
 
-	ultralight::JSValue Communicator::GetHeadDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::GetHeadDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 1)
 		{
@@ -407,7 +421,7 @@ namespace Babel
 		return headGrh;
 	}
 
-	ultralight::JSValue Communicator::SelectCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::SelectCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 1)
 		{
@@ -422,7 +436,7 @@ namespace Babel
 		return ultralight::JSValue();
 	}
 
-	ultralight::JSValue Communicator::LoginCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::LoginCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 1)
 		{
@@ -437,7 +451,7 @@ namespace Babel
 		return ultralight::JSValue();
 	}
 
-	ultralight::JSValue Communicator::CreateCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::CreateCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 6)
 		{
@@ -459,7 +473,7 @@ namespace Babel
 		return ultralight::JSValue();
 	}
 
-	ultralight::JSValue Communicator::GetStoredLocale(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::GetStoredLocale(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 0)
 		{
@@ -482,12 +496,12 @@ namespace Babel
 		}
 	}
 
-	ultralight::JSValue Communicator::EnableDebug(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	ultralight::JSValue JSBridge::EnableDebug(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		return mApplication.GetSettings().EnableDebug;
 	}
 
-	void Communicator::ExitCharacterSelection(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	void JSBridge::ExitCharacterSelection(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 0)
 		{
@@ -498,8 +512,63 @@ namespace Babel
 		evt.Size = sizeof(Event);
 		mEventBuffer.AddEvent((uint8_t*)&evt, evt.Size);
 	}
+
+	ultralight::JSValue JSBridge::RequestDeleteCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return "invalid params";
+		}
+
+		SelectCharacterEvent selectCharEvent;
+		selectCharEvent.CharIndex = args[0];
+		selectCharEvent.EventType = EventType::RequestDeleteCharacter;
+		selectCharEvent.Size = sizeof(SelectCharacterEvent);
+		mEventBuffer.AddEvent((uint8_t*)&selectCharEvent, sizeof(selectCharEvent));
+		return ultralight::JSValue();
+	}
+
+	ultralight::JSValue JSBridge::ConfirmDeleteCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return "invalid params";
+		}
+
+		ultralight::String jcode = args[1];
+
+		std::string code = utf8_to_ascii(jcode.utf8().data());
+		SelectCharacterEvent confirmDelete;
+		confirmDelete.CharIndex = args[0];
+		confirmDelete.EventType = EventType::ConfirmDeleteCharacter;
+		std::vector<StringInBuffer> strInfo(1);
+		strInfo[0].StartPos = code.c_str();
+		confirmDelete.Size = sizeof(confirmDelete) + PrepareDynamicStrings(strInfo);
+		mEventBuffer.AddEvent((uint8_t*)&confirmDelete, sizeof(confirmDelete), strInfo);
+		return ultralight::JSValue();
+	}
+
+	ultralight::JSValue JSBridge::RequestCharacterTransfer(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return "invalid params";
+		}
+
+		ultralight::String jemail = args[1];
+
+		std::string email = utf8_to_ascii(jemail.utf8().data());
+		SelectCharacterEvent transferChar;
+		transferChar.CharIndex = args[0];
+		transferChar.EventType = EventType::RequestTransferCharacter;
+		std::vector<StringInBuffer> strInfo(1);
+		strInfo[0].StartPos = email.c_str();
+		transferChar.Size = sizeof(transferChar) + PrepareDynamicStrings(strInfo);
+		mEventBuffer.AddEvent((uint8_t*)&transferChar, sizeof(transferChar), strInfo);
+		return ultralight::JSValue();
+	}
 	
-	void Communicator::HandlekeyData(const KeyEvent& keyData)
+	void JSBridge::HandlekeyData(const KeyEvent& keyData)
 	{
 		ultralight::KeyEvent evt;
 		evt.type = static_cast<ultralight::KeyEvent::Type>(keyData.Type);
@@ -526,7 +595,7 @@ namespace Babel
 			break;
 		}
 	}
-	void Communicator::SendErrorMessage(const ErrorMessageEvent& messageData)
+	void JSBridge::SendErrorMessage(const ErrorMessageEvent& messageData)
 	{
 		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
 		JSContextRef ctx = context->ctx();
@@ -564,7 +633,7 @@ namespace Babel
 			}
 		}
 	}
-	void Communicator::SetActiveScreen(const std::string& name)
+	void JSBridge::SetActiveScreen(const std::string& name)
 	{
 		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
 		JSContextRef ctx = context->ctx();
@@ -602,7 +671,7 @@ namespace Babel
 			}
 		}
 	}
-	void Communicator::SetLoadingMessage(const std::string& message, bool localize)
+	void JSBridge::SetLoadingMessage(const std::string& message, bool localize)
 	{
 		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
 		JSContextRef ctx = context->ctx();
@@ -626,7 +695,7 @@ namespace Babel
 											JSValueMakeBoolean(ctx, localize)};
 
 				// Count the number of arguments in the array.
-				size_t num_args = 1;
+				size_t num_args = 2;
 
 				// Create a place to store an exception, if any
 				JSValueRef exception = 0;
@@ -638,7 +707,7 @@ namespace Babel
 			}
 		}
 	}
-	void Communicator::HandleLoginCharList(const CharacterListEvent& messageData)
+	void JSBridge::HandleLoginCharList(const CharacterListEvent& messageData)
 	{
 		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
 		JSContextRef ctx = context->ctx();
@@ -675,6 +744,47 @@ namespace Babel
 						num_args, args,
 						&exception);
 				}
+			}
+		}
+	}
+	void JSBridge::DeleteCharacterFromList(int characterIndex)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.DeleteCharacterFromList"));
+
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+			if (funcObj && JSObjectIsFunction(ctx, funcObj)) 
+			{
+				const JSValueRef args[] = { JSValueMakeNumber(ctx, characterIndex) };
+				size_t num_args = 1;
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+					num_args, args,
+					&exception);
+			}
+		}
+	}
+
+	void JSBridge::RequestDeleteCode()
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.RequestDeleteCode"));
+
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
+				size_t num_args = 0;
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0, num_args, nullptr, &exception);
 			}
 		}
 	}

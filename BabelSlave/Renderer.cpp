@@ -4,7 +4,7 @@
 #include <filesystem>
 #include "Core/Logger.hpp"
 #include "SharedMemory/Events/EventHandler.hpp"
-#include "Communicator.hpp"
+#include "JSBridge.hpp"
 #include "Utils/FileUtils.h"
 
 const char* htmlString();
@@ -191,57 +191,4 @@ namespace Babel
             }
         }
     }
-}
-
-const char* htmlString() {
-    return R"(
-   <html>
-  <head>
-    <style type="text/css">
-      * { -webkit-user-select: none; }
-      body { 
-        font-family: -apple-system, 'Segoe UI', Ubuntu, Arial, sans-serif; 
-        text-align: center;
-        background: linear-gradient(#FFF, #DDD);
-        padding: 2em;
-      }
-      body.rainbow {
-        background: linear-gradient(90deg, #ff2363, #fff175, #68ff9d, 
-                                           #45dce0, #6c6eff, #9e23ff, #ff3091);
-        background-size: 1000% 1000%;
-        animation: ScrollGradient 10s ease infinite;
-      }
-      @keyframes ScrollGradient {
-        0%   { background-position:0% 50%; }
-        50%  { background-position:100% 50%; }
-        100% { background-position:0% 50%; }
-      }
-      #message {
-        padding-top: 2em;
-        color: white;
-        font-weight: bold;
-        font-size: 24px;
-        text-shadow: 1px 1px rgba(0, 0, 0, 0.4);
-      }
-    </style>
-    <script type="text/javascript">
-    function HandleButton(evt) {
-      // Call our C++ callback 'GetMessage'
-      //var message = GetMessage();
-      
-      // Display the result in our 'message' div element and apply the
-      // rainbow effect to our document's body.
-      document.getElementById('message').innerHTML = "hardcoded message";
-      document.body.classList.add('rainbow');
-    }
-    </script>
-  </head>
-  <body>
-    <div> 
-    <object type="text/html" data="https://www.ao20.com.ar/wiki" width="100%" height="100%" style="overflow:auto;border:5px ridge blue">
-    </object>
- </div>
-  </body>
-</html>
-    )";
 }

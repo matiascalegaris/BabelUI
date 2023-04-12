@@ -42,6 +42,7 @@ namespace Babel {
 		std::unique_ptr<WCHAR[]> baseDir_;
 		bool mCompressedResources = {0};
 		std::unique_ptr<AO::Compressor> mCompressedGraphics;
+		std::unique_ptr<AO::Compressor> mCompressedInit;
 		int mNextIndex = { 0 };
 		std::map<int, std::unique_ptr<CompressedData>> mOpenFileMap;
 	};

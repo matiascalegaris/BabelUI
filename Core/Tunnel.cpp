@@ -195,6 +195,36 @@ namespace Babel
             mVBCallbacks.CreateCharacter(&createCharacter);
         }
         break;
+        case EventType::RequestDeleteCharacter:
+        {
+            const SelectCharacterEvent& selectEvt = static_cast<const SelectCharacterEvent&>(eventData);
+            mVBCallbacks.RequestDeleteCharacter(selectEvt.CharIndex);
+        }
+        break;
+        case EventType::ConfirmDeleteCharacter:
+        {
+            const SelectCharacterEvent& selectEvt = static_cast<const SelectCharacterEvent&>(eventData);
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(1);
+            const char* output = GetStringPtrInEvent((char*)(&selectEvt), sizeof(SelectCharacterEvent), strInfo);
+            SingleStringParam strParam;
+            strParam.Len = strInfo[0].Size;
+            strParam.Str = strInfo[0].StartPos;
+            mVBCallbacks.ConfirmDeleteCharacter(selectEvt.CharIndex, &strParam);
+        }
+        break;
+        case EventType::RequestTransferCharacter:
+        {
+            const SelectCharacterEvent& selectEvt = static_cast<const SelectCharacterEvent&>(eventData);
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(1);
+            const char* output = GetStringPtrInEvent((char*)(&selectEvt), sizeof(SelectCharacterEvent), strInfo);
+            SingleStringParam strParam;
+            strParam.Len = strInfo[0].Size;
+            strParam.Str = strInfo[0].StartPos;
+            mVBCallbacks.TransferCharacter(selectEvt.CharIndex, &strParam);
+        }
+        break;
         }
     }
 

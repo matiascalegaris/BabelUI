@@ -67,6 +67,9 @@ namespace Babel {
             mCompressedGraphics = std::make_unique<AO::Compressor>();
             mCompressedGraphics->Open(GetFilePath("OUTPUT/Graficos").u8string().c_str(),
                                       "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
+            mCompressedInit = std::make_unique<AO::Compressor>();
+            mCompressedInit->Open(GetFilePath("OUTPUT/init").u8string().c_str(),
+                "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
         }
         sActiveFS = this;
     }
@@ -83,6 +86,11 @@ namespace Babel {
                 auto start = file.rfind("/") + 1;
                 file = file.substr(start);
                 return mCompressedGraphics->HasFile(file.c_str());
+            }
+            if (file.rfind("/init/", 0) == 0) {
+                auto start = file.rfind("/") + 1;
+                file = file.substr(start);
+                return mCompressedInit->HasFile(file.c_str());
             }
         }
         return getFindData(GetRelative(path).get(), findData);
@@ -137,6 +145,16 @@ namespace Babel {
                 auto it = mOpenFileMap.insert(std::make_pair(mNextIndex, std::make_unique<CompressedData>()));
                 it.first->second->Id = mNextIndex;
                 mCompressedGraphics->GetFileData(file.c_str(), it.first->second->data);
+                return Buffer::Create(it.first->second->data.data(), it.first->second->data.size(), it.first->second.get(),
+                    FileSystemWin_DestroyDecompressedFileData);
+            }
+            if (file.rfind("/init/", 0) == 0) {
+                auto start = file.rfind("/") + 1;
+                file = file.substr(start);
+                mNextIndex++;
+                auto it = mOpenFileMap.insert(std::make_pair(mNextIndex, std::make_unique<CompressedData>()));
+                it.first->second->Id = mNextIndex;
+                mCompressedInit->GetFileData(file.c_str(), it.first->second->data);
                 return Buffer::Create(it.first->second->data.data(), it.first->second->data.size(), it.first->second.get(),
                     FileSystemWin_DestroyDecompressedFileData);
             }

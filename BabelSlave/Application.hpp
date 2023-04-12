@@ -4,7 +4,7 @@
 #include "SharedMemory/SharedMemory.h"
 #include "SharedMemory/SyncData.h"
 #include "SharedMemory/Events/EventHandler.hpp"
-#include "Communicator.hpp"
+#include "JSBridge.hpp"
 #include "CommonDefines.hpp"
 
 namespace Babel
@@ -39,7 +39,7 @@ namespace Babel
 		std::unique_ptr<EventHandler> mEventHandler;
 		std::unique_ptr<SyncData> mDebugSyncData;
 		std::unique_ptr<SharedMemory> mDebugSharedMemory;
-		std::unique_ptr<Communicator> mCommunicator;
+		std::unique_ptr<JSBridge> mCommunicator;
 		bool mRun{ false };
 		bool mActiveDebugView{ false };
 		int64_t expectedFrameTime{ 10 };

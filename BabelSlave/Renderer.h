@@ -7,7 +7,7 @@
 
 namespace Babel
 {
-	class Communicator;
+	class JSBridge;
 	class Renderer : public ultralight::LoadListener,
 		public ultralight::ViewListener,
 		public ultralight::Logger
@@ -40,13 +40,13 @@ namespace Babel
 		void SendInpectorMouseEvent(int mouseX, int mouseY, uint8_t evtType, uint8_t button);
 		void EnableInspector(int width, int height);
 		void SendKeyEvent(ultralight::KeyEvent& evt, bool isInspectorEvent);
-		void SetCommunicator(Communicator* communicator) { mCommunicator = communicator; }
+		void SetCommunicator(JSBridge* communicator) { mCommunicator = communicator; }
 		ultralight::RefPtr<ultralight::View>& GetMainView() { return mView; }
 	private:
 		ultralight::RefPtr<ultralight::Renderer> mRender;
 		ultralight::RefPtr<ultralight::View> mView;
 		ultralight::RefPtr<ultralight::View> mInspectorView;
-		Communicator* mCommunicator;
+		JSBridge* mCommunicator;
 		std::unique_ptr<BabelFileSystemWin> mFileSystem;
 		std::wstring mLocalPath;
 		bool mLoadComplete = false;

@@ -28,7 +28,12 @@ namespace Babel
 		SelectCharacter,
 		LoginCharacter,
 		CreateCharacter,
-		ReturnToLogin
+		ReturnToLogin,
+		RequestDeleteCharacter,
+		RequestDeleteCode,
+		RemoveCharacterFromList,
+		ConfirmDeleteCharacter,
+		RequestTransferCharacter
 	};
 
 	struct Event

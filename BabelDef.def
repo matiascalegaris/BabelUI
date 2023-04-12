@@ -1,0 +1,20 @@
+LIBRARY
+
+EXPORTS
+    InitializeBabel @1
+    GetImageBuffer @2
+    SendMouseEvent @3
+    SendKeyEvent @4
+    RegisterCallbacks @5
+    SendErrorMessage @6
+    SetActiveScreen @7
+    SetLoadingMessage @8
+    LoginCharacterListPrepare @9
+    LoginAddCharacter @10
+    LoginSendCharacters @11
+    NextPowerOf2 @12
+    CreateDebugWindow @13
+    GetDebugImageBuffer @14
+    SendDebugMouseEvent @15
+    RequestDeleteCode @16
+    RemoveCharacterFromList @17

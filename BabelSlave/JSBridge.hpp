@@ -9,10 +9,10 @@ namespace Babel
 	class Application;
 	
 	// handles the comunication between c++ and js
-	class Communicator : public EventListener
+	class JSBridge : public EventListener
 	{
 	public:
-		Communicator(EventBuffer& eventBuffer, Renderer& renderer, Application& application);
+		JSBridge(EventBuffer& eventBuffer, Renderer& renderer, Application& application);
 
 		void RegisterJSApi(ultralight::JSObject& global);
 		void HandleEvent(const Event& eventData) override;
@@ -34,13 +34,17 @@ namespace Babel
 		ultralight::JSValue GetStoredLocale(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue EnableDebug(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void ExitCharacterSelection(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
-		
+		ultralight::JSValue RequestDeleteCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue ConfirmDeleteCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue RequestCharacterTransfer(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
 		void SendErrorMessage(const ErrorMessageEvent& messageData);
 		void SetActiveScreen(const std::string& name);
 		void SetLoadingMessage(const std::string& message, bool localize);
 		void HandleLoginCharList(const CharacterListEvent& messageData);
+		void DeleteCharacterFromList(int characterIndex);
+		void RequestDeleteCode();
 	private:
 		EventBuffer& mEventBuffer;
 		Renderer& mRenderer;

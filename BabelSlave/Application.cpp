@@ -19,7 +19,7 @@ namespace Babel
 		mSharedMemory = std::make_unique<SharedMemory>(mSyncData->GetTotalSize());
 		mSharedMemory->Connect("Local\\TestMemShare2");
 		mSyncData->GetSharedFileViews(*mSharedMemory);
-		mCommunicator = std::make_unique<Communicator>(mSyncData->GetSlaveMessenger(), *mRenderer, *this);
+		mCommunicator = std::make_unique<JSBridge>(mSyncData->GetSlaveMessenger(), *mRenderer, *this);
 		mEventHandler = std::make_unique<EventHandler>(*mCommunicator, mSyncData->GetApiMessenger());
 		mRenderer->SetCommunicator(mCommunicator.get());
 	}
@@ -36,7 +36,7 @@ namespace Babel
 			frameTime = expectedFrameTime - frameTime;
 			if (frameTime > 0)
 			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(frameTime));
+				//std::this_thread::sleep_for(std::chrono::milliseconds(frameTime));
 			}
 		}
 	}

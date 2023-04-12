@@ -9,7 +9,8 @@ int main(int argc, char* argv[])
     try
     {
         Babel::AppSettings settings;
-        Babel::LOGGER->init("Logs/BabelUI.log", "BabelUI");
+        Babel::LOGGER->init("D:\\Proyectos/ao20/client/Logs/BabelUI.log", "BabelUI");
+        Babel::LOGGER->log("Slave initialize");
         settings.Width = std::atoi(argv[1]);
         settings.Height = std::atoi(argv[2]);
         settings.CompressedResources = std::atoi(argv[3]) > 0;

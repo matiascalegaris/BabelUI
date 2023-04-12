@@ -46,9 +46,6 @@
     <ClCompile Include="..\Core\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Communicator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utils\FileUtils.cpp">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
@@ -69,6 +66,9 @@
     </ClCompile>
     <ClCompile Include="Utils\StringUtils.cpp">
       <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="JSBridge.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -91,9 +91,6 @@
       <Filter>Source Files\SharedMemory\Events</Filter>
     </ClInclude>
     <ClInclude Include="..\Core\Logger.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Communicator.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Utils\FileUtils.h">
@@ -119,6 +116,9 @@
     </ClInclude>
     <ClInclude Include="Utils\StringUtils.hpp">
       <Filter>Source Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="JSBridge.hpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

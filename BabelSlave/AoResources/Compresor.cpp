@@ -10,6 +10,7 @@
 #include "Utils/StringUtils.hpp"
 #include "zlib.h"
 #include "tomcrypt.h"
+#include <algorithm>
 
 namespace AO {
 namespace {
@@ -75,8 +76,8 @@ namespace {
 	public:
 		~CompressedFile() {}
 		void Open(const char* fileName, const std::string& password);
-		bool GetFileData(const std::string& fileName, std::vector<uint8_t>& data);
-		bool HasFile(const std::string& fileName);
+		bool GetFileData(std::string fileName, std::vector<uint8_t>& data);
+		bool HasFile(std::string fileName);
 	private:
 		std::ifstream mFile;
 		FILEHEADER mFileHeader;
@@ -147,8 +148,10 @@ namespace {
 		}
 	}
 
-	bool CompressedFile::GetFileData(const std::string& fileName, std::vector<uint8_t>& data)
+	bool CompressedFile::GetFileData(std::string fileName, std::vector<uint8_t>& data)
 	{
+		std::transform(fileName.begin(), fileName.end(), fileName.begin(),
+			[](unsigned char c) { return std::tolower(c); });
 		auto it = mFileMap.find(fileName);
 		if (it == mFileMap.end()) return false;
 
@@ -164,8 +167,10 @@ namespace {
 		return true;
 	}
 
-	bool CompressedFile::HasFile(const std::string& fileName)
+	bool CompressedFile::HasFile(std::string fileName)
 	{
+		std::transform(fileName.begin(), fileName.end(), fileName.begin(),
+			[](unsigned char c) { return std::tolower(c); });
 		auto it = mFileMap.find(fileName);
 		if (it == mFileMap.end()) return false;
 		return true;

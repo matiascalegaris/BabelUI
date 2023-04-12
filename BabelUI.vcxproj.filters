@@ -27,9 +27,6 @@
     <ClInclude Include="framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Definitions.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="Core\ProcessHandler.hpp">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
@@ -55,6 +52,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="CommonDefines.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dllmain.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -85,6 +85,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="cpp.hint" />
+    <None Include="BabelDef.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
