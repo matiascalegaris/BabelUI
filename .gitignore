@@ -5,5 +5,12 @@
 *.user
 result.png
 BabelSlave/x64/
-Debug/
-Release/
+SignBinary.txt
+*.obj
+*.tlog
+*.log
+*.recipe
+*.idb
+*.pdb
+Debug/BabelUI.vcxproj.FileListAbsolute.txt
+Release/BabelUI.vcxproj.FileListAbsolute.txt

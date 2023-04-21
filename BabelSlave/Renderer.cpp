@@ -7,8 +7,6 @@
 #include "JSBridge.hpp"
 #include "Utils/FileUtils.h"
 
-const char* htmlString();
-
 namespace Babel
 {
 
@@ -86,7 +84,6 @@ namespace Babel
         mView->set_view_listener(this);
 
         mView->LoadURL("file:///BabelUI/index.html");
-        //mView->LoadHTML(htmlString());
         mView->Focus();
 	}
     Renderer::~Renderer()
