@@ -2,10 +2,27 @@
 #include <string>
 #include "SharedMemory/Events/EventHandler.hpp"
 #include "Core/Logger.hpp"
+#include <windows.h>
+#include <algorithm> 
+
 namespace Babel
 {
     namespace {
-
+        std::string GetRandomString(size_t length)
+        {
+            auto randchar = []() -> char
+            {
+                const char charset[] =
+                    "0123456789"
+                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                    "abcdefghijklmnopqrstuvwxyz";
+                const size_t max_index = (sizeof(charset) - 1);
+                return charset[rand() % max_index];
+            };
+            std::string str(length, 0);
+            std::generate_n(str.begin(), length, randchar);
+            return str;
+        }
     }
     Tunnel::~Tunnel()
     {
@@ -17,17 +34,27 @@ namespace Babel
 
     bool Tunnel::Initialize(const Settings& settings)
     {
-        mSettings = settings;
-        LOGGER->init("Logs/BabelAPI.log", "BabelAPI");
-        mSyncData = std::make_unique<SyncData>(mSettings.Width, mSettings.Height, 4, 3);
-        mSharedMemory = std::make_unique<SharedMemory>(mSyncData->GetTotalSize());
-        if (!mSharedMemory->Create("Local\\TestMemShare2")) return false;
-        mSyncData->GetSharedFileViews(*mSharedMemory);
-        mEventHandler = std::make_unique<EventHandler>(*this, mSyncData->GetSlaveMessenger());
-        std::string commandLine = "BabelSlave.exe ";
-        commandLine += std::to_string(mSettings.Width) + " " + std::to_string(mSettings.Height) 
-                       + " " + std::to_string(mSettings.Compmpressed) + " " + std::to_string(mSettings.EnableDebug);
-        return mProcess.StartProcess(commandLine.c_str());
+        try {
+            srand((unsigned)time(NULL) * GetCurrentProcessId());
+            mSettings = settings;
+            mSharedMemName = GetRandomString(8);
+            LOGGER->init("Logs/BabelAPI.log", "BabelAPI");
+            LOGGER->log("Initializing tunnel");
+            mSyncData = std::make_unique<SyncData>(mSettings.Width, mSettings.Height, 4, 3);
+            mSharedMemory = std::make_unique<SharedMemory>(mSyncData->GetTotalSize());
+            if (!mSharedMemory->Create(("Local\\TestMemShare2" + mSharedMemName).c_str())) return false;
+            mSyncData->GetSharedFileViews(*mSharedMemory);
+            mEventHandler = std::make_unique<EventHandler>(*this, mSyncData->GetSlaveMessenger());
+            std::string commandLine = "BabelSlave.exe ";
+            commandLine += std::to_string(mSettings.Width) + " " + std::to_string(mSettings.Height)
+                + " " + std::to_string(mSettings.Compmpressed) + " " + std::to_string(mSettings.EnableDebug)
+                + " " + std::to_string(GetCurrentProcessId()) + " " + mSharedMemName;
+            return mProcess.StartProcess(commandLine.c_str());
+        }
+        catch (...)
+        {
+            LOGGER->log("Failed to start the tunnel");
+        }
     }
 
     void Tunnel::Terminate()
@@ -44,7 +71,7 @@ namespace Babel
         }
         mDebugSyncData = std::make_unique<SyncData>(width, height, 4, 3);
         mDebugSharedMemory = std::make_unique<SharedMemory>(mDebugSyncData->GetTotalSize());
-        if (!mDebugSharedMemory->Create("Local\\TestMemShare2Debug")) return false;
+        if (!mDebugSharedMemory->Create(("Local\\TestMemShare2Debug" + mSharedMemName).c_str())) return false;
         mDebugSyncData->GetSharedFileViews(*mDebugSharedMemory);
 
         Babel::WindowInfo windowData;

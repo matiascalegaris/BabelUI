@@ -38,5 +38,6 @@ namespace Babel
 		std::unique_ptr<SharedMemory> mDebugSharedMemory;
 		std::unique_ptr<SyncData> mDebugSyncData;
 		CallbacksList mVBCallbacks;
+		std::string mSharedMemName;
 	};
 }

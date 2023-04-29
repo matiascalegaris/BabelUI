@@ -6,6 +6,8 @@
 #include "SharedMemory/Events/EventHandler.hpp"
 #include "JSBridge.hpp"
 #include "CommonDefines.hpp"
+#include <thread>
+#include <mutex>
 
 namespace Babel
 {
@@ -14,6 +16,8 @@ namespace Babel
 		int Height { 0 };
 		bool CompressedResources { false };
 		bool EnableDebug { false };
+		DWORD ParentProcessId;
+		std::string TunnelName;
 	};
 
 	class Application
@@ -31,6 +35,7 @@ namespace Babel
 	private:
 		void Update();
 		void UpdateRemoteFrame();
+		void TestIfMasterIsAlive();
 	private:
 		AppSettings mSettings;
 		std::unique_ptr<Renderer> mRenderer;
@@ -43,5 +48,7 @@ namespace Babel
 		bool mRun{ false };
 		bool mActiveDebugView{ false };
 		int64_t expectedFrameTime{ 10 };
+		std::thread mBackgroundTask;
+		std::condition_variable mCloseAppCondition;
 	};
 }

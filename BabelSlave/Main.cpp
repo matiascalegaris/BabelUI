@@ -5,7 +5,7 @@
 
 int main(int argc, char* argv[])
 {
-    if (argc < 4) return -1;
+    if (argc < 6) return -1;
     try
     {
         Babel::AppSettings settings;
@@ -15,6 +15,8 @@ int main(int argc, char* argv[])
         settings.Height = std::atoi(argv[2]);
         settings.CompressedResources = std::atoi(argv[3]) > 0;
         settings.EnableDebug = std::atoi(argv[4]) > 0;
+        settings.ParentProcessId = std::atoi(argv[5]);
+        settings.TunnelName = argv[6];
         Babel::Application app;
         app.Initialize(settings);
         app.Run();
