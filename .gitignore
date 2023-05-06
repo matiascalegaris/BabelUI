@@ -14,3 +14,4 @@ SignBinary.txt
 *.pdb
 Debug/BabelUI.vcxproj.FileListAbsolute.txt
 Release/BabelUI.vcxproj.FileListAbsolute.txt
+SignBinary.bat

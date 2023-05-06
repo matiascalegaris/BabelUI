@@ -18,3 +18,4 @@ EXPORTS
     SendDebugMouseEvent @15
     RequestDeleteCode @16
     RemoveCharacterFromList @17
+    GetTelemetry @18

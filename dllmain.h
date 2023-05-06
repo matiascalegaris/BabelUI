@@ -26,6 +26,8 @@ extern "C"
 	LIBRARY_API bool _stdcall CreateDebugWindow(int width, int height);
 	LIBRARY_API bool _stdcall GetDebugImageBuffer(char* buffer, int size);
 	LIBRARY_API void _stdcall SendDebugMouseEvent(int mouseX, int mouseY, int type, int buttonState);
+
+	LIBRARY_API uint32_t _stdcall GetTelemetry(const char* str, const uint8_t* data, uint32_t maxSize);
 	
 
 }

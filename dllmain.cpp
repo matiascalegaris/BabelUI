@@ -4,6 +4,7 @@
 #include "SharedMemory/Events/EventHandler.hpp"
 #include "Core/Logger.hpp"
 #include "CallbackDefines.hpp"
+#include "AOToolsApi.h"
 
 namespace {
 	Babel::Tunnel BabelTunnel;
@@ -183,4 +184,11 @@ void _stdcall SendDebugMouseEvent(int mouseX, int mouseY, int type, int buttonSt
 	mouseData.EventType = Babel::EventType::DebugMouseData;
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&mouseData, mouseData.Size);
 
+}
+
+uint32_t _stdcall GetTelemetry(const char* str, const uint8_t* data, uint32_t maxSize)
+{
+	auto ret = GetTelemetry(str);
+	CopyMemory((void*)data, ret.data(), min((int)ret.size(), maxSize));
+	return min(ret.size(), maxSize);
 }
