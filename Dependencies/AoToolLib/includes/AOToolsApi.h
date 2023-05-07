@@ -2,10 +2,13 @@
 #include <string>
 #include <vector>
 
-std::vector<uint8_t> __cdecl GetTelemetry(const std::string& code);
+extern "C"
+{
+	int __cdecl CheckIdErrors(int telemetryId, char* outBuffer, int outLen);
 
-std::string __cdecl CheckIdErrors(int telemetryId);
+	int __cdecl GetTelemetryCode(int telemetryId, const char* name, char* outBuffer, int outLen);
 
-std::string __cdecl GetTelemetryCode(int telemetryId, const std::string& name);
+	int __cdecl GetTelemetryResult(const char* data, int dataSize, int telemetryId, char* outBuffer, int outLen);
 
-std::string __cdecl GetTelemetryResult(std::vector<uint8_t>& data, int TelemetryId);
+	uint32_t __cdecl GetTelemetryData(const char* str, const uint8_t* data, uint32_t maxSize);
+}

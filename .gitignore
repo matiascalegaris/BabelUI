@@ -15,3 +15,5 @@ SignBinary.txt
 Debug/BabelUI.vcxproj.FileListAbsolute.txt
 Release/BabelUI.vcxproj.FileListAbsolute.txt
 SignBinary.bat
+Release/BabelUI.iobj
+Release/BabelUI.ipdb

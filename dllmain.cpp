@@ -188,7 +188,5 @@ void _stdcall SendDebugMouseEvent(int mouseX, int mouseY, int type, int buttonSt
 
 uint32_t _stdcall GetTelemetry(const char* str, const uint8_t* data, uint32_t maxSize)
 {
-	auto ret = GetTelemetry(str);
-	CopyMemory((void*)data, ret.data(), min((int)ret.size(), maxSize));
-	return min(ret.size(), maxSize);
+	return GetTelemetryData(str, data, maxSize);
 }
