@@ -111,7 +111,7 @@ void _stdcall LoginCharacterListPrepare(int characterCount)
 	memset(&LoginCharList.CharacterList, 0, sizeof(LoginCharList.CharacterList));
 }
 
-void _stdcall LoginAddCharacter(const char* name, int head, int body, int helm, int shield, int weapon, int level, int status, int index)
+void _stdcall LoginAddCharacter(const char* name, int head, int body, int helm, int shield, int weapon, int level, int status, int index, int classId)
 {
 	int len = strnlen(name, sizeof(LoginCharList.CharacterList[index].Name));
 	strncpy_s(LoginCharList.CharacterList[index].Name, sizeof(LoginCharList.CharacterList[index].Name) - 1l, name, len);
@@ -124,6 +124,7 @@ void _stdcall LoginAddCharacter(const char* name, int head, int body, int helm, 
 	LoginCharList.CharacterList[index].Level = level;
 	LoginCharList.CharacterList[index].Status = status;
 	LoginCharList.CharacterList[index].Index = index;
+	LoginCharList.CharacterList[index].Class = classId;
 }
 
 void _stdcall RemoveCharacterFromList(int index)

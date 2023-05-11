@@ -737,6 +737,7 @@ namespace Babel
 					SetObjectNumber(ctx, ret, "level", messageData.CharacterList[i].Level);
 					SetObjectNumber(ctx, ret, "status", messageData.CharacterList[i].Status);
 					SetObjectNumber(ctx, ret, "index", messageData.CharacterList[i].Index);
+					SetObjectNumber(ctx, ret, "class", messageData.CharacterList[i].Class);
 					const JSValueRef args[] = { ret };
 					size_t num_args = 1;
 					JSValueRef exception = 0;

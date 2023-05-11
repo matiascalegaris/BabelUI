@@ -38,7 +38,7 @@ namespace Babel
 			frameTime = expectedFrameTime - frameTime;
 			if (frameTime > 0)
 			{
-				//std::this_thread::sleep_for(std::chrono::milliseconds(frameTime));
+				std::this_thread::sleep_for(std::chrono::milliseconds(frameTime));
 			}
 		}
 		mBackgroundTask.join();

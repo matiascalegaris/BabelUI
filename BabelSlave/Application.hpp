@@ -47,7 +47,7 @@ namespace Babel
 		std::unique_ptr<JSBridge> mCommunicator;
 		bool mRun{ false };
 		bool mActiveDebugView{ false };
-		int64_t expectedFrameTime{ 10 };
+		int64_t expectedFrameTime{ 5 };
 		std::thread mBackgroundTask;
 		std::condition_variable mCloseAppCondition;
 	};

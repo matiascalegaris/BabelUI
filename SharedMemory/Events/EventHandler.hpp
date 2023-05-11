@@ -85,6 +85,7 @@ namespace Babel
 		int Level;
 		int Status;
 		int Index;
+		int Class;
 	};
 
 	struct CharacterListEvent : public Event
