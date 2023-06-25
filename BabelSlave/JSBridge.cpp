@@ -446,7 +446,7 @@ namespace Babel
 				strInfo.resize(1);
 				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::Event), strInfo);
 				auto size = output - (char*)(&eventData);
-				assert(size == slotInfo.Size);
+				assert(size == eventData.Size);
 				std::string targetName(strInfo[0].StartPos, strInfo[0].Size);
 				UpdateWhisperTarget(targetName);
 				break;
