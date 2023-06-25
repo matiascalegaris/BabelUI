@@ -92,6 +92,16 @@ namespace Babel {
                 file = file.substr(start);
                 return mCompressedInit->HasFile(file.c_str());
             }
+            if (file.rfind("/Mapas/", 0) == 0) {
+                auto start = file.rfind("/") + 1;
+                file = file.substr(start);
+                return mCompressedInit->HasFile(file.c_str());
+            }
+            if (file.rfind("/MiniMapas/", 0) == 0) {
+                auto start = file.rfind("/") + 1;
+                file = file.substr(start);
+                return mCompressedInit->HasFile(file.c_str());
+            }
         }
         return getFindData(GetRelative(path).get(), findData);
     }
