@@ -54,6 +54,7 @@ namespace Babel
         catch (...)
         {
             LOGGER->log("Failed to start the tunnel");
+            return false;
         }
     }
 
@@ -252,6 +253,113 @@ namespace Babel
             mVBCallbacks.TransferCharacter(selectEvt.CharIndex, &strParam);
         }
         break;
+        case EventType::SendConsoleMsgToVB:
+        {
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(1);
+            const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Event), strInfo);
+            auto size = output - (char*)(&eventData);
+            SingleStringParam strParam;
+            strParam.Len = strInfo[0].Size;
+            strParam.Str = strInfo[0].StartPos;
+            mGameplayVBcallbacks.HandleConsoleMsg(&strParam);
+        }
+        break;
+        case EventType::ShowVBDialog:
+        {
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(1);
+            const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Event), strInfo);
+            auto size = output - (char*)(&eventData);
+            SingleStringParam strParam;
+            strParam.Len = strInfo[0].Size;
+            strParam.Str = strInfo[0].StartPos;
+            mGameplayVBcallbacks.ShowDialog(&strParam);
+        }
+        break;
+        case EventType::SelectInvSlot:
+        {
+            const SingleIntEvent& selectEvt = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.SelectInvSlot(selectEvt.Value + 1);
+        }
+        break;
+        case EventType::UseInvSlot:
+        {
+            const SingleIntEvent& selectEvt = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.UseInvSlot(selectEvt.Value + 1);
+        }
+        break;
+        case EventType::SelectSpellSlot:
+        {
+            const SingleIntEvent& selectEvt = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.SelectSpellSlot(selectEvt.Value + 1);
+        }
+        break;
+        case EventType::UseSpellSlot:
+        {
+            const SingleIntEvent& selectEvt = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.UseSpellSlot(selectEvt.Value + 1);
+        }
+        break;
+        case EventType::UpdateInputFocus:
+        {
+            const SingleBoolEvent& selectEvt = static_cast<const SingleBoolEvent&>(eventData);
+            mGameplayVBcallbacks.UpdateFocus(selectEvt.Value);
+        }
+        break;
+        case EventType::ClickLink:
+        {
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(1);
+            const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Event), strInfo);
+            auto size = output - (char*)(&eventData);
+            SingleStringParam strParam;
+            strParam.Len = strInfo[0].Size;
+            strParam.Str = strInfo[0].StartPos;
+            mGameplayVBcallbacks.OpenLink(&strParam);
+            break;
+        }
+        case EventType::ClickGold:
+        {
+            mGameplayVBcallbacks.ClickGold();
+            break;
+        }
+        case EventType::MoveInvSlot:
+        {
+            const DoubleIntEvent& slotsInfo = static_cast<const DoubleIntEvent&>(eventData);
+            mGameplayVBcallbacks.MoveInvItem(slotsInfo.Value1 + 1, slotsInfo.Value2 + 1);
+            break;
+        }
+        case EventType::RequestAction:
+        {
+            const SingleIntEvent& slotsInfo = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.RequestAction(slotsInfo.Value);
+            break;
+        }
+        case EventType::UseKey:
+        {
+            const SingleIntEvent& slotsInfo = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.UseKey(slotsInfo.Value);
+            break;
+        }
+        case EventType::MoveSpellSlot:
+        {
+            const DoubleIntEvent& slotsInfo = static_cast<const DoubleIntEvent&>(eventData);
+            mGameplayVBcallbacks.MoveSpellSlot(slotsInfo.Value1 + 1, slotsInfo.Value2 + 1);
+            break;
+        }
+        case EventType::DeleteItem:
+        {
+            const SingleIntEvent& evtData = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.DeleteItem(evtData.Value + 1);
+            break;
+        }
+        case EventType::UpdateOpenDialog:
+        {
+            const SingleBoolEvent& evtData = static_cast<const SingleBoolEvent&>(eventData);
+            mGameplayVBcallbacks.UpdateOpenDialog(evtData.Value);
+            break;
+        }
         }
     }
 

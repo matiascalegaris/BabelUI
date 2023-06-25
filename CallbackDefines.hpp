@@ -54,7 +54,7 @@ namespace Babel
 
 	typedef void(__stdcall* TLogInCallback)(LogInInfo*);
 	typedef void(__stdcall* TCreateAccountCallback)(NewAccountInfo*);
-	typedef void(__stdcall* TCloseClient)(void);
+	typedef void(__stdcall* TVoidParam)(void);
 	typedef void(__stdcall* TSetHost)(SingleStringParam*);
 	typedef void(__stdcall* TValidateAccount)(DoubleStringParam* );
 	typedef void(__stdcall* TResendValidationCode)(SingleStringParam*);
@@ -64,13 +64,12 @@ namespace Babel
 	typedef void(__stdcall* TLoginCharacterIndex)(int);
 	typedef void(__stdcall* TCreateCharacter)(NewCharacterInfo*);
 	typedef void(__stdcall* TIntStringF)(int, SingleStringParam*);
-	
 
 	struct CallbacksList
 	{
 		TLogInCallback Login;
 		TCreateAccountCallback CreateAccount;
-		TCloseClient CloseClient;
+		TVoidParam CloseClient;
 		TSetHost SetHost;
 		TValidateAccount ValidateAccount;
 		TResendValidationCode ResendValidationCode;
@@ -78,11 +77,34 @@ namespace Babel
 		TNewPasswordRequest NewPasswordRequest;
 		TSelectCharacter SelectCharacter;
 		TLoginCharacterIndex LoginWithCharacter;
-		TCloseClient ReturnToLogin;
+		TVoidParam ReturnToLogin;
 		TCreateCharacter CreateCharacter;
 		TSelectCharacter RequestDeleteCharacter;
 		TIntStringF ConfirmDeleteCharacter;
 		TIntStringF TransferCharacter;
 	};
 
+	typedef void(__stdcall* TSingleStringParam)(SingleStringParam*);
+	typedef void(__stdcall* TSingleIntParam)(int);
+	typedef void(__stdcall* TSingleBoolParam)(int);
+	typedef void(__stdcall* TDoubleIntParam)(int, int);
+
+	struct GameplayCallbacks
+	{
+		TSingleStringParam HandleConsoleMsg;
+		TSingleStringParam ShowDialog;
+		TSingleIntParam SelectInvSlot;
+		TSingleIntParam UseInvSlot;
+		TSingleIntParam SelectSpellSlot;
+		TSingleIntParam UseSpellSlot;
+		TSingleBoolParam UpdateFocus;
+		TSingleBoolParam UpdateOpenDialog;
+		TSingleStringParam OpenLink;
+		TVoidParam ClickGold;
+		TDoubleIntParam MoveInvItem;
+		TSingleIntParam RequestAction;
+		TSingleIntParam UseKey;
+		TDoubleIntParam MoveSpellSlot;
+		TSingleIntParam DeleteItem;
+	};
 }

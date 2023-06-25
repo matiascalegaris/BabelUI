@@ -19,3 +19,35 @@ EXPORTS
     RequestDeleteCode @16
     RemoveCharacterFromList @17
     GetTelemetry @18
+    SetUserStats @19
+    SetUserName @20
+    SendChatMessage @21
+    RegisterGameplayCallbacks @22
+    UpdateFps @23
+    SetInventoryLevel @24
+    SetInvSlot @25
+    SetSpellSlot @26
+    SendScrollEvent @27
+    UpdateHpValue @28
+    UpdateManaValue @29
+    UpdateStaminaValue @30
+    UpdateDrinkValue @31
+    UpdateFoodValue @32
+    UpdateGold @33
+    UpdateExp @34
+    OpenChat @35
+    UpdateStrAndAgiBuff @36
+    UpdateMapInfo @37
+    UpdateUserPos @38
+    UpdateGroupPos @39
+    SetKeySlot @40
+    UpdateIntervals @41
+    ActivateInterval @42
+    SetSafeState @43
+    UpdateOnlines @44
+    UpdateGameTime @45
+    UpdateIsGameMaster @46
+    UpdateMagicResistance @47
+    UpdateMagicAttack @48
+    SetWhisperTarget @49
+

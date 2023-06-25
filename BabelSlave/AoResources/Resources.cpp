@@ -798,4 +798,9 @@ namespace AO
         mResources->GetHeadInfo(headInfo, headIndex);
     }
 
+    void Resources::GetGrhInfo(GrhDetails& grhInfo, int grhIndex)
+    {
+        mResources->SetGrhDetails(grhInfo, grhIndex - 1);
+    }
+
 }

@@ -60,6 +60,15 @@ namespace Babel
 			JSObjectSetProperty(ctx, objectRef, paramStr.get(), jvalue, 0, nullptr);
 		}
 
+		void SetObjectBoolean(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, bool value)
+		{
+			JSRetainPtr<JSStringRef> paramStr =
+				adopt(JSStringCreateWithUTF8CString(paramName));
+			auto jparam = JSValueMakeString(ctx, paramStr.get());
+			auto jvalue = JSValueMakeBoolean(ctx, value);
+			JSObjectSetProperty(ctx, objectRef, paramStr.get(), jvalue, 0, nullptr);
+		}
+
 		void SetChildObject(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, JSObjectRef& value)
 		{
 			JSRetainPtr<JSStringRef> paramStr =
@@ -75,6 +84,13 @@ namespace Babel
 			SetObjectNumber(ctx, objectRef, "startY", grhData.StartPos.Y);
 			SetObjectNumber(ctx, objectRef, "width", grhData.EndPos.X);
 			SetObjectNumber(ctx, objectRef, "height", grhData.EndPos.Y);
+		}
+
+		void SetColorObject(JSContextRef& ctx, JSObjectRef& objectRef, const Babel::Color& colorData)
+		{
+			SetObjectNumber(ctx, objectRef, "R", colorData.R);
+			SetObjectNumber(ctx, objectRef, "G", colorData.G);
+			SetObjectNumber(ctx, objectRef, "B", colorData.B);
 		}
 	}
 	using namespace ultralight;
@@ -100,6 +116,7 @@ namespace Babel
 		Api["SelectCharacter"] = BindJSCallbackWithRetval(&JSBridge::SelectCharacter);
 		Api["LoginCharacter"] = BindJSCallbackWithRetval(&JSBridge::LoginCharacter);
 		Api["GetHeadDrawInfo"] = BindJSCallbackWithRetval(&JSBridge::GetHeadDrawInfo);
+		Api["GetGrhDrawInfo"] = BindJSCallbackWithRetval(&JSBridge::GetGrhDrawInfo);		
 		Api["ExitCharacterSelection"] = BindJSCallback(&JSBridge::ExitCharacterSelection);
 		Api["CreateCharacter"] = BindJSCallbackWithRetval(&JSBridge::CreateCharacter);
 		Api["GetStoredLocale"] = BindJSCallbackWithRetval(&JSBridge::GetStoredLocale);
@@ -107,6 +124,22 @@ namespace Babel
 		Api["RequestDeleteCharacter"] = BindJSCallbackWithRetval(&JSBridge::RequestDeleteCharacter);
 		Api["ConfirmDeleteCharacter"] = BindJSCallbackWithRetval(&JSBridge::ConfirmDeleteCharacter);
 		Api["RequestCharacterTransfer"] = BindJSCallbackWithRetval(&JSBridge::RequestCharacterTransfer);
+		Api["SendChat"] = BindJSCallback(&JSBridge::SendChatMsg);
+		Api["OpenVBDialog"] = BindJSCallback(&JSBridge::OpenVBDialog);
+		Api["UpdateSelectedInvSlot"] = BindJSCallback(&JSBridge::UpdateSelectedInvSlot);
+		Api["UseInvSlotIndex"] = BindJSCallback(&JSBridge::UseInvSlotIndex);
+		Api["UpdateSelectedSpellSlot"] = BindJSCallback(&JSBridge::UpdateSelectedSpellSlot);
+		Api["UseSpellSlot"] = BindJSCallback(&JSBridge::UseSpellSlot);
+		Api["UpdateInputFocus"] = BindJSCallback(&JSBridge::UpdateInputFocus);
+		Api["OpenLink"] = BindJSCallback(&JSBridge::ClickLink);
+		Api["GoldClick"] = BindJSCallback(&JSBridge::ClickGold);
+		Api["MoveInvItem"] = BindJSCallback(&JSBridge::MoveInvItem);
+		Api["RequestAction"] = BindJSCallback(&JSBridge::RequestAction);
+		Api["UseKeySlotIndex"] = BindJSCallback(&JSBridge::UseKey);
+		Api["MoveSpellSlot"] = BindJSCallback(&JSBridge::MoveSpellSlot);
+		Api["DeleteItem"] = BindJSCallback(&JSBridge::DeleteItem);
+		Api["UpdateOpenDialog"] = BindJSCallback(&JSBridge::UpdateOpenDialog);	
+		
 		global["BabelUI"] = JSValue(Api);
 	}
 	void JSBridge::HandleEvent(const Event& eventData)
@@ -117,6 +150,12 @@ namespace Babel
 			{
 				const MouseData& mouseEvtdata = static_cast<const MouseData&>(eventData);
 				mRenderer.SendMouseEvent(mouseEvtdata.PosX, mouseEvtdata.PosY, (mouseEvtdata.TypeFlags >> 4) & 0x0f, mouseEvtdata.TypeFlags & 0x0f);
+				break;
+			}
+			case EventType::SendScrollEvent:
+			{
+				const SingleIntEvent& mouseEvtdata = static_cast<const SingleIntEvent&>(eventData);
+				mRenderer.SendScrollEvent(mouseEvtdata.Value * 0.5);
 				break;
 			}
 			case EventType::DebugMouseData:
@@ -184,6 +223,234 @@ namespace Babel
 				DeleteCharacterFromList(charEvent.CharIndex);
 			}
 			break;
+			case EventType::UpdateCharacterStats:
+			{
+				const UpdateUserStats& userStatsEvent = static_cast<const UpdateUserStats&>(eventData);
+				UpdateStats(userStatsEvent.UserStats);
+			}
+			break;
+			case EventType::SetUserName:
+			{
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(1);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Event), strInfo);
+				auto size = output - (char*)(&eventData);
+				std::string name(strInfo[0].StartPos, strInfo[0].Size);
+				UpdateUserName(name);
+			}
+			break;
+			case EventType::SendChatMessage:
+			{
+				const ChatMessageEvent& chatEvent = static_cast<const ChatMessageEvent&>(eventData);
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(2);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(ChatMessageEvent), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == chatEvent.Size);
+				std::string sender(strInfo[0].StartPos, strInfo[0].Size);
+				std::string text(strInfo[1].StartPos, strInfo[1].Size);
+				SendChatMessage(sender, chatEvent.SenderColor, text, chatEvent.TextColor, chatEvent.TextStyle);
+			}
+			break;
+			case EventType::UpdateFps:
+			{
+				const Babel::UpdateFps& fpsEvent = static_cast<const Babel::UpdateFps&>(eventData);
+				UpdateFps(fpsEvent.Fps);
+			}
+			break;
+			case EventType::SetInvLevel:
+			{
+				const Babel::SetInvLevel& invLevelEvent = static_cast<const Babel::SetInvLevel&>(eventData);
+				UpdateInvLevel(invLevelEvent.Level);
+			}
+			break;
+			case EventType::UpdateInvSlot:
+			{
+				const Babel::UpdateInvSlot& slotInfo = static_cast<const Babel::UpdateInvSlot&>(eventData);
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(2);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::UpdateInvSlot), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == slotInfo.Size);
+				std::string objName(strInfo[0].StartPos, strInfo[0].Size);
+				std::string objDesc(strInfo[1].StartPos, strInfo[1].Size);
+				UpdateInvSlot(objName, objDesc, slotInfo);
+			}
+			break;
+			case EventType::UpdateSpellSlot:
+			{
+				const Babel::UpdateSpellSlot& slotInfo = static_cast<const Babel::UpdateSpellSlot&>(eventData);
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(1);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::UpdateSpellSlot), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == slotInfo.Size);
+				std::string objName(strInfo[0].StartPos, strInfo[0].Size);
+				UpdateSpellSlot(objName, slotInfo);
+			}
+			break;
+			case EventType::UpdateHp:
+			{
+				const Babel::UpdateHp& invLevelEvent = static_cast<const Babel::UpdateHp&>(eventData);
+				UpdateHp(invLevelEvent.NewHpValue, invLevelEvent.NewShieldValue);
+				break;
+			}
+			case EventType::UpdateMana:
+			{
+				const Babel::SingleIntEvent& invLevelEvent = static_cast<const Babel::SingleIntEvent&>(eventData);
+				UpdateMana(invLevelEvent.Value);
+				break;
+			}
+			case EventType::UpdateStamina:
+			{
+				const Babel::SingleIntEvent& invLevelEvent = static_cast<const Babel::SingleIntEvent&>(eventData);
+				UpdateStamina(invLevelEvent.Value);
+				break;
+			}
+			case EventType::UpdateFood:
+			{
+				const Babel::SingleIntEvent& invLevelEvent = static_cast<const Babel::SingleIntEvent&>(eventData);
+				UpdateFood(invLevelEvent.Value);
+				break;
+			}
+			case EventType::UpdateDrink:
+			{
+				const Babel::SingleIntEvent& invLevelEvent = static_cast<const Babel::SingleIntEvent&>(eventData);
+				UpdateDrink(invLevelEvent.Value);
+				break;
+			}
+			case EventType::UpdateGold:
+			{
+				const Babel::SingleIntEvent& invLevelEvent = static_cast<const Babel::SingleIntEvent&>(eventData);
+				UpdateGold(invLevelEvent.Value);
+				break;
+			}
+			case EventType::UpdateExp:
+			{
+				const Babel::DoubleIntEvent& doubleInEvent = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				UpdateExp(doubleInEvent.Value1, doubleInEvent.Value2);
+				break;
+			}
+			case EventType::OpenChat:
+			{
+				const Babel::SingleIntEvent& invLevelEvent = static_cast<const Babel::SingleIntEvent&>(eventData);
+				OpenChat(invLevelEvent.Value);
+				break;
+			}
+			case EventType::UpdateStrAndAgi:
+			{
+				const Babel::UpdateAgiAndStr& evtData = static_cast<const Babel::UpdateAgiAndStr&>(eventData);
+				UpdateStrAndAgi(evtData);
+				break;
+			}
+			case EventType::UpdateMapName:
+			{
+				const Babel::DoubleIntEvent& evtData = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(1);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::DoubleIntEvent), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == evtData.Size);
+				std::string mapName(strInfo[0].StartPos, strInfo[0].Size);
+				UpdateMapName(evtData.Value1, mapName, evtData.Value2);
+				break;
+			}
+			case EventType::UpdateMapNpc:
+			{
+				const Babel::SingleIntEvent& evtData = static_cast<const Babel::SingleIntEvent&>(eventData);
+				char* arrayStart = (char*)(&eventData) + sizeof(Babel::SingleIntEvent);
+				Babel::QuestNpc* npcDataPtr = reinterpret_cast<Babel::QuestNpc*>(arrayStart);
+				auto size = (evtData.Value * sizeof(Babel::QuestNpc)) + sizeof(Babel::SingleIntEvent);
+				assert(size == evtData.Size);
+				UpdateMapNpc(evtData.Value, npcDataPtr);
+				break;
+			}
+			case EventType::UpdateUserPos:
+			{
+				const Babel::UpdateUserPosEvt& evtData = static_cast<const Babel::UpdateUserPosEvt&>(eventData);
+				UpdateUserPos(evtData);
+				break;
+			}
+			case EventType::UpdateGroupMemberPos:
+			{
+				const Babel::UpdateGroupMemberPosEvt& evtData = static_cast<const Babel::UpdateGroupMemberPosEvt&>(eventData);
+				UpdateGroupMemberPos(evtData);
+				break;
+			}
+			case EventType::UpdateKeySlot:
+			{
+				const Babel::UpdateInvSlot& slotInfo = static_cast<const Babel::UpdateInvSlot&>(eventData);
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(2);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::UpdateInvSlot), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == slotInfo.Size);
+				std::string objName(strInfo[0].StartPos, strInfo[0].Size);
+				std::string objDesc(strInfo[1].StartPos, strInfo[1].Size);
+				UpdateKeySlot(objName, objDesc, slotInfo);
+				break;
+			}
+			case EventType::UpdateIntervals:
+			{
+				const Babel::UpdateIntervalsEvent& slotInfo = static_cast<const Babel::UpdateIntervalsEvent&>(eventData);
+				
+				UpdateInterval(slotInfo.Intervals);
+				break;
+			}
+			case EventType::StartInterval:
+			{
+				const Babel::StartIntervalEvent& slotInfo = static_cast<const Babel::StartIntervalEvent&>(eventData);
+
+				StartInterval(slotInfo.IntervalType, slotInfo.Timestamp);
+				break;
+			}
+			case EventType::UpdateSafeState:
+			{
+				const Babel::DoubleIntEvent& evtInfo = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				UpdatesafeState(evtInfo.Value1, evtInfo.Value2);
+				break;
+			}
+			case EventType::UpdateOnlines:
+			{
+				const Babel::SingleIntEvent& evtInfo = static_cast<const Babel::SingleIntEvent&>(eventData);
+				UpdateOnlines(evtInfo.Value);
+				break;
+			}
+			case EventType::UpdateGameTime:
+			{
+				const Babel::DoubleIntEvent& evtInfo = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				UpdateGameTime(evtInfo.Value1, evtInfo.Value2);
+				break;
+			}
+			case EventType::UpdateIsGameMaster:
+			{
+				const Babel::SingleIntEvent& evtInfo = static_cast<const Babel::SingleIntEvent&>(eventData);
+				UpdateIsGameMaster(evtInfo.Value);
+				break;
+			}
+			case EventType::UpdateMagicAttack:
+			{
+				const Babel::SingleIntEvent& evtInfo = static_cast<const Babel::SingleIntEvent&>(eventData);
+				UpdateMagicAttack(evtInfo.Value);
+				break;
+			}
+			case EventType::UpdateMagicResistance:
+			{
+				const Babel::SingleIntEvent& evtInfo = static_cast<const Babel::SingleIntEvent&>(eventData);
+				UpdateMagicResistance(evtInfo.Value);
+				break;
+			}
+			case EventType::SetWhisperTarget:
+			{
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(1);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::Event), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == slotInfo.Size);
+				std::string targetName(strInfo[0].StartPos, strInfo[0].Size);
+				UpdateWhisperTarget(targetName);
+				break;
+			}
 			default:
 				break;
 		}
@@ -421,6 +688,23 @@ namespace Babel
 		return headGrh;
 	}
 
+	ultralight::JSValue JSBridge::GetGrhDrawInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return "invalid params";
+		}
+
+		AO::GrhDetails grhInfo;
+
+		mResources->GetGrhInfo(grhInfo, args[0]);
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSObjectRef grh = JSObjectMake(ctx, nullptr, nullptr);
+		SetGrhJsObject(ctx, grh, grhInfo);
+		return grh;
+	}
+
 	ultralight::JSValue JSBridge::SelectCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 1)
@@ -566,6 +850,236 @@ namespace Babel
 		transferChar.Size = sizeof(transferChar) + PrepareDynamicStrings(strInfo);
 		mEventBuffer.AddEvent((uint8_t*)&transferChar, sizeof(transferChar), strInfo);
 		return ultralight::JSValue();
+	}
+
+	void JSBridge::SendChatMsg(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+		ultralight::String jenv = args[0];
+		auto message = utf8_to_ascii(jenv.utf8().data());
+		if (message.empty())
+		{
+			return;
+		}
+		Babel::Event eventInfo;
+		eventInfo.EventType = Babel::EventType::SendConsoleMsgToVB;
+		std::vector<StringInBuffer> strInfo(1);
+		strInfo[0].StartPos = message.c_str();
+		eventInfo.Size = sizeof(eventInfo) + PrepareDynamicStrings(strInfo);
+		mEventBuffer.AddEvent((uint8_t*)&eventInfo, sizeof(eventInfo), strInfo);
+	}
+
+	void JSBridge::OpenVBDialog(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+		ultralight::String jenv = args[0];
+		auto envornment = utf8_to_ascii(jenv.utf8().data());
+		Babel::Event eventInfo;
+		eventInfo.EventType = Babel::EventType::ShowVBDialog;
+		std::vector<StringInBuffer> strInfo(1);
+		strInfo[0].StartPos = envornment.c_str();
+		eventInfo.Size = sizeof(eventInfo) + PrepareDynamicStrings(strInfo);
+		mEventBuffer.AddEvent((uint8_t*)&eventInfo, sizeof(eventInfo), strInfo);
+	}
+
+	void JSBridge::UpdateSelectedInvSlot(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+
+		SingleIntEvent selectInvSlotEvent;
+		selectInvSlotEvent.Value = args[0];
+		selectInvSlotEvent.EventType = EventType::SelectInvSlot;
+		selectInvSlotEvent.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&selectInvSlotEvent, sizeof(selectInvSlotEvent));
+		return;
+	}
+
+	void JSBridge::UseInvSlotIndex(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+
+		SingleIntEvent userSlotEvent;
+		userSlotEvent.Value = args[0];
+		userSlotEvent.EventType = EventType::UseInvSlot;
+		userSlotEvent.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&userSlotEvent, sizeof(userSlotEvent));
+		return;
+	}
+
+	void JSBridge::UpdateSelectedSpellSlot(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+
+		SingleIntEvent selectSpellSlotEvent;
+		selectSpellSlotEvent.Value = args[0];
+		selectSpellSlotEvent.EventType = EventType::SelectSpellSlot;
+		selectSpellSlotEvent.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&selectSpellSlotEvent, sizeof(selectSpellSlotEvent));
+		return;
+	}
+
+	void JSBridge::UseSpellSlot(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+
+		SingleIntEvent useSpellEvent;
+		useSpellEvent.Value = args[0];
+		useSpellEvent.EventType = EventType::UseSpellSlot;
+		useSpellEvent.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&useSpellEvent, sizeof(useSpellEvent));
+		return;
+	}
+	
+	void JSBridge::UpdateInputFocus(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+
+		SingleBoolEvent updateInputFocus;
+		updateInputFocus.Value = args[0];
+		updateInputFocus.EventType = EventType::UpdateInputFocus;
+		updateInputFocus.Size = sizeof(SingleBoolEvent);
+		mEventBuffer.AddEvent((uint8_t*)&updateInputFocus, sizeof(updateInputFocus));
+		return;
+	}
+
+	void JSBridge::ClickLink(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+		ultralight::String jenv = args[0];
+		auto url = utf8_to_ascii(jenv.utf8().data());
+		Event clickLink;
+		clickLink.EventType = EventType::ClickLink;
+		std::vector<StringInBuffer> strInfo(1);
+		strInfo[0].StartPos = url.c_str();
+		clickLink.Size = sizeof(clickLink) + PrepareDynamicStrings(strInfo);
+		mEventBuffer.AddEvent((uint8_t*)&clickLink, sizeof(clickLink), strInfo);
+		return;
+	}
+
+	void JSBridge::ClickGold(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 0)
+		{
+			return;
+		}
+
+		Event clickGold;
+		clickGold.EventType = EventType::ClickGold;
+		clickGold.Size = sizeof(Event);
+		mEventBuffer.AddEvent((uint8_t*)&clickGold, sizeof(clickGold));
+		return;
+	}
+
+	void JSBridge::MoveInvItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return;
+		}
+
+		DoubleIntEvent moveItem;
+		moveItem.Value1 = args[0];
+		moveItem.Value2 = args[1];
+		moveItem.EventType = EventType::MoveInvSlot;
+		moveItem.Size = sizeof(Event);
+		mEventBuffer.AddEvent((uint8_t*)&moveItem, sizeof(moveItem));
+		return;
+	}
+
+	void JSBridge::RequestAction(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+
+		SingleIntEvent requestActionEvent;
+		requestActionEvent.Value = args[0];
+		requestActionEvent.EventType = EventType::RequestAction;
+		requestActionEvent.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&requestActionEvent, sizeof(requestActionEvent));
+		return;
+	}
+
+	void JSBridge::UseKey(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+
+		SingleIntEvent requestActionEvent;
+		requestActionEvent.Value = args[0];
+		requestActionEvent.EventType = EventType::UseKey;
+		requestActionEvent.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&requestActionEvent, sizeof(requestActionEvent));
+		return;
+	}
+
+	void JSBridge::MoveSpellSlot(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return;
+		}
+		DoubleIntEvent requestMoveSpellSlot;
+		requestMoveSpellSlot.Value1 = args[0];
+		requestMoveSpellSlot.Value2 = args[1];
+		requestMoveSpellSlot.EventType = EventType::MoveSpellSlot;
+		requestMoveSpellSlot.Size = sizeof(requestMoveSpellSlot);
+		mEventBuffer.AddEvent((uint8_t*)&requestMoveSpellSlot, sizeof(requestMoveSpellSlot));
+	}
+
+	void JSBridge::DeleteItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+		SingleIntEvent evtData;
+		evtData.Value = args[0];
+		evtData.EventType = EventType::DeleteItem;
+		evtData.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&evtData, sizeof(evtData));
+	}
+
+	void JSBridge::UpdateOpenDialog(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+
+		SingleBoolEvent updateInputFocus;
+		updateInputFocus.Value = args[0];
+		updateInputFocus.EventType = EventType::UpdateOpenDialog;
+		updateInputFocus.Size = sizeof(SingleBoolEvent);
+		mEventBuffer.AddEvent((uint8_t*)&updateInputFocus, sizeof(updateInputFocus));
+		return;
 	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
@@ -786,6 +1300,515 @@ namespace Babel
 				size_t num_args = 0;
 				JSValueRef exception = 0;
 				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0, num_args, nullptr, &exception);
+			}
+		}
+	}
+	void JSBridge::UpdateStats(const UserStats& userStats)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.UpdateUserStats"));
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			// Cast 'func' to an Object, will return null if typecast failed.
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+
+			// Check if 'funcObj' is a Function and not null
+			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
+
+				// Create a JS string from null-terminated UTF8 C-string, store it
+				// in a smart pointer to release it when it goes out of scope.
+
+				JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+				SetObjectNumber(ctx, ret, "maxHp", userStats.MaxHp);
+				SetObjectNumber(ctx, ret, "minHp", userStats.MinHp);
+				SetObjectNumber(ctx, ret, "hpShield", userStats.HpShield);
+				SetObjectNumber(ctx, ret, "maxMan", userStats.MaxMAN);
+				SetObjectNumber(ctx, ret, "minMan", userStats.MinMAN);
+				SetObjectNumber(ctx, ret, "maxSta", userStats.MaxSTA);
+				SetObjectNumber(ctx, ret, "minSta", userStats.MinSTA);
+				SetObjectNumber(ctx, ret, "maxAgu", userStats.MaxAGU);
+				SetObjectNumber(ctx, ret, "minAgu", userStats.MinAGU);
+				SetObjectNumber(ctx, ret, "maxHam", userStats.MaxHAM);
+				SetObjectNumber(ctx, ret, "minHam", userStats.MinHAM);
+				SetObjectNumber(ctx, ret, "gold", userStats.GLD);
+				SetObjectNumber(ctx, ret, "level", userStats.Lvl);
+				SetObjectNumber(ctx, ret, "class", userStats.Class);
+				SetObjectNumber(ctx, ret, "gender", userStats.Gender);
+				SetObjectNumber(ctx, ret, "race", userStats.Race);
+				SetObjectNumber(ctx, ret, "home", userStats.Home);
+				SetObjectNumber(ctx, ret, "nextLevel", userStats.NextLevel);
+				SetObjectNumber(ctx, ret, "exp", userStats.Exp);
+				SetObjectNumber(ctx, ret, "status", userStats.Status);
+				const JSValueRef args[] = { ret };
+				size_t num_args = 1;
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+					num_args, args,
+					&exception);
+			}
+		}
+	}
+	void JSBridge::UpdateUserName(const std::string& name)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.SetUserName"));
+
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
+				JSRetainPtr<JSStringRef> msg =
+					adopt(JSStringCreateWithUTF8CString(name.c_str()));
+				const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()) };
+				size_t num_args = 1;
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+					num_args, args,
+					&exception);
+			}
+		}
+	}
+	void JSBridge::SendChatMessage(const std::string& sender, const Color& senderColor, const std::string& text, const Color& textColor, uint8_t textStyle)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.PostChatMsg"));
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			// Cast 'func' to an Object, will return null if typecast failed.
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+
+			// Check if 'funcObj' is a Function and not null
+			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
+
+				// Create a JS string from null-terminated UTF8 C-string, store it
+				// in a smart pointer to release it when it goes out of scope.
+
+				JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+
+				JSObjectRef senderColorObj = JSObjectMake(ctx, nullptr, nullptr);
+				SetObjectString(ctx, ret, "sender", ascii_to_utf8(sender).c_str());
+				SetColorObject(ctx, senderColorObj, senderColor);
+				SetChildObject(ctx, ret, "senderColor", senderColorObj);
+				
+				SetObjectString(ctx, ret, "text", ascii_to_utf8(text).c_str());
+				JSObjectRef textColorObj = JSObjectMake(ctx, nullptr, nullptr);
+				SetColorObject(ctx, textColorObj, textColor);
+				SetChildObject(ctx, ret, "textColor", textColorObj);
+				SetObjectNumber(ctx, ret, "textStyle", textStyle);
+				SetObjectBoolean(ctx, ret, "italic", (textStyle & (uint8_t)Babel::eTextFormatMask::eItalic) > 0);
+				SetObjectBoolean(ctx, ret, "bold", (textStyle & (uint8_t)Babel::eTextFormatMask::eBold) > 0);
+
+				const JSValueRef args[] = { ret };
+				size_t num_args = 1;
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+					num_args, args,
+					&exception);
+			}
+		}
+	}
+	void JSBridge::UpdateFps(int Fps)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.UpdateFps"));
+
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+			if (funcObj && JSObjectIsFunction(ctx, funcObj))
+			{
+				const JSValueRef args[] = { JSValueMakeNumber(ctx, Fps) };
+				size_t num_args = 1;
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+					num_args, args,
+					&exception);
+			}
+		}
+	}
+	void JSBridge::UpdateInvLevel(int level)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.SetInventoryLevel"));
+
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+			if (funcObj && JSObjectIsFunction(ctx, funcObj))
+			{
+				const JSValueRef args[] = { JSValueMakeNumber(ctx, level) };
+				size_t num_args = 1;
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+					num_args, args,
+					&exception);
+			}
+		}
+	}
+	void JSBridge::UpdateInvSlot(const std::string& objName, const std::string& objDesc, const Babel::UpdateInvSlot& slotInfo)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.UpdateInvSlot"));
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			// Cast 'func' to an Object, will return null if typecast failed.
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+
+			// Check if 'funcObj' is a Function and not null
+			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
+
+				// Create a JS string from null-terminated UTF8 C-string, store it
+				// in a smart pointer to release it when it goes out of scope.
+
+				JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+
+				JSObjectRef senderColorObj = JSObjectMake(ctx, nullptr, nullptr);
+				SetObjectString(ctx, ret, "name", ascii_to_utf8(objName).c_str());
+				SetObjectString(ctx, ret, "description", ascii_to_utf8(objDesc).c_str());
+				SetObjectNumber(ctx, ret, "count", slotInfo.Amount);
+				SetObjectBoolean(ctx, ret, "canUse", slotInfo.CanUse > 0);
+				SetObjectBoolean(ctx, ret, "equipped", slotInfo.Equipped > 0);
+				SetObjectNumber(ctx, ret, "grh", slotInfo.GrhIndex);
+				SetObjectNumber(ctx, ret, "maxDef", slotInfo.MaxDef);
+				SetObjectNumber(ctx, ret, "minDef", slotInfo.MinDef);
+				SetObjectNumber(ctx, ret, "maxHit", slotInfo.MaxHit);
+				SetObjectNumber(ctx, ret, "minHit", slotInfo.MinHit);
+				SetObjectNumber(ctx, ret, "objIndex", slotInfo.ObjIndex);
+				SetObjectNumber(ctx, ret, "index", slotInfo.Slot);
+				SetObjectNumber(ctx, ret, "type", slotInfo.ObjType);
+				SetObjectNumber(ctx, ret, "value", slotInfo.Value);
+				SetObjectNumber(ctx, ret, "cooldown", slotInfo.Cooldown);
+				SetObjectNumber(ctx, ret, "cdType", slotInfo.CDType);
+				SetObjectNumber(ctx, ret, "cdMask", slotInfo.CDMask);
+				SetObjectNumber(ctx, ret, "amunition", slotInfo.Amunition);
+
+				const JSValueRef args[] = { ret };
+				size_t num_args = 1;
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+					num_args, args,
+					&exception);
+			}
+		}
+	}
+	void JSBridge::UpdateSpellSlot(const std::string& objName, const Babel::UpdateSpellSlot& slotInfo)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.UpdateSpellSlot"));
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			// Cast 'func' to an Object, will return null if typecast failed.
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+
+			// Check if 'funcObj' is a Function and not null
+			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
+
+				// Create a JS string from null-terminated UTF8 C-string, store it
+				// in a smart pointer to release it when it goes out of scope.
+
+				JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+
+				JSObjectRef senderColorObj = JSObjectMake(ctx, nullptr, nullptr);
+				SetObjectString(ctx, ret, "name", ascii_to_utf8(objName).c_str());
+				SetObjectNumber(ctx, ret, "index", slotInfo.Slot);
+				SetObjectNumber(ctx, ret, "spellIndex", slotInfo.SpellIndex);
+				SetObjectNumber(ctx, ret, "grh", slotInfo.IconIndex);
+				SetObjectNumber(ctx, ret, "cooldown", slotInfo.Cooldown);
+
+				const JSValueRef args[] = { ret };
+				size_t num_args = 1;
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+					num_args, args,
+					&exception);
+			}
+		}
+	}
+	void JSBridge::UpdateHp(int32_t newHp, int32_t newShield)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+		SetObjectNumber(ctx, ret, "hp", newHp);
+		SetObjectNumber(ctx, ret, "shield", newShield);
+		const JSValueRef args[] = { ret };
+		CallJsFunction(ctx, "APicallbacks.UpdateHp", args, 1);
+	}
+
+	void JSBridge::UpdateMana(int32_t newMana)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, newMana) };
+		CallJsFunction(ctx, "APicallbacks.UpdateMana", args, 1);
+	}
+	void JSBridge::UpdateStamina(int32_t newStamina)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, newStamina) };
+		CallJsFunction(ctx, "APicallbacks.UpdateStamina", args, 1);
+	}
+	void JSBridge::UpdateDrink(int32_t newDrink)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, newDrink) };
+		CallJsFunction(ctx, "APicallbacks.UpdateDrink", args, 1);
+	}
+	void JSBridge::UpdateFood(int32_t newFood)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, newFood) };
+		CallJsFunction(ctx, "APicallbacks.UpdateFood", args, 1);
+	}
+
+	void JSBridge::UpdateGold(int32_t newGold)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, newGold) };
+		CallJsFunction(ctx, "APicallbacks.UpdateGold", args, 1);
+	}
+
+	void JSBridge::UpdateExp(int32_t current, int32_t maxExp)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, current),
+									JSValueMakeNumber(ctx, maxExp) };
+		CallJsFunction(ctx, "APicallbacks.UpdateExp", args, 2);
+	}
+
+	void JSBridge::OpenChat(int32_t mode)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, mode) };
+		CallJsFunction(ctx, "APicallbacks.OpenChat", args, 1);
+	}
+
+	void JSBridge::UpdateStrAndAgi(const UpdateAgiAndStr& updatedInfo)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, updatedInfo.Str),
+									JSValueMakeNumber(ctx, updatedInfo.Agi),
+									JSValueMakeNumber(ctx, updatedInfo.StrState),
+									JSValueMakeNumber(ctx, updatedInfo.AgiState) };
+		CallJsFunction(ctx, "APicallbacks.UpdateStrAndAgi", args, 4);
+	}
+
+	void JSBridge::UpdateMapName(int32_t mapNumber, const std::string& mapName, int32_t isSafe)
+	{
+		
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> msg =
+			adopt(JSStringCreateWithUTF8CString(mapName.c_str()));
+		const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()),
+									JSValueMakeNumber(ctx, mapNumber),
+									JSValueMakeBoolean(ctx, isSafe > 0)};
+		CallJsFunction(ctx, "APicallbacks.UpdateMapNumber", args, 3);
+	}
+
+	void JSBridge::UpdateMapNpc(int32_t npcCount, const Babel::QuestNpc* npcList)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		std::vector<JSObjectRef> NpcList;
+		NpcList.resize(npcCount);
+		for (int i = 0; i < npcCount; i++)
+		{
+			NpcList[i] = JSObjectMake(ctx, nullptr, nullptr);
+			JSObjectRef pos = JSObjectMake(ctx, nullptr, nullptr);
+			SetObjectNumber(ctx, pos, "tileX", npcList[i].Position.TileX);
+			SetObjectNumber(ctx, pos, "tileY", npcList[i].Position.TileY);
+			SetChildObject(ctx, NpcList[i], "position", pos);
+			SetObjectNumber(ctx, NpcList[i], "npcNumber", npcList[i].NpcNumber);
+			SetObjectNumber(ctx, NpcList[i], "state", npcList[i].State);
+		}
+		JSObjectRef jsArray = JSObjectMakeArray(ctx, npcCount, NpcList.data(),0);
+		const JSValueRef args[] = { jsArray };
+		CallJsFunction(ctx, "APicallbacks.UpdateMapNpc", args, 1);
+	}
+
+	void JSBridge::UpdateUserPos(const Babel::UpdateUserPosEvt& updatePos)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, updatePos.TileX),
+									JSValueMakeNumber(ctx, updatePos.TileY),
+									JSValueMakeNumber(ctx, updatePos.MapPos.TileX),
+									JSValueMakeNumber(ctx, updatePos.MapPos.TileY) };
+		CallJsFunction(ctx, "APicallbacks.UpdatePlayerCoord", args, 4);
+	}
+
+	void JSBridge::UpdateGroupMemberPos(const Babel::UpdateGroupMemberPosEvt& memberPos)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, memberPos.MapPos.TileX),
+									JSValueMakeNumber(ctx, memberPos.MapPos.TileY),
+									JSValueMakeNumber(ctx, memberPos.GroupIndex)};
+		CallJsFunction(ctx, "APicallbacks.UpdateGroupMarker", args, 3);
+	}
+
+	void JSBridge::UpdateKeySlot(const std::string& objName, const std::string& objDesc, const Babel::UpdateInvSlot& slotInfo)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+		SetObjectString(ctx, ret, "name", ascii_to_utf8(objName).c_str());
+		SetObjectString(ctx, ret, "description", ascii_to_utf8(objDesc).c_str());
+		SetObjectNumber(ctx, ret, "count", slotInfo.Amount);
+		SetObjectBoolean(ctx, ret, "canUse", slotInfo.CanUse > 0);
+		SetObjectBoolean(ctx, ret, "equipped", slotInfo.Equipped > 0);
+		SetObjectNumber(ctx, ret, "grh", slotInfo.GrhIndex);
+		SetObjectNumber(ctx, ret, "maxDef", slotInfo.MaxDef);
+		SetObjectNumber(ctx, ret, "minDef", slotInfo.MinDef);
+		SetObjectNumber(ctx, ret, "maxHit", slotInfo.MaxHit);
+		SetObjectNumber(ctx, ret, "minHit", slotInfo.MinHit);
+		SetObjectNumber(ctx, ret, "objIndex", slotInfo.ObjIndex);
+		SetObjectNumber(ctx, ret, "index", slotInfo.Slot);
+		SetObjectNumber(ctx, ret, "type", slotInfo.ObjType);
+		SetObjectNumber(ctx, ret, "value", slotInfo.Value);
+		SetObjectNumber(ctx, ret, "cooldown", slotInfo.Cooldown);
+		SetObjectNumber(ctx, ret, "cdType", slotInfo.CDType);
+		SetObjectNumber(ctx, ret, "cdMask", slotInfo.CDMask);
+
+		const JSValueRef args[] = { ret };
+		CallJsFunction(ctx, "APicallbacks.UpdateKeySlot", args, 1);
+	}
+
+	void JSBridge::UpdateInterval(const Intervals& intervals)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+		SetObjectNumber(ctx, ret, "bow", intervals.Bow);
+		SetObjectNumber(ctx, ret, "hit", intervals.Hit);
+		SetObjectNumber(ctx, ret, "magic", intervals.Magic);
+		SetObjectNumber(ctx, ret, "buildWork", intervals.BuildWork);
+		SetObjectNumber(ctx, ret, "dropItem", intervals.DropItem);
+		SetObjectNumber(ctx, ret, "extractWork", intervals.ExtractWork);
+		SetObjectNumber(ctx, ret, "hitMagic", intervals.HitMagic);
+		SetObjectNumber(ctx, ret, "hitUseItem", intervals.HitUseItem);
+		SetObjectNumber(ctx, ret, "magicHit", intervals.MagicHit);
+		SetObjectNumber(ctx, ret, "useItemClick", intervals.UseItemClick);
+		SetObjectNumber(ctx, ret, "useItemKey", intervals.UseItemKey);
+		SetObjectNumber(ctx, ret, "walk", intervals.Walk);
+
+		const JSValueRef args[] = { ret };
+		CallJsFunction(ctx, "APicallbacks.UpdateIntervals", args, 1);
+	}
+
+	void JSBridge::StartInterval(int32_t intervalType, int64_t timestamp)
+	{
+		using namespace std::chrono;
+		int64_t currentTimestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, intervalType),
+									JSValueMakeNumber(ctx, currentTimestamp - timestamp)};
+		CallJsFunction(ctx, "APicallbacks.StartInterval", args, 2);
+	}
+
+	void JSBridge::UpdatesafeState(int32_t type, int32_t state)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, type),
+									JSValueMakeBoolean(ctx, state > 0)};
+		CallJsFunction(ctx, "APicallbacks.UpdateLockState", args, 2);
+	}
+
+	void JSBridge::UpdateOnlines(int32_t onlines)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, onlines) };
+		CallJsFunction(ctx, "APicallbacks.UpdateOnlines", args, 1);
+	}
+
+	void JSBridge::UpdateGameTime(int32_t hour, int32_t minutes)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, hour), 
+									JSValueMakeNumber(ctx, minutes)};
+		CallJsFunction(ctx, "APicallbacks.UpdateGameTime", args, 2);
+	}
+
+	void JSBridge::UpdateIsGameMaster(int32_t state)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeBoolean(ctx, state > 0)};
+		CallJsFunction(ctx, "APicallbacks.UpdateIsGameGaster", args, 1);
+	}
+
+	void JSBridge::UpdateMagicResistance(int32_t value)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, value) };
+		CallJsFunction(ctx, "APicallbacks.UpdateMagicResistance", args, 1);
+	}
+
+	void JSBridge::UpdateMagicAttack(int32_t value)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, value) };
+		CallJsFunction(ctx, "APicallbacks.UpdateMagicAttack", args, 1);
+	}
+
+	void JSBridge::UpdateWhisperTarget(const std::string& target)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> msg =
+			adopt(JSStringCreateWithUTF8CString(target.c_str()));
+		const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()) };
+		CallJsFunction(ctx, "APicallbacks.SetWhisperTarget", args, 1);
+	}
+
+	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)
+	{
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString(functionName));
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+					argCount, args,
+					&exception);
 			}
 		}
 	}

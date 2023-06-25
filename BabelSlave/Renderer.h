@@ -37,6 +37,7 @@ namespace Babel
 		ultralight::BitmapSurface* GetSurface();
 		ultralight::BitmapSurface* GetInspectorSurface();
 		void SendMouseEvent(int mouseX, int mouseY, uint8_t evtType, uint8_t button);
+		void SendScrollEvent(int scrollAmount);
 		void SendInpectorMouseEvent(int mouseX, int mouseY, uint8_t evtType, uint8_t button);
 		void EnableInspector(int width, int height);
 		void SendKeyEvent(ultralight::KeyEvent& evt, bool isInspectorEvent);

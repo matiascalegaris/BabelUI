@@ -153,6 +153,11 @@ namespace Babel
         mView->FireMouseEvent(mouseEvent);
     }
 
+    void Renderer::SendScrollEvent(int scrollAmount)
+    {
+        mView->FireScrollEvent({ ScrollEvent::kType_ScrollByPixel, 0, scrollAmount });
+    }
+
     void Renderer::SendInpectorMouseEvent(int mouseX, int mouseY, uint8_t evtType, uint8_t button)
     {
         if (!mInspectorView) return;

@@ -7,6 +7,7 @@ extern "C"
 	LIBRARY_API bool InitializeBabel(void* settings);
 	LIBRARY_API bool GetImageBuffer(char* buffer, int size);
 	LIBRARY_API void _stdcall SendMouseEvent(int mouseX, int mouseY, int type, int buttonState);
+	LIBRARY_API void _stdcall SendScrollEvent(int direction);
 	LIBRARY_API void _stdcall SendKeyEvent(int16_t keyCode, bool shift, int type, bool capsState, bool inspector);
 	LIBRARY_API void _stdcall RegisterCallbacks(int loginCallback, int closeClient, int createAccount, int setHost, int ValidateCode, int resendValidationCode,
 												int requestPasswordReset, int newPasswordRequest, int selectCharacter, int loginCharacter, int returnToLogin, int createCharacter,
@@ -29,5 +30,35 @@ extern "C"
 
 	LIBRARY_API uint32_t _stdcall GetTelemetry(const char* str, const uint8_t* data, uint32_t maxSize);
 	
-
+	//GameplayInterface
+	LIBRARY_API void _stdcall SetUserStats(void* userStats);
+	LIBRARY_API void _stdcall SetUserName(const char* name);
+	LIBRARY_API void _stdcall SendChatMessage(void* messageData);
+	LIBRARY_API void _stdcall RegisterGameplayCallbacks(void* gameplayCallbacks);
+	LIBRARY_API void _stdcall UpdateFps(int Fps);
+	LIBRARY_API void _stdcall SetInventoryLevel(int Level);
+	LIBRARY_API void _stdcall SetInvSlot(void* invData);
+	LIBRARY_API void _stdcall SetSpellSlot(void* spellData);
+	LIBRARY_API void _stdcall UpdateHpValue(int32_t newHp, int32_t newShield);
+	LIBRARY_API void _stdcall UpdateManaValue(int32_t newMana);
+	LIBRARY_API void _stdcall UpdateStaminaValue(int32_t newMana);
+	LIBRARY_API void _stdcall UpdateDrinkValue(int32_t newMana);
+	LIBRARY_API void _stdcall UpdateFoodValue(int32_t newMana);
+	LIBRARY_API void _stdcall UpdateGold(int32_t gold);
+	LIBRARY_API void _stdcall UpdateExp(int32_t current, int32_t target);
+	LIBRARY_API void _stdcall OpenChat(int32_t mode);
+	LIBRARY_API void _stdcall UpdateStrAndAgiBuff(uint8_t str, uint8_t agi, uint8_t strState, uint8_t agiState);
+	LIBRARY_API void _stdcall UpdateMapInfo(int32_t mapNumber, const char * mapName, int16_t npcCount, void* npcList, uint8_t isSafeMap);
+	LIBRARY_API void _stdcall UpdateUserPos(int16_t PosX, int16_t PosY, void *mapPos);
+	LIBRARY_API void _stdcall UpdateGroupPos(void* mapPos, int16_t groupIndex);
+	LIBRARY_API void _stdcall SetKeySlot(void* slotData);
+	LIBRARY_API void _stdcall UpdateIntervals(void* slotData);
+	LIBRARY_API void _stdcall ActivateInterval(int32_t intervalType);
+	LIBRARY_API void _stdcall SetSafeState(int32_t type, int32_t state);
+	LIBRARY_API void _stdcall UpdateOnlines(int32_t newValue);
+	LIBRARY_API void _stdcall UpdateGameTime(int32_t hour, int32_t minutes);
+	LIBRARY_API void _stdcall UpdateIsGameMaster(int32_t state);
+	LIBRARY_API void _stdcall UpdateMagicResistance(int32_t value);
+	LIBRARY_API void _stdcall UpdateMagicAttack(int32_t value);
+	LIBRARY_API void _stdcall SetWhisperTarget(const char* userName);
 }

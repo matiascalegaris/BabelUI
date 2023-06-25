@@ -24,6 +24,7 @@ namespace Babel
 
 		void CheckIncommingMessages();
 		void SetCallbacks(const CallbacksList& callbacks) { mVBCallbacks = callbacks;  }
+		void SetGameplayCallbacks(const GameplayCallbacks& callbacks) { mGameplayVBcallbacks = callbacks; }
 
 	public:
 		void SetActiveScreen(const char* name);
@@ -38,6 +39,7 @@ namespace Babel
 		std::unique_ptr<SharedMemory> mDebugSharedMemory;
 		std::unique_ptr<SyncData> mDebugSyncData;
 		CallbacksList mVBCallbacks;
+		GameplayCallbacks mGameplayVBcallbacks;
 		std::string mSharedMemName;
 	};
 }

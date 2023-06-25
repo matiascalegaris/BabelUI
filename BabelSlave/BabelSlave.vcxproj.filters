@@ -120,5 +120,11 @@
     <ClInclude Include="JSBridge.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\SharedMemory\Events\GameplayEvents.hpp">
+      <Filter>Source Files\SharedMemory\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonDefines.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

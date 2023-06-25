@@ -181,9 +181,11 @@
     <ClCompile Include="Utils\StringUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\CommonDefines.hpp" />
     <ClInclude Include="..\Core\Logger.hpp" />
     <ClInclude Include="..\SharedMemory\EventBuffer.hpp" />
     <ClInclude Include="..\SharedMemory\Events\EventHandler.hpp" />
+    <ClInclude Include="..\SharedMemory\Events\GameplayEvents.hpp" />
     <ClInclude Include="..\SharedMemory\SharedMemory.h" />
     <ClInclude Include="..\SharedMemory\SyncData.h" />
     <ClInclude Include="AoResources\Compresor.hpp" />

@@ -42,9 +42,6 @@
     <ClInclude Include="SharedMemory\EventBuffer.hpp">
       <Filter>Source Files\SharedMemory</Filter>
     </ClInclude>
-    <ClInclude Include="SharedMemory\Events\EventHandler.h">
-      <Filter>Source Files\SharedMemory\Events</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Logger.hpp">
       <Filter>Source Files\Core</Filter>
     </ClInclude>

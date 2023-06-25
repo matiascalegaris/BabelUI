@@ -64,7 +64,14 @@ namespace Babel
 		int32_t totalSize = 0;
 		for (size_t i = 0; i < result.size(); i++)
 		{
-			result[i].Size = strnlen(result[i].StartPos, maxSize);
+			if (result[i].StartPos != nullptr) 
+			{
+				result[i].Size = strnlen(result[i].StartPos, maxSize);
+			}
+			else
+			{
+				result[i].Size = 0;
+			}	
 			totalSize += result[i].Size + sizeof(int32_t);
 		}
 		return totalSize;

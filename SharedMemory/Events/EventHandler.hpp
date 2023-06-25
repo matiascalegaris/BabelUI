@@ -33,7 +33,53 @@ namespace Babel
 		RequestDeleteCode,
 		RemoveCharacterFromList,
 		ConfirmDeleteCharacter,
-		RequestTransferCharacter
+		RequestTransferCharacter,
+		UpdateCharacterStats,
+		SetUserName,
+		SendChatMessage, // send chat info from vb to the message list
+		SendConsoleMsgToVB, // send user input from chat input
+		ShowVBDialog, // to display vb dialog by name
+		UpdateFps,
+		SetInvLevel, //configures bonus slot in invetory
+		UpdateInvSlot, // vb update inventory slot info
+		UpdateSpellSlot,
+		SelectInvSlot, //js select an item from inventory
+		UseInvSlot,
+		SelectSpellSlot,
+		UseSpellSlot,
+		UpdateInputFocus, // informs vb we have input focus so we don't move while writting
+		SendScrollEvent,
+		UpdateHp,
+		UpdateMana,
+		UpdateStamina,
+		UpdateDrink,
+		UpdateFood,
+		UpdateGold,
+		UpdateExp,
+		ClickLink,
+		ClickGold,
+		OpenChat,
+		UpdateStrAndAgi,
+		UpdateMapName,
+		UpdateMapNpc,
+		UpdateUserPos,
+		UpdateGroupMemberPos,
+		MoveInvSlot,
+		RequestAction,
+		UpdateKeySlot,
+		UseKey,
+		UpdateIntervals,
+		StartInterval,
+		MoveSpellSlot,
+		UpdateSafeState,
+		DeleteItem,
+		UpdateOnlines,
+		UpdateGameTime,
+		UpdateIsGameMaster,
+		UpdateMagicResistance,
+		UpdateMagicAttack,
+		UpdateOpenDialog,
+		SetWhisperTarget
 	};
 
 	struct Event
@@ -131,6 +177,21 @@ namespace Babel
 		int Race;
 		int Class;
 		int HomeCity;
+	};
+
+	struct SingleIntEvent : public Event
+	{
+		int Value;
+	};
+	struct DoubleIntEvent : public Event
+	{
+		int Value1;
+		int Value2;
+	};
+
+	struct SingleBoolEvent : public Event
+	{
+		bool Value;
 	};
 
 	struct StringInBuffer

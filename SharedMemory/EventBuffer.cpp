@@ -53,8 +53,11 @@ namespace Babel
 			{
 				CopyMemory(writePos, &extraData[i].Size, sizeof(int32_t));
 				writePos += sizeof(int32_t);
-				CopyMemory(writePos, (void*)extraData[i].StartPos, extraData[i].Size);
-				writePos += extraData[i].Size;
+				if (extraData[i].Size > 0)
+				{
+					CopyMemory(writePos, (void*)extraData[i].StartPos, extraData[i].Size);
+					writePos += extraData[i].Size;
+				}				
 			}
 			int32_t writedData = writePos - (char*)dest;
 			return writedData;
