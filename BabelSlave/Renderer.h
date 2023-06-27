@@ -43,6 +43,7 @@ namespace Babel
 		void SendKeyEvent(ultralight::KeyEvent& evt, bool isInspectorEvent);
 		void SetCommunicator(JSBridge* communicator) { mCommunicator = communicator; }
 		ultralight::RefPtr<ultralight::View>& GetMainView() { return mView; }
+
 	private:
 		ultralight::RefPtr<ultralight::Renderer> mRender;
 		ultralight::RefPtr<ultralight::View> mView;

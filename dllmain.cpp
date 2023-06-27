@@ -279,7 +279,7 @@ void _stdcall SetInvSlot(void* invData)
 	slotMessage.GrhIndex = invDataPtr->GrhIndex;
 	slotMessage.ObjType = invDataPtr->ObjType;
 	slotMessage.Equipped = invDataPtr->Equipped;
-	slotMessage.CanUse = invDataPtr->CanUse;
+	slotMessage.CantUse = invDataPtr->CantUse;
 	slotMessage.Amount = invDataPtr->Amount;
 	slotMessage.MinHit = invDataPtr->MinHit;
 	slotMessage.MaxHit = invDataPtr->MaxHit;
@@ -456,7 +456,7 @@ void _stdcall SetKeySlot(void* slotData)
 	Babel::InvItem* invDataPtr = static_cast<Babel::InvItem*>(slotData);
 	Babel::UpdateInvSlot slotMessage;
 	slotMessage.Amount = invDataPtr->Amount;
-	slotMessage.CanUse = invDataPtr->CanUse;
+	slotMessage.CantUse = invDataPtr->CantUse;
 	slotMessage.Equipped = invDataPtr->Equipped;
 	slotMessage.GrhIndex = invDataPtr->GrhIndex;
 	slotMessage.ObjType = invDataPtr->ObjType;
@@ -563,6 +563,16 @@ void _stdcall SetWhisperTarget(const char* userName)
 	evtData.EventType = Babel::EventType::SetWhisperTarget;
 	std::vector<Babel::StringInBuffer> strInfo(1);
 	strInfo[0].StartPos = userName;
+	evtData.Size = sizeof(evtData) + PrepareDynamicStrings(strInfo);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evtData, sizeof(evtData), strInfo);
+}
+
+void _stdcall PasteText(const char* text)
+{
+	Babel::Event evtData;
+	evtData.EventType = Babel::EventType::PasteText;
+	std::vector<Babel::StringInBuffer> strInfo(1);
+	strInfo[0].StartPos = text;
 	evtData.Size = sizeof(evtData) + PrepareDynamicStrings(strInfo);
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evtData, sizeof(evtData), strInfo);
 }

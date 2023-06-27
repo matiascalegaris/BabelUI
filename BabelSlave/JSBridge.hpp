@@ -55,6 +55,8 @@ namespace Babel
 		void MoveSpellSlot(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void DeleteItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void UpdateOpenDialog(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue GetSpellInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue GetItemInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
@@ -96,6 +98,7 @@ namespace Babel
 		void UpdateMagicResistance(int32_t value);
 		void UpdateMagicAttack(int32_t value);
 		void UpdateWhisperTarget(const std::string& target);
+		void HandleTextPaste(const std::string& data);
 	private:
 		void CallJsFunction(JSContextRef& context, const char* functionName, const JSValueRef* args, int argCount);
 		EventBuffer& mEventBuffer;

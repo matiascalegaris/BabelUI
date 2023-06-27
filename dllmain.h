@@ -61,4 +61,5 @@ extern "C"
 	LIBRARY_API void _stdcall UpdateMagicResistance(int32_t value);
 	LIBRARY_API void _stdcall UpdateMagicAttack(int32_t value);
 	LIBRARY_API void _stdcall SetWhisperTarget(const char* userName);
+	LIBRARY_API void _stdcall PasteText(const char* text);
 }

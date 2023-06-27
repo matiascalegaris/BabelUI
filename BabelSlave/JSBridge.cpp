@@ -86,6 +86,52 @@ namespace Babel
 			SetObjectNumber(ctx, objectRef, "height", grhData.EndPos.Y);
 		}
 
+		void SetSpellObject(JSContextRef& ctx, JSObjectRef& objectRef, const AO::SpellData& spellData)
+		{
+			SetObjectString(ctx, objectRef, "name", ascii_to_utf8(spellData.Name).c_str());
+			SetObjectString(ctx, objectRef, "description", ascii_to_utf8(spellData.Description).c_str());
+			SetObjectNumber(ctx, objectRef, "cooldown", spellData.Cooldown);
+			SetObjectNumber(ctx, objectRef, "iconIndex", spellData.IconIndex);
+			SetObjectNumber(ctx, objectRef, "requiredMana", spellData.RequiredMana);
+			SetObjectNumber(ctx, objectRef, "requiredSkill", spellData.RequiredSkill);
+			SetObjectNumber(ctx, objectRef, "requiredStamina", spellData.RequiredStamina);
+		}
+
+		void SetObjectInfo(JSContextRef& ctx, JSObjectRef& objectRef, const AO::ObjectData& objData)
+		{
+			SetObjectString(ctx, objectRef, "name", ascii_to_utf8(objData.Name).c_str());
+			SetObjectNumber(ctx, objectRef, "grhIndex", objData.grhindex);
+			SetObjectNumber(ctx, objectRef, "cooldown", objData.Cooldown);
+			SetObjectNumber(ctx, objectRef, "minDef", objData.MinDef);
+			SetObjectNumber(ctx, objectRef, "maxDef", objData.MaxDef);
+			SetObjectNumber(ctx, objectRef, "minHit", objData.MinHit);
+			SetObjectNumber(ctx, objectRef, "maxHit", objData.MaxHit);
+			SetObjectNumber(ctx, objectRef, "objType", objData.ObjType);
+			SetObjectString(ctx, objectRef, "createsLight", ascii_to_utf8(objData.CreatesLight).c_str());
+			SetObjectNumber(ctx, objectRef, "reatesGRH", objData.CreateFloorParticle);
+			SetObjectString(ctx, objectRef, "createsLight", ascii_to_utf8(objData.CreatesGRH).c_str());
+			SetObjectNumber(ctx, objectRef, "roots", objData.Roots);
+			SetObjectNumber(ctx, objectRef, "wood", objData.Wood);
+			SetObjectNumber(ctx, objectRef, "elvenWood", objData.ElvenWood);
+			SetObjectNumber(ctx, objectRef, "wolfSkin", objData.WolfSkin);
+			SetObjectNumber(ctx, objectRef, "brownBearSkin", objData.BrownBearSkin);
+			SetObjectNumber(ctx, objectRef, "polarBearSkin", objData.PolarBearSkin);
+			SetObjectNumber(ctx, objectRef, "lingH", objData.LingH);
+			SetObjectNumber(ctx, objectRef, "lingP", objData.LingP);
+			SetObjectNumber(ctx, objectRef, "lingO", objData.LingO);
+			SetObjectNumber(ctx, objectRef, "destroy", objData.Destroy);
+			SetObjectNumber(ctx, objectRef, "projectile", objData.Projectile);
+			SetObjectNumber(ctx, objectRef, "ammunition", objData.Ammunition);
+			SetObjectNumber(ctx, objectRef, "blacksmithingSkill", objData.BlacksmithingSkill);
+			SetObjectNumber(ctx, objectRef, "potionSkill", objData.PotionSkill);
+			SetObjectNumber(ctx, objectRef, "tailoringSkill", objData.TailoringSkill);
+			SetObjectNumber(ctx, objectRef, "value", objData.Value);			
+			SetObjectNumber(ctx, objectRef, "grabbable", objData.Grabbable);
+			SetObjectNumber(ctx, objectRef, "Key", objData.Key);
+			SetObjectNumber(ctx, objectRef, "cdType", objData.CdType);
+			SetObjectNumber(ctx, objectRef, "spellIndex", objData.SpellIndex);
+		}
+
 		void SetColorObject(JSContextRef& ctx, JSObjectRef& objectRef, const Babel::Color& colorData)
 		{
 			SetObjectNumber(ctx, objectRef, "R", colorData.R);
@@ -138,7 +184,9 @@ namespace Babel
 		Api["UseKeySlotIndex"] = BindJSCallback(&JSBridge::UseKey);
 		Api["MoveSpellSlot"] = BindJSCallback(&JSBridge::MoveSpellSlot);
 		Api["DeleteItem"] = BindJSCallback(&JSBridge::DeleteItem);
-		Api["UpdateOpenDialog"] = BindJSCallback(&JSBridge::UpdateOpenDialog);	
+		Api["UpdateOpenDialog"] = BindJSCallback(&JSBridge::UpdateOpenDialog);
+		Api["GetSpellInfo"] = BindJSCallbackWithRetval(&JSBridge::GetSpellInfo);
+		Api["GetItemInfo"] = BindJSCallbackWithRetval(&JSBridge::GetItemInfo);
 		
 		global["BabelUI"] = JSValue(Api);
 	}
@@ -449,6 +497,17 @@ namespace Babel
 				assert(size == eventData.Size);
 				std::string targetName(strInfo[0].StartPos, strInfo[0].Size);
 				UpdateWhisperTarget(targetName);
+				break;
+			}
+			case EventType::PasteText:
+			{
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(1);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::Event), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == eventData.Size);
+				std::string pasteData(strInfo[0].StartPos, strInfo[0].Size);
+				HandleTextPaste(pasteData);
 				break;
 			}
 			default:
@@ -1081,6 +1140,40 @@ namespace Babel
 		mEventBuffer.AddEvent((uint8_t*)&updateInputFocus, sizeof(updateInputFocus));
 		return;
 	}
+
+	ultralight::JSValue JSBridge::GetSpellInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return "invalid params";
+		}
+
+		AO::SpellData spellInfo;
+
+		mResources->GetSpellDetails(spellInfo, args[0]);
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSObjectRef spell = JSObjectMake(ctx, nullptr, nullptr);
+		SetSpellObject(ctx, spell, spellInfo);
+		return spell;
+	}
+
+	ultralight::JSValue JSBridge::GetItemInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return "invalid params";
+		}
+
+		AO::ObjectData objData;
+
+		mResources->GetObjectDetails(objData, args[0]);
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSObjectRef obj = JSObjectMake(ctx, nullptr, nullptr);
+		SetObjectInfo(ctx, obj, objData);
+		return obj;
+	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
 	{
@@ -1484,7 +1577,7 @@ namespace Babel
 				SetObjectString(ctx, ret, "name", ascii_to_utf8(objName).c_str());
 				SetObjectString(ctx, ret, "description", ascii_to_utf8(objDesc).c_str());
 				SetObjectNumber(ctx, ret, "count", slotInfo.Amount);
-				SetObjectBoolean(ctx, ret, "canUse", slotInfo.CanUse > 0);
+				SetObjectNumber(ctx, ret, "cantUse", slotInfo.CantUse);
 				SetObjectBoolean(ctx, ret, "equipped", slotInfo.Equipped > 0);
 				SetObjectNumber(ctx, ret, "grh", slotInfo.GrhIndex);
 				SetObjectNumber(ctx, ret, "maxDef", slotInfo.MaxDef);
@@ -1684,7 +1777,7 @@ namespace Babel
 		SetObjectString(ctx, ret, "name", ascii_to_utf8(objName).c_str());
 		SetObjectString(ctx, ret, "description", ascii_to_utf8(objDesc).c_str());
 		SetObjectNumber(ctx, ret, "count", slotInfo.Amount);
-		SetObjectBoolean(ctx, ret, "canUse", slotInfo.CanUse > 0);
+		SetObjectNumber(ctx, ret, "cantUse", slotInfo.CantUse);
 		SetObjectBoolean(ctx, ret, "equipped", slotInfo.Equipped > 0);
 		SetObjectNumber(ctx, ret, "grh", slotInfo.GrhIndex);
 		SetObjectNumber(ctx, ret, "maxDef", slotInfo.MaxDef);
@@ -1794,6 +1887,16 @@ namespace Babel
 			adopt(JSStringCreateWithUTF8CString(target.c_str()));
 		const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()) };
 		CallJsFunction(ctx, "APicallbacks.SetWhisperTarget", args, 1);
+	}
+
+	void JSBridge::HandleTextPaste(const std::string& data)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> msg =
+			adopt(JSStringCreateWithUTF8CString(data.c_str()));
+		const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()) };
+		CallJsFunction(ctx, "APicallbacks.PasteText", args, 1);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

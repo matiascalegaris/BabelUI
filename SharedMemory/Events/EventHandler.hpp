@@ -79,7 +79,8 @@ namespace Babel
 		UpdateMagicResistance,
 		UpdateMagicAttack,
 		UpdateOpenDialog,
-		SetWhisperTarget
+		SetWhisperTarget,
+		PasteText
 	};
 
 	struct Event

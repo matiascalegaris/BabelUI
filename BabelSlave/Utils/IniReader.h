@@ -124,7 +124,7 @@ inline static char* rstrip(char* s, int len = 0)
 /* Return pointer to first non-whitespace char in given string. */
 inline static char* lskip(const char* s, int len = 0)
 {
-    while (*s && isspace((unsigned char)(*s)))
+    while (*s && isspace((unsigned char)(*s)) && *s != '\n')
         s++;
     return (char*)s;
 }
@@ -363,7 +363,7 @@ inline int ini_parse_buffer(char* buffer, int size, ini_handler handler, void* u
                 if (!handler(user, section, name, value) && !error)
                     error = lineno;
             }
-            else if (!error) {
+            else {//if (!error) {
                 /* No '=' or ':' found on name[=:]value line */
                 error = lineno;
             }

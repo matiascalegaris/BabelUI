@@ -50,4 +50,5 @@ EXPORTS
     UpdateMagicResistance @47
     UpdateMagicAttack @48
     SetWhisperTarget @49
+    PasteText @50
 

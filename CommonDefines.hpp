@@ -58,7 +58,7 @@ namespace Babel
 		int32_t GrhIndex;
 		uint8_t ObjType;
 		uint8_t Equipped;
-		uint8_t CanUse;
+		uint8_t CantUse;
 		int16_t Amount;
 		int16_t MinHit;
 		int16_t MaxHit;

@@ -23,6 +23,7 @@ namespace AO
         const char* HeadDataPath = "init/cabezas.ind";
         const char* GrhIniPath = "init/graficos.ini";
         const char* BodyDataPath = "init/cuerpos.dat";
+        const char* LocalIndexPath = "init/localindex.dat";
         const char* BodyStructPath = "init/moldes.ini";
         const char* HelmDataPath = "init/cascos.ind";
         const char* WeaponDataPath = "init/armas.dat";
@@ -97,6 +98,7 @@ namespace AO
         Position HeadOffset;
         Position BodyOffset;
     };
+
 #pragma pack(pop) // restore previous packing setting
 
     class ResourceLoader {
@@ -107,6 +109,8 @@ namespace AO
         void GetBodyInfo(CharacterRenderInfo& charInfo, int bodyIndex, int headIndex, int helmIndex, int shieldIndex, int weaponIndex);
         void GetHeadInfo(GrhDetails& headInfo, int headIndex);
         void SetGrhDetails(GrhDetails& dest, int grhIndex);
+        void GetSpellData(SpellData& dest, int spellIndex);
+        void GetObjectData(ObjectData& dest, int objIndex);
     private:
         void InitGrh(Grh& grhObj, int GrhIndex, int Started = -1, int16_t Loops = -1);
         void InitGrhWithBody(GrhData& dest, const MoldeCuerpo& bodyData, int16_t fileNum, int16_t x, int16_t y, int index);
@@ -117,6 +121,9 @@ namespace AO
         void LoadBodies();
         void LoadWeaponAnimations();
         void LoadShields();
+        void LoadLocalIndex();
+        void LoadSpellData(INIReader& reader);
+        void LoadItemData(INIReader& reader);
         bool GetFile(const char* fileName, std::vector<uint8_t>& fileData);
         void UnloadCompressedFiles();
     private:
@@ -128,6 +135,8 @@ namespace AO
         std::vector<BodyData> mBodyData;
         std::vector<WeaponAnimData> mWeaponAnimData;
         std::vector<ShieldAnimData> mShieldAnimData;
+        std::vector<SpellData> mSpellInfo;
+        std::vector<ObjectData> mObjData;
         std::map<std::string, std::unique_ptr<Compressor>> mCompressedFiles;
         E_Heading mBodyHeading[4];
         bool mCompressed;
@@ -362,6 +371,77 @@ namespace AO
                 InitGrh(mHeadData[i].Head[E_Heading_WEST], mHeadList[i].Head[E_Heading_WEST], 0);
             }
         }
+    }
+
+    void ResourceLoader::LoadSpellData(INIReader& reader)
+    {
+        int spellCount = reader.GetInteger("INIT", "NUMEROHECHIZO", 0); //NumHechizos = Val(Leer.GetValue("INIT", "NumeroHechizo"))
+        mSpellInfo.resize(spellCount);
+        for (int i = 0; i < spellCount; i++)
+        {
+            std::string spellEntry = "HECHIZO" + std::to_string(i + 1);
+            mSpellInfo[i].Name = reader.Get(spellEntry, "NOMBRE", "");
+            mSpellInfo[i].Description = reader.Get(spellEntry, "DESC", "");
+            mSpellInfo[i].RequiredMana = reader.GetInteger(spellEntry, "MANAREQUERIDO", 0);
+            mSpellInfo[i].RequiredSkill = reader.GetInteger(spellEntry, "MINSKILL", 0);
+            mSpellInfo[i].RequiredStamina = reader.GetInteger(spellEntry, "STAREQUERIDO", 0);
+            mSpellInfo[i].IconIndex = reader.GetInteger(spellEntry, "ICONOINDEX", 0);
+            mSpellInfo[i].Cooldown = reader.GetInteger(spellEntry, "COOLDOWN", 0);
+        }
+    }
+
+    void ResourceLoader::LoadItemData(INIReader& reader)
+    {
+        int itemCount = reader.GetInteger("INIT", "NUMOBJS", 0); //NumHechizos = Val(Leer.GetValue("INIT", "NumeroHechizo"))
+        mObjData.resize(itemCount);
+        for (int i = 0; i < itemCount; i++)
+        {
+            std::string object = "OBJ" + std::to_string(i + 1);
+            mObjData[i].Name = reader.Get(object, "NOMBRE", "");
+            mObjData[i].grhindex = reader.GetInteger(object, "GRHINDEX", 0);
+            mObjData[i].MinDef = reader.GetInteger(object, "MINDEF", 0);
+            mObjData[i].MaxDef = reader.GetInteger(object, "MAXDEF", 0);
+            mObjData[i].MinHit = reader.GetInteger(object, "MINHIT", 0);
+            mObjData[i].MaxHit = reader.GetInteger(object, "MAXHIT", 0);
+            mObjData[i].ObjType = reader.GetInteger(object, "OBJTYPE", 0);
+            mObjData[i].CreatesLight = reader.Get(object, "CREALUZ", "");
+            mObjData[i].CreateFloorParticle = reader.GetInteger(object, "CREAPARTICULAPISO", 0);
+            mObjData[i].CreatesGRH = reader.Get(object, "CREAGRH", "");
+            mObjData[i].Roots = reader.GetInteger(object, "RAICES", 0);
+            mObjData[i].Wood = reader.GetInteger(object, "MADERA", 0);
+            mObjData[i].ElvenWood = reader.GetInteger(object, "MADERAELFICA", 0);
+            mObjData[i].WolfSkin = reader.GetInteger(object, "PIELLOBO", 0);
+            mObjData[i].BrownBearSkin = reader.GetInteger(object, "PIELOSOPARDO", 0);
+            mObjData[i].PolarBearSkin = reader.GetInteger(object, "PIELOSOPOLAR", 0);
+            mObjData[i].LingH = reader.GetInteger(object, "LINGH", 0);
+            mObjData[i].LingP = reader.GetInteger(object, "LINGP", 0);
+            mObjData[i].LingO = reader.GetInteger(object, "LINGO", 0);
+            mObjData[i].Destroy = reader.GetInteger(object, "DESTRUYE", 0);
+            mObjData[i].Projectile = reader.GetInteger(object, "PROYECTIL", 0);
+            mObjData[i].Ammunition = reader.GetInteger(object, "MUNICIONES", 0);
+            mObjData[i].BlacksmithingSkill = reader.GetInteger(object, "SKHERRERIA", 0);
+            mObjData[i].PotionSkill = reader.GetInteger(object, "SKPOCIONES", 0);
+            mObjData[i].TailoringSkill = reader.GetInteger(object, "SKSASTRERIA", 0);
+            mObjData[i].Value = reader.GetInteger(object, "VALOR", 0);
+            mObjData[i].Grabbable = reader.GetInteger(object, "AGARRABLE", 0);
+            mObjData[i].Key = reader.GetInteger(object, "LLAVE", 0);
+            mObjData[i].Cooldown = reader.GetInteger(object, "CD", 0);
+            mObjData[i].CdType = reader.GetInteger(object, "CDTYPE", 0);
+            mObjData[i].SpellIndex = reader.GetInteger(object, "SPELLINDEX", 0);
+        }
+    }
+
+    void ResourceLoader::LoadLocalIndex()
+    {
+        std::vector<uint8_t> fileData;
+        if (!GetFile(LocalIndexPath, fileData))
+        {
+            return;
+        }
+        INIReader Loader(reinterpret_cast<char*>(fileData.data()), fileData.size());
+        auto error = Loader.ParseError();
+        LoadSpellData(Loader);
+        LoadItemData(Loader);
     }
 
     void ResourceLoader::LoadBodyStruct()
@@ -718,6 +798,7 @@ namespace AO
             LoadBodies();
             LoadWeaponAnimations();
             LoadShields();
+            LoadLocalIndex();
             });
     }
 
@@ -777,6 +858,35 @@ namespace AO
         dest.EndPos.Y = mGrhData[grhIndex].pixelHeight;
     }
 
+    void ResourceLoader::GetSpellData(SpellData& dest, int spellIndex)
+    {
+        if (spellIndex >= 0 && spellIndex < mSpellInfo.size())
+        {
+            dest = mSpellInfo[spellIndex];
+        }
+        else
+        {
+            dest.RequiredMana = 0;
+            dest.IconIndex = 0;
+            dest.RequiredSkill= 0;
+            dest.RequiredStamina = 0;
+            dest.IconIndex = 0;
+            dest.Cooldown = 0;
+        }
+    }
+
+    void ResourceLoader::GetObjectData(ObjectData& dest, int objIndex)
+    {
+        if (objIndex >= 0 && objIndex < mObjData.size())
+        {
+            dest = mObjData[objIndex];
+        }
+        else
+        {
+            dest.grhindex = 0;
+        }
+    }
+
 
     Resources::Resources(bool compressed)
     {
@@ -801,6 +911,16 @@ namespace AO
     void Resources::GetGrhInfo(GrhDetails& grhInfo, int grhIndex)
     {
         mResources->SetGrhDetails(grhInfo, grhIndex - 1);
+    }
+
+    void Resources::GetSpellDetails(SpellData& spellInfo, int spellIndex)
+    {
+        mResources->GetSpellData(spellInfo, spellIndex - 1);
+    }
+
+    void Resources::GetObjectDetails(ObjectData& destObj, int itemIndex)
+    {
+        mResources->GetObjectData(destObj, itemIndex - 1);
     }
 
 }
