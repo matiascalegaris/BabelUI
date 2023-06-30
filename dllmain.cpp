@@ -305,7 +305,7 @@ void _stdcall SetSpellSlot(void* spellData)
 	Babel::UpdateSpellSlot slotMessage;
 	slotMessage.Slot = spellDataPtr->Slot - 1;
 	slotMessage.SpellIndex = spellDataPtr->SpellIndex;
-	slotMessage.IconIndex = spellDataPtr->Icon - 1;
+	slotMessage.IconIndex = spellDataPtr->Icon;
 	slotMessage.Cooldown = spellDataPtr->Cooldown;
 	slotMessage.EventType = Babel::EventType::UpdateSpellSlot;
 
