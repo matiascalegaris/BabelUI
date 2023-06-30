@@ -2,6 +2,7 @@
 #include <filesystem>
 #include "Core/Logger.hpp"
 #include "AoResources/Resources.hpp"
+#include "Utils/FileUtils.h"
 
 int main(int argc, char* argv[])
 {
@@ -9,7 +10,7 @@ int main(int argc, char* argv[])
     try
     {
         Babel::AppSettings settings;
-        Babel::LOGGER->init("D:\\Proyectos/ao20/client/Logs/BabelUI.log", "BabelUI");
+        Babel::LOGGER->init(CallerPath() + "Logs/BabelUI.log", "BabelUI");
         Babel::LOGGER->log("Slave initialize");
         settings.Width = std::atoi(argv[1]);
         settings.Height = std::atoi(argv[2]);

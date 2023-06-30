@@ -10,6 +10,7 @@
 #include "Utils/FileUtils.h"
 #include "Utils/Encoding.h"
 #include "AoResources/Resources.hpp"
+#include "Core/Logger.hpp"
 
 namespace Babel
 {
@@ -187,6 +188,7 @@ namespace Babel
 		Api["UpdateOpenDialog"] = BindJSCallback(&JSBridge::UpdateOpenDialog);
 		Api["GetSpellInfo"] = BindJSCallbackWithRetval(&JSBridge::GetSpellInfo);
 		Api["GetItemInfo"] = BindJSCallbackWithRetval(&JSBridge::GetItemInfo);
+		Api["LogError"] = BindJSCallback(&JSBridge::LogError);
 		
 		global["BabelUI"] = JSValue(Api);
 	}
@@ -1173,6 +1175,17 @@ namespace Babel
 		JSObjectRef obj = JSObjectMake(ctx, nullptr, nullptr);
 		SetObjectInfo(ctx, obj, objData);
 		return obj;
+	}
+
+	void JSBridge::LogError(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+		ultralight::String jenv = args[0];
+		auto errorMsg = utf8_to_ascii(jenv.utf8().data());
+		Babel::LOGGER->log(errorMsg.c_str());
 	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)

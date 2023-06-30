@@ -57,6 +57,7 @@ namespace Babel
 		void UpdateOpenDialog(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue GetSpellInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue GetItemInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void LogError(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
