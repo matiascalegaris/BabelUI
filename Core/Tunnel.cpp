@@ -360,6 +360,18 @@ namespace Babel
             mGameplayVBcallbacks.UpdateOpenDialog(evtData.Value);
             break;
         }
+        case EventType::ScrollSpell:
+        {
+            const SingleIntEvent& evtData = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.ScrollSpell(evtData.Value);
+            break;
+        }
+        case EventType::TeleportToMinimapPos:
+        {
+            const DoubleIntEvent& evtInfo = static_cast<const DoubleIntEvent&>(eventData);
+            mGameplayVBcallbacks.TeleportToMiniMapPos(evtInfo.Value1, evtInfo.Value2);
+            break;
+        }
         }
     }
 

@@ -62,4 +62,9 @@ extern "C"
 	LIBRARY_API void _stdcall UpdateMagicAttack(int32_t value);
 	LIBRARY_API void _stdcall SetWhisperTarget(const char* userName);
 	LIBRARY_API void _stdcall PasteText(const char* text);
+	LIBRARY_API void _stdcall ReloadSettings();
+	LIBRARY_API void _stdcall SetRemoteTrackingState(int state);
+	LIBRARY_API void _stdcall UpdateInvAndSpellTracking(int selectedTab, int selectedSpell, int firstSpellOnScroll);
+	LIBRARY_API void _stdcall HandleRemoteUserClick();
+	LIBRARY_API void _stdcall UpdateRemoteMousePos(int posX, int posY);
 }

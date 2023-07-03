@@ -51,4 +51,9 @@ EXPORTS
     UpdateMagicAttack @48
     SetWhisperTarget @49
     PasteText @50
+    ReloadSettings @51
+    SetRemoteTrackingState @52
+    UpdateInvAndSpellTracking @53
+    HandleRemoteUserClick @54
+    UpdateRemoteMousePos @55
 

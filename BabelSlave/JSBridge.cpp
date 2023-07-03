@@ -189,6 +189,8 @@ namespace Babel
 		Api["GetSpellInfo"] = BindJSCallbackWithRetval(&JSBridge::GetSpellInfo);
 		Api["GetItemInfo"] = BindJSCallbackWithRetval(&JSBridge::GetItemInfo);
 		Api["LogError"] = BindJSCallback(&JSBridge::LogError);
+		Api["InformSpellListScroll"] = BindJSCallback(&JSBridge::InformSpellListScroll);
+		Api["ClickMiniMapPos"] = BindJSCallback(&JSBridge::ClickMiniMapPos);
 		
 		global["BabelUI"] = JSValue(Api);
 	}
@@ -510,6 +512,34 @@ namespace Babel
 				assert(size == eventData.Size);
 				std::string pasteData(strInfo[0].StartPos, strInfo[0].Size);
 				HandleTextPaste(pasteData);
+				break;
+			}
+			case EventType::ReloadSettings:
+			{
+				UpdateGameSettings();
+				break;
+			}
+			case EventType::SetRemoteTrackingState:
+			{
+				const Babel::SingleIntEvent& evtInfo = static_cast<const Babel::SingleIntEvent&>(eventData);
+				SetRemoteTrackingState(evtInfo.Value);
+				break;
+			}
+			case EventType::RemoteInvSpellState:
+			{
+				const Babel::TripleIntEvent& evtInfo = static_cast<const Babel::TripleIntEvent&>(eventData);
+				SetRemoteInvstate(evtInfo.Value1, evtInfo.Value2, evtInfo.Value3);
+				break;
+			}
+			case EventType::RemoteUserClick:
+			{
+				RemoteUserClick();
+				break;
+			}
+			case EventType::UpdateRemoteMousePos:
+			{
+				const Babel::DoubleIntEvent& evtInfo = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				UpdateRemoteMousePos(evtInfo.Value1, evtInfo.Value2);
 				break;
 			}
 			default:
@@ -1186,6 +1216,39 @@ namespace Babel
 		ultralight::String jenv = args[0];
 		auto errorMsg = utf8_to_ascii(jenv.utf8().data());
 		Babel::LOGGER->log(errorMsg.c_str());
+	}
+
+	void JSBridge::InformSpellListScroll(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+
+		AO::ObjectData objData;
+
+		SingleIntEvent scrollSpellEvent;
+		scrollSpellEvent.Value = args[0];
+		scrollSpellEvent.EventType = EventType::ScrollSpell;
+		scrollSpellEvent.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&scrollSpellEvent, sizeof(scrollSpellEvent));
+	}
+
+	void JSBridge::ClickMiniMapPos(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return;
+		}
+
+		AO::ObjectData objData;
+
+		DoubleIntEvent mapPosEvent;
+		mapPosEvent.Value1 = args[0];
+		mapPosEvent.Value2 = args[1];
+		mapPosEvent.EventType = EventType::TeleportToMinimapPos;
+		mapPosEvent.Size = sizeof(mapPosEvent);
+		mEventBuffer.AddEvent((uint8_t*)&mapPosEvent, sizeof(mapPosEvent));
 	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
@@ -1910,6 +1973,66 @@ namespace Babel
 			adopt(JSStringCreateWithUTF8CString(data.c_str()));
 		const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()) };
 		CallJsFunction(ctx, "APicallbacks.PasteText", args, 1);
+	}
+
+	void JSBridge::UpdateGameSettings()
+	{
+		auto path = GetFilePath("OUTPUT/Configuracion.ini");
+		INIReader Reader(path.u8string());
+		auto chatBombat = Reader.GetInteger("OPCIONES", "CHATCOMBATE", 1);
+		auto spellMode = Reader.GetInteger("OPCIONES", "ModoHechizos", 1); 
+		auto inventoryFullNumbers = Reader.GetInteger("OPCIONES", "NumerosCompletosInventario", 1);
+		auto scrollDrag = Reader.GetInteger("OPCIONES", "ScrollArrastrar", 1); 
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		
+		JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+		SetObjectNumber(ctx, ret, "combatChat", chatBombat);
+		SetObjectNumber(ctx, ret, "spellMode", spellMode);
+		SetObjectNumber(ctx, ret, "inventoryFullNumbers", inventoryFullNumbers);
+		SetObjectNumber(ctx, ret, "scrollDrag", scrollDrag);
+
+		const JSValueRef args[] = { ret };
+		CallJsFunction(ctx, "APicallbacks.ReloadSettings", args, 1);
+	}
+
+	void JSBridge::SetRemoteTrackingState(int newState)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, newState) };
+		CallJsFunction(ctx, "APicallbacks.SetRemoteTrackingState", args, 1);
+	}
+
+	void JSBridge::SetRemoteInvstate(int selectedTab, int selectedSpell, int firstListSpellInView)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, selectedTab),
+									JSValueMakeNumber(ctx, selectedSpell),
+									JSValueMakeNumber(ctx, firstListSpellInView) };
+		CallJsFunction(ctx, "APicallbacks.SetRemoteInvstate", args, 3);
+	}
+
+	void JSBridge::RemoteUserClick()
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		const JSValueRef args {};
+		CallJsFunction(ctx, "APicallbacks.RemoteUserClick", &args, 0);
+	}
+
+	void JSBridge::UpdateRemoteMousePos(int posX, int posY)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, posX),
+									JSValueMakeNumber(ctx, posY) };
+		CallJsFunction(ctx, "APicallbacks.UpdateRemoteMousePos", args, 2);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

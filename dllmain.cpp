@@ -576,3 +576,49 @@ void _stdcall PasteText(const char* text)
 	evtData.Size = sizeof(evtData) + PrepareDynamicStrings(strInfo);
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evtData, sizeof(evtData), strInfo);
 }
+
+void _stdcall ReloadSettings()
+{
+	Babel::Event evtData;
+	evtData.EventType = Babel::EventType::ReloadSettings;
+	evtData.Size = sizeof(evtData);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evtData, sizeof(evtData));
+}
+
+void _stdcall SetRemoteTrackingState(int state)
+{
+	Babel::SingleIntEvent invEvt;
+	invEvt.Value = state;
+	invEvt.Size = sizeof(invEvt);
+	invEvt.EventType = Babel::EventType::SetRemoteTrackingState;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
+}
+
+void _stdcall UpdateInvAndSpellTracking(int selectedTab, int selectedSpell, int firstSpellOnScroll)
+{
+	Babel::TripleIntEvent invEvt;
+	invEvt.Value1 = selectedTab;
+	invEvt.Value2 = selectedSpell;
+	invEvt.Value3 = firstSpellOnScroll;
+	invEvt.Size = sizeof(invEvt);
+	invEvt.EventType = Babel::EventType::RemoteInvSpellState;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
+}
+
+void _stdcall HandleRemoteUserClick()
+{
+	Babel::Event evtData;
+	evtData.EventType = Babel::EventType::RemoteUserClick;
+	evtData.Size = sizeof(evtData);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evtData, sizeof(evtData));
+}
+
+void _stdcall UpdateRemoteMousePos(int posX, int posY)
+{
+	Babel::DoubleIntEvent invEvt;
+	invEvt.Value1 = posX;
+	invEvt.Value2 = posY;
+	invEvt.Size = sizeof(invEvt);
+	invEvt.EventType = Babel::EventType::UpdateRemoteMousePos;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
+}

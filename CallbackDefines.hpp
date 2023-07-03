@@ -106,5 +106,7 @@ namespace Babel
 		TSingleIntParam UseKey;
 		TDoubleIntParam MoveSpellSlot;
 		TSingleIntParam DeleteItem;
+		TSingleIntParam ScrollSpell;
+		TDoubleIntParam TeleportToMiniMapPos;
 	};
 }

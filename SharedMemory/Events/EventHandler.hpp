@@ -80,7 +80,14 @@ namespace Babel
 		UpdateMagicAttack,
 		UpdateOpenDialog,
 		SetWhisperTarget,
-		PasteText
+		PasteText,
+		ScrollSpell,
+		ReloadSettings,
+		SetRemoteTrackingState,
+		RemoteInvSpellState,
+		RemoteUserClick,
+		UpdateRemoteMousePos,
+		TeleportToMinimapPos
 	};
 
 	struct Event
@@ -188,6 +195,13 @@ namespace Babel
 	{
 		int Value1;
 		int Value2;
+	};
+
+	struct TripleIntEvent : public Event
+	{
+		int Value1;
+		int Value2;
+		int Value3;
 	};
 
 	struct SingleBoolEvent : public Event
