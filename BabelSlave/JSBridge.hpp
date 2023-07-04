@@ -107,6 +107,7 @@ namespace Babel
 		void SetRemoteInvstate(int selectedTab, int selectedSpell, int firstListSpellInView);
 		void RemoteUserClick();
 		void UpdateRemoteMousePos(int posX, int posY);
+		void StartSpellCd(int spellId, int cdTime);
 
 	private:
 		void CallJsFunction(JSContextRef& context, const char* functionName, const JSValueRef* args, int argCount);

@@ -56,4 +56,5 @@ EXPORTS
     UpdateInvAndSpellTracking @53
     HandleRemoteUserClick @54
     UpdateRemoteMousePos @55
+    StartSpellCd @56
 

@@ -542,6 +542,12 @@ namespace Babel
 				UpdateRemoteMousePos(evtInfo.Value1, evtInfo.Value2);
 				break;
 			}
+			case EventType::StartSpellCd:
+			{
+				const Babel::DoubleIntEvent& evtInfo = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				StartSpellCd(evtInfo.Value1, evtInfo.Value2);
+				break;
+			}
 			default:
 				break;
 		}
@@ -1270,7 +1276,7 @@ namespace Babel
 		case ultralight::KeyEvent::kType_Char:
 		{
 			char key = static_cast<char>(keyData.KeyCode);
-			evt.text = std::string(1, key).c_str();
+			evt.text = ascii_to_utf8(std::string(1, key)).c_str();
 			evt.unmodified_text = evt.text;
 			mRenderer.SendKeyEvent(evt, keyData.Inspector);
 		}
@@ -2033,6 +2039,16 @@ namespace Babel
 		const JSValueRef args[] = { JSValueMakeNumber(ctx, posX),
 									JSValueMakeNumber(ctx, posY) };
 		CallJsFunction(ctx, "APicallbacks.UpdateRemoteMousePos", args, 2);
+	}
+
+	void JSBridge::StartSpellCd(int spellId, int cdTime)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, spellId),
+									JSValueMakeNumber(ctx, cdTime) };
+		CallJsFunction(ctx, "APicallbacks.StartSpellCd", args, 2);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

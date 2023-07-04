@@ -622,3 +622,13 @@ void _stdcall UpdateRemoteMousePos(int posX, int posY)
 	invEvt.EventType = Babel::EventType::UpdateRemoteMousePos;
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
 }
+
+void _stdcall StartSpellCd(int spellIndex, int cdTime)
+{
+	Babel::DoubleIntEvent invEvt;
+	invEvt.Value1 = spellIndex;
+	invEvt.Value2 = cdTime;
+	invEvt.Size = sizeof(invEvt);
+	invEvt.EventType = Babel::EventType::StartSpellCd;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
+}
