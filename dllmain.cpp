@@ -632,3 +632,13 @@ void _stdcall StartSpellCd(int spellIndex, int cdTime)
 	invEvt.EventType = Babel::EventType::StartSpellCd;
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
 }
+
+void _stdcall UpdateCombatAndGlobalChatSettings(int combatValue, int globalValue)
+{
+	Babel::DoubleIntEvent invEvt;
+	invEvt.Value1 = combatValue;
+	invEvt.Value2 = globalValue;
+	invEvt.Size = sizeof(invEvt);
+	invEvt.EventType = Babel::EventType::UpdateCombatAndglobalChatSettings;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
+}

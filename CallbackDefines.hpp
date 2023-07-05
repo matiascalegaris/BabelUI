@@ -108,5 +108,6 @@ namespace Babel
 		TSingleIntParam DeleteItem;
 		TSingleIntParam ScrollSpell;
 		TDoubleIntParam TeleportToMiniMapPos;
+		TDoubleIntParam UpdateCombatAndGlobalChatSettings;
 	};
 }

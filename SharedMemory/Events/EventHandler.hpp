@@ -88,7 +88,8 @@ namespace Babel
 		RemoteUserClick,
 		UpdateRemoteMousePos,
 		TeleportToMinimapPos,
-		StartSpellCd
+		StartSpellCd,
+		UpdateCombatAndglobalChatSettings
 	};
 
 	struct Event

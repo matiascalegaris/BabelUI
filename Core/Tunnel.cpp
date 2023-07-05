@@ -372,6 +372,12 @@ namespace Babel
             mGameplayVBcallbacks.TeleportToMiniMapPos(evtInfo.Value1, evtInfo.Value2);
             break;
         }
+        case EventType::UpdateCombatAndglobalChatSettings:
+        {
+            const DoubleIntEvent& evtInfo = static_cast<const DoubleIntEvent&>(eventData);
+            mGameplayVBcallbacks.UpdateCombatAndGlobalChatSettings(evtInfo.Value1, evtInfo.Value2);
+            break;
+        }
         }
     }
 

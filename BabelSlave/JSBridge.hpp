@@ -60,6 +60,7 @@ namespace Babel
 		void LogError(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void InformSpellListScroll(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void ClickMiniMapPos(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void UpdateCombatAndGlobatChatState(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
@@ -108,6 +109,7 @@ namespace Babel
 		void RemoteUserClick();
 		void UpdateRemoteMousePos(int posX, int posY);
 		void StartSpellCd(int spellId, int cdTime);
+		void UpdateCombatAndGlobalChatSettings(int combatValue, int globalValue);
 
 	private:
 		void CallJsFunction(JSContextRef& context, const char* functionName, const JSValueRef* args, int argCount);

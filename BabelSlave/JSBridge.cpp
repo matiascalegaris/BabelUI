@@ -191,6 +191,7 @@ namespace Babel
 		Api["LogError"] = BindJSCallback(&JSBridge::LogError);
 		Api["InformSpellListScroll"] = BindJSCallback(&JSBridge::InformSpellListScroll);
 		Api["ClickMiniMapPos"] = BindJSCallback(&JSBridge::ClickMiniMapPos);
+		Api["UpdateCombatAndGlobatChatState"] = BindJSCallback(&JSBridge::UpdateCombatAndGlobatChatState);		
 		
 		global["BabelUI"] = JSValue(Api);
 	}
@@ -548,6 +549,12 @@ namespace Babel
 				StartSpellCd(evtInfo.Value1, evtInfo.Value2);
 				break;
 			}
+			case EventType::UpdateCombatAndglobalChatSettings:
+			{
+				const Babel::DoubleIntEvent& evtInfo = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				UpdateCombatAndGlobalChatSettings(evtInfo.Value1, evtInfo.Value2);
+				break;
+			}			
 			default:
 				break;
 		}
@@ -1256,6 +1263,23 @@ namespace Babel
 		mapPosEvent.Size = sizeof(mapPosEvent);
 		mEventBuffer.AddEvent((uint8_t*)&mapPosEvent, sizeof(mapPosEvent));
 	}
+
+	void JSBridge::UpdateCombatAndGlobatChatState(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return;
+		}
+
+		AO::ObjectData objData;
+
+		DoubleIntEvent evtData;
+		evtData.Value1 = args[0];
+		evtData.Value2 = args[1];
+		evtData.EventType = EventType::UpdateCombatAndglobalChatSettings;
+		evtData.Size = sizeof(evtData);
+		mEventBuffer.AddEvent((uint8_t*)&evtData, sizeof(evtData));
+	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
 	{
@@ -1263,8 +1287,10 @@ namespace Babel
 		evt.type = static_cast<ultralight::KeyEvent::Type>(keyData.Type);
 		switch (keyData.Type)
 		{
+		
 		case ultralight::KeyEvent::kType_KeyDown:
 			evt.type = ultralight::KeyEvent::kType_RawKeyDown;
+			break;
 		case ultralight::KeyEvent::kType_RawKeyDown:
 		case ultralight::KeyEvent::kType_KeyUp:
 			evt.virtual_key_code = keyData.KeyCode;
@@ -1279,6 +1305,7 @@ namespace Babel
 			evt.text = ascii_to_utf8(std::string(1, key)).c_str();
 			evt.unmodified_text = evt.text;
 			mRenderer.SendKeyEvent(evt, keyData.Inspector);
+			break;
 		}
 		default:
 			break;
@@ -2049,6 +2076,16 @@ namespace Babel
 		const JSValueRef args[] = { JSValueMakeNumber(ctx, spellId),
 									JSValueMakeNumber(ctx, cdTime) };
 		CallJsFunction(ctx, "APicallbacks.StartSpellCd", args, 2);
+	}
+
+	void JSBridge::UpdateCombatAndGlobalChatSettings(int combatValue, int globalValue)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, combatValue),
+									JSValueMakeNumber(ctx, globalValue) };
+		CallJsFunction(ctx, "APicallbacks.UpdateCombatAndGlobalChatModes", args, 2);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

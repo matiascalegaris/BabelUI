@@ -68,4 +68,5 @@ extern "C"
 	LIBRARY_API void _stdcall HandleRemoteUserClick();
 	LIBRARY_API void _stdcall UpdateRemoteMousePos(int posX, int posY);
 	LIBRARY_API void _stdcall StartSpellCd(int spellIndex, int cdTime);
+	LIBRARY_API void _stdcall UpdateCombatAndGlobalChatSettings(int combatValue, int globalValue);
 }
