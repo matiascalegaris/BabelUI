@@ -3,14 +3,48 @@
 #include "Core/Logger.hpp"
 #include "AoResources/Resources.hpp"
 #include "Utils/FileUtils.h"
+#include <csignal>
+
+void signalHandler(int signum) {
+    
+
+    // cleanup and close up stuff here  
+    // terminate program  
+    switch (signum)
+    {
+    case SIGABRT:
+        Babel::LOGGER->log("Got error signal SIGABRT");
+        break;
+    case SIGFPE:
+        Babel::LOGGER->log("Got error signal SIGFPE");
+        break;
+    case SIGILL:
+        Babel::LOGGER->log("Got error signal SIGILL");
+        break;
+    case SIGSEGV:
+        Babel::LOGGER->log("Got error signal SIGSEGV");
+        break;
+    case SIGINT:
+        Babel::LOGGER->log("Got error signal SIGINT");
+        break;
+    default:
+        Babel::LOGGER->log("Got error signal " + std::to_string(signum));
+        break;
+    }
+}
 
 int main(int argc, char* argv[])
 {
     if (argc < 6) return -1;
     try
     {
+        signal(SIGABRT, signalHandler);
+        signal(SIGFPE, signalHandler);
+        signal(SIGILL, signalHandler);
+        signal(SIGSEGV, signalHandler);
+
         Babel::AppSettings settings;
-        Babel::LOGGER->init(CallerPath() + "Logs/BabelUI.log", "BabelUI");
+        Babel::LOGGER->init(CallerPath() + "/Logs/BabelUI.log", "BabelUI");
         Babel::LOGGER->log("Slave initialize");
         settings.Width = std::atoi(argv[1]);
         settings.Height = std::atoi(argv[2]);
@@ -26,6 +60,9 @@ int main(int argc, char* argv[])
     {
         auto error = err.what();
     }
-    
+    signal(SIGABRT, SIG_DFL);
+    signal(SIGFPE, SIG_DFL);
+    signal(SIGILL, SIG_DFL);
+    signal(SIGSEGV, SIG_DFL);
 	return 0;
 }
