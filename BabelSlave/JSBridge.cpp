@@ -11,10 +11,17 @@
 #include "Utils/Encoding.h"
 #include "AoResources/Resources.hpp"
 #include "Core/Logger.hpp"
+#include "Utils/StringUtils.hpp"
 
 namespace Babel
 {
 	namespace {
+		enum VB6Modifiers
+		{
+			vbShift = 1,
+			vbCtrl = 2,
+			vbAlt = 4
+		};
 		std::string ascii_to_utf8(const std::string& ascii_string) 
 		{
 			int num_wchars = MultiByteToWideChar(CP_ACP, 0, ascii_string.c_str(), -1, NULL, 0);
@@ -139,7 +146,17 @@ namespace Babel
 			SetObjectNumber(ctx, objectRef, "G", colorData.G);
 			SetObjectNumber(ctx, objectRef, "B", colorData.B);
 		}
+
+		uint32_t ConvertKeyModifiers(int16_t vbModifiers)
+		{
+			uint32_t ret = 0;
+			ret = ret | ((vbModifiers & vbShift) > 0 ? ultralight::KeyEvent::kMod_ShiftKey : 0);
+			ret = ret | ((vbModifiers & vbCtrl) > 0 ? ultralight::KeyEvent::kMod_CtrlKey : 0);
+			ret = ret | ((vbModifiers & vbAlt) > 0 ? ultralight::KeyEvent::kMod_AltKey : 0);
+			return ret;
+		}
 	}
+
 	using namespace ultralight;
 	JSBridge::JSBridge(EventBuffer& eventBuffer, Renderer& renderer, Application& application) 
 		: mEventBuffer(eventBuffer), mRenderer(renderer), mApplication(application)
@@ -191,7 +208,8 @@ namespace Babel
 		Api["LogError"] = BindJSCallback(&JSBridge::LogError);
 		Api["InformSpellListScroll"] = BindJSCallback(&JSBridge::InformSpellListScroll);
 		Api["ClickMiniMapPos"] = BindJSCallback(&JSBridge::ClickMiniMapPos);
-		Api["UpdateCombatAndGlobatChatState"] = BindJSCallback(&JSBridge::UpdateCombatAndGlobatChatState);		
+		Api["UpdateCombatAndGlobatChatState"] = BindJSCallback(&JSBridge::UpdateCombatAndGlobatChatState);
+		Api["Copytext"] = BindJSCallback(&JSBridge::Copytext);
 		
 		global["BabelUI"] = JSValue(Api);
 	}
@@ -956,6 +974,17 @@ namespace Babel
 		return ultralight::JSValue();
 	}
 
+	void JSBridge::Copytext(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+		ultralight::String jenv = args[0];
+		auto message = utf8_to_ascii(jenv.utf8().data());
+		CopyToClipboard(message);
+	}
+
 	void JSBridge::SendChatMsg(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
 		if (args.size() != 1)
@@ -1211,7 +1240,6 @@ namespace Babel
 		}
 
 		AO::ObjectData objData;
-
 		mResources->GetObjectDetails(objData, args[0]);
 		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
 		JSContextRef ctx = context->ctx();
@@ -1285,6 +1313,7 @@ namespace Babel
 	{
 		ultralight::KeyEvent evt;
 		evt.type = static_cast<ultralight::KeyEvent::Type>(keyData.Type);
+		evt.modifiers = ConvertKeyModifiers(keyData.ShiftState);
 		switch (keyData.Type)
 		{
 		
@@ -1295,7 +1324,6 @@ namespace Babel
 		case ultralight::KeyEvent::kType_KeyUp:
 			evt.virtual_key_code = keyData.KeyCode;
 			evt.native_key_code = 0;
-			evt.modifiers = 0;
 			GetKeyIdentifierFromVirtualKeyCode(evt.virtual_key_code, evt.key_identifier);
 			mRenderer.SendKeyEvent(evt, keyData.Inspector);
 			break;

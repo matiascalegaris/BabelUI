@@ -8,7 +8,7 @@ extern "C"
 	LIBRARY_API bool GetImageBuffer(char* buffer, int size);
 	LIBRARY_API void _stdcall SendMouseEvent(int mouseX, int mouseY, int type, int buttonState);
 	LIBRARY_API void _stdcall SendScrollEvent(int direction);
-	LIBRARY_API void _stdcall SendKeyEvent(int16_t keyCode, bool shift, int type, bool capsState, bool inspector);
+	LIBRARY_API void _stdcall SendKeyEvent(int16_t keyCode, int16_t shift, int type, bool capsState, bool inspector);
 	LIBRARY_API void _stdcall RegisterCallbacks(int loginCallback, int closeClient, int createAccount, int setHost, int ValidateCode, int resendValidationCode,
 												int requestPasswordReset, int newPasswordRequest, int selectCharacter, int loginCharacter, int returnToLogin, int createCharacter,
 												int requestDeleteCharater, int confirmDeleteCharacter, int transferCharacter);

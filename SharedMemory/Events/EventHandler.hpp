@@ -110,7 +110,7 @@ namespace Babel
 	{
 		int16_t KeyCode;
 		bool CapsState;
-		bool ShiftState;
+		int16_t ShiftState;
 		int8_t Type;
 		bool Inspector;
 	};

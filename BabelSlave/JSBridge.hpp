@@ -39,6 +39,9 @@ namespace Babel
 		ultralight::JSValue ConfirmDeleteCharacter(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue RequestCharacterTransfer(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
+		//System
+		void Copytext(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+
 		//Gameplay
 		void SendChatMsg(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void OpenVBDialog(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);

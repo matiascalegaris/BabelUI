@@ -58,7 +58,7 @@ void _stdcall SendScrollEvent(int direction)
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&scrollData, scrollData.Size);
 }
 
-void _stdcall SendKeyEvent(int16_t keyCode, bool shift, int type, bool capsState, bool inspector)
+void _stdcall SendKeyEvent(int16_t keyCode, int16_t shift, int type, bool capsState, bool inspector)
 {
 	Babel::KeyEvent keyData;
 	keyData.KeyCode = keyCode;
