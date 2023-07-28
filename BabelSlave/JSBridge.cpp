@@ -392,8 +392,8 @@ namespace Babel
 			}
 			case EventType::UpdateGold:
 			{
-				const Babel::SingleIntEvent& invLevelEvent = static_cast<const Babel::SingleIntEvent&>(eventData);
-				UpdateGold(invLevelEvent.Value);
+				const Babel::DoubleIntEvent& goldEvt = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				UpdateGold(goldEvt.Value1, goldEvt.Value2);
 				break;
 			}
 			case EventType::UpdateExp:
@@ -572,7 +572,13 @@ namespace Babel
 				const Babel::DoubleIntEvent& evtInfo = static_cast<const Babel::DoubleIntEvent&>(eventData);
 				UpdateCombatAndGlobalChatSettings(evtInfo.Value1, evtInfo.Value2);
 				break;
-			}			
+			}
+			case EventType::StartStunTime:
+			{
+				const Babel::StartIntervalEvent& slotInfo = static_cast<const Babel::StartIntervalEvent&>(eventData);
+				StartStunTime(slotInfo.IntervalType, slotInfo.Timestamp);
+				break;
+			}
 			default:
 				break;
 		}
@@ -1564,6 +1570,7 @@ namespace Babel
 				SetObjectNumber(ctx, ret, "maxHam", userStats.MaxHAM);
 				SetObjectNumber(ctx, ret, "minHam", userStats.MinHAM);
 				SetObjectNumber(ctx, ret, "gold", userStats.GLD);
+				SetObjectNumber(ctx, ret, "safeGoldForLevel", userStats.OroPorNivel);
 				SetObjectNumber(ctx, ret, "level", userStats.Lvl);
 				SetObjectNumber(ctx, ret, "class", userStats.Class);
 				SetObjectNumber(ctx, ret, "gender", userStats.Gender);
@@ -1815,12 +1822,12 @@ namespace Babel
 		CallJsFunction(ctx, "APicallbacks.UpdateFood", args, 1);
 	}
 
-	void JSBridge::UpdateGold(int32_t newGold)
+	void JSBridge::UpdateGold(int32_t newGold, int32_t maxGold)
 	{
 		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
 		JSContextRef ctx = context->ctx();
-		const JSValueRef args[] = { JSValueMakeNumber(ctx, newGold) };
-		CallJsFunction(ctx, "APicallbacks.UpdateGold", args, 1);
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, newGold), JSValueMakeNumber(ctx, maxGold) };
+		CallJsFunction(ctx, "APicallbacks.UpdateGold", args, 2);
 	}
 
 	void JSBridge::UpdateExp(int32_t current, int32_t maxExp)
@@ -2114,6 +2121,17 @@ namespace Babel
 		const JSValueRef args[] = { JSValueMakeNumber(ctx, combatValue),
 									JSValueMakeNumber(ctx, globalValue) };
 		CallJsFunction(ctx, "APicallbacks.UpdateCombatAndGlobalChatModes", args, 2);
+	}
+
+	void JSBridge::StartStunTime(int duration, int64_t timeStamp)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		using namespace std::chrono;
+		int64_t currentTimestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, duration),
+									JSValueMakeNumber(ctx, currentTimestamp - timeStamp) };
+		CallJsFunction(ctx, "APicallbacks.StartStunTime", args, 2);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

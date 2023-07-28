@@ -361,10 +361,11 @@ void _stdcall UpdateFoodValue(int32_t newMana)
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
 }
 
-void _stdcall UpdateGold(int32_t gold)
+void _stdcall UpdateGold(int32_t gold, int maxGold)
 {
-	Babel::SingleIntEvent invEvt;
-	invEvt.Value = gold;
+	Babel::DoubleIntEvent invEvt;
+	invEvt.Value1 = gold;
+	invEvt.Value2 = maxGold;
 	invEvt.Size = sizeof(invEvt);
 	invEvt.EventType = Babel::EventType::UpdateGold;
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
@@ -641,4 +642,16 @@ void _stdcall UpdateCombatAndGlobalChatSettings(int combatValue, int globalValue
 	invEvt.Size = sizeof(invEvt);
 	invEvt.EventType = Babel::EventType::UpdateCombatAndglobalChatSettings;
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
+}
+
+void _stdcall ActivateStunTimer(int duration)
+{
+	using namespace std::chrono;
+	int64_t timestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+	Babel::StartIntervalEvent eventData;
+	eventData.IntervalType = duration;
+	eventData.Timestamp = timestamp;
+	eventData.Size = sizeof(eventData);
+	eventData.EventType = Babel::EventType::StartStunTime;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&eventData, eventData.Size);
 }

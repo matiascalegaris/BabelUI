@@ -87,7 +87,7 @@ namespace Babel
 		void UpdateStamina(int32_t newStamina);
 		void UpdateDrink(int32_t newDrink);
 		void UpdateFood(int32_t newFood);
-		void UpdateGold(int32_t newGold);
+		void UpdateGold(int32_t newGold, int32_t maxGold);
 		void UpdateExp(int32_t current, int32_t maxExp);
 		void OpenChat(int32_t mode);
 		void UpdateStrAndAgi(const UpdateAgiAndStr& updatedInfo);
@@ -113,6 +113,7 @@ namespace Babel
 		void UpdateRemoteMousePos(int posX, int posY);
 		void StartSpellCd(int spellId, int cdTime);
 		void UpdateCombatAndGlobalChatSettings(int combatValue, int globalValue);
+		void StartStunTime(int duration, int64_t timeStamp);
 
 	private:
 		void CallJsFunction(JSContextRef& context, const char* functionName, const JSValueRef* args, int argCount);

@@ -19,7 +19,6 @@ std::string CallerPath()
 
 std::filesystem::path GetWorkingPath()
 {
-
     auto path = CallerPath();
     //auto path = std::filesystem::path("D:\\Proyectos/ao20/Recursos");
     path += "/../Recursos/";

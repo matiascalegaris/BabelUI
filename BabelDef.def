@@ -58,4 +58,5 @@ EXPORTS
     UpdateRemoteMousePos @55
     StartSpellCd @56
     UpdateCombatAndGlobalChatSettings @57
+    ActivateStunTimer @58
 

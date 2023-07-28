@@ -44,7 +44,7 @@ extern "C"
 	LIBRARY_API void _stdcall UpdateStaminaValue(int32_t newMana);
 	LIBRARY_API void _stdcall UpdateDrinkValue(int32_t newMana);
 	LIBRARY_API void _stdcall UpdateFoodValue(int32_t newMana);
-	LIBRARY_API void _stdcall UpdateGold(int32_t gold);
+	LIBRARY_API void _stdcall UpdateGold(int32_t gold, int32_t maxGold);
 	LIBRARY_API void _stdcall UpdateExp(int32_t current, int32_t target);
 	LIBRARY_API void _stdcall OpenChat(int32_t mode);
 	LIBRARY_API void _stdcall UpdateStrAndAgiBuff(uint8_t str, uint8_t agi, uint8_t strState, uint8_t agiState);
@@ -69,4 +69,5 @@ extern "C"
 	LIBRARY_API void _stdcall UpdateRemoteMousePos(int posX, int posY);
 	LIBRARY_API void _stdcall StartSpellCd(int spellIndex, int cdTime);
 	LIBRARY_API void _stdcall UpdateCombatAndGlobalChatSettings(int combatValue, int globalValue);
+	LIBRARY_API void _stdcall ActivateStunTimer(int duration);
 }

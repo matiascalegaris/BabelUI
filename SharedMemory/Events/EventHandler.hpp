@@ -89,7 +89,8 @@ namespace Babel
 		UpdateRemoteMousePos,
 		TeleportToMinimapPos,
 		StartSpellCd,
-		UpdateCombatAndglobalChatSettings
+		UpdateCombatAndglobalChatSettings,
+		StartStunTime
 	};
 
 	struct Event
