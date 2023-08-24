@@ -1,6 +1,7 @@
 #include "Tunnel.h"
 #include <string>
 #include "SharedMemory/Events/EventHandler.hpp"
+#include "SharedMemory/Events/GameplayEvents.hpp"
 #include "Core/Logger.hpp"
 #include <windows.h>
 #include <algorithm> 
@@ -376,6 +377,14 @@ namespace Babel
         {
             const DoubleIntEvent& evtInfo = static_cast<const DoubleIntEvent&>(eventData);
             mGameplayVBcallbacks.UpdateCombatAndGlobalChatSettings(evtInfo.Value1, evtInfo.Value2);
+            break;
+        }
+        case EventType::JSUpdateHotkeySlot:
+        {
+            const UpdateHotkeySlot& evtInfo = static_cast<const UpdateHotkeySlot&>(eventData);
+            Babel::HotkeySlot slotInfo = evtInfo.SlotInfo;
+            slotInfo.LastKnownslot = slotInfo.LastKnownslot + 1;
+            mGameplayVBcallbacks.UpdateHotKeySlot(evtInfo.SlotIndex, &slotInfo);
             break;
         }
         }

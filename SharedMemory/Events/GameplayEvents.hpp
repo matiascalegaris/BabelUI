@@ -51,6 +51,7 @@ namespace Babel {
 		int16_t CDType;
 		int32_t CDMask;
 		int16_t Amunition;
+		uint8_t IsBindable;
 	};
 
 	struct UpdateSpellSlot : public Event
@@ -59,6 +60,7 @@ namespace Babel {
 		int16_t SpellIndex;
 		int32_t IconIndex;
 		int32_t Cooldown;
+		uint8_t IsBindable;
 	};
 
 	struct UpdateHp : public Event
@@ -96,5 +98,11 @@ namespace Babel {
 	{
 		int32_t IntervalType;
 		int64_t Timestamp;
+	};
+
+	struct UpdateHotkeySlot : public Event
+	{
+		HotkeySlot SlotInfo;
+		int SlotIndex;
 	};
 }

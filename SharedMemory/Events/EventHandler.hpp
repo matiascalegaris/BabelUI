@@ -90,7 +90,11 @@ namespace Babel
 		TeleportToMinimapPos,
 		StartSpellCd,
 		UpdateCombatAndglobalChatSettings,
-		StartStunTime
+		StartStunTime,
+		VBUpdateHotkeySlot,
+		JSUpdateHotkeySlot,
+		ActivateFeatureToggle,
+		ClearToggles
 	};
 
 	struct Event

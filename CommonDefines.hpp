@@ -69,6 +69,7 @@ namespace Babel
 		int16_t CDType;
 		int32_t CDMask;
 		int16_t Amunition;
+		uint8_t IsBindable;
 		const char* Name;
 		const char* Desc;
 	};
@@ -79,6 +80,7 @@ namespace Babel
 		int16_t SpellIndex;
 		int32_t Icon;
 		int32_t Cooldown;
+		uint8_t IsBindable;
 		const char* Name;
 	};
 
@@ -109,5 +111,12 @@ namespace Babel
 		int32_t HitMagic;
 		int32_t MagicHit;
 		int32_t HitUseItem;
+	};
+
+	struct HotkeySlot
+	{
+		int16_t Type;
+		int16_t Index;
+		int16_t LastKnownslot;
 	};
 }

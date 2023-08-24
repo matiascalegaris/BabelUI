@@ -210,6 +210,7 @@ namespace Babel
 		Api["ClickMiniMapPos"] = BindJSCallback(&JSBridge::ClickMiniMapPos);
 		Api["UpdateCombatAndGlobatChatState"] = BindJSCallback(&JSBridge::UpdateCombatAndGlobatChatState);
 		Api["Copytext"] = BindJSCallback(&JSBridge::Copytext);
+		Api["UpdateHoykeySlotInfo"] = BindJSCallback(&JSBridge::UpdateHoykeySlotInfo);
 		
 		global["BabelUI"] = JSValue(Api);
 	}
@@ -577,6 +578,28 @@ namespace Babel
 			{
 				const Babel::StartIntervalEvent& slotInfo = static_cast<const Babel::StartIntervalEvent&>(eventData);
 				StartStunTime(slotInfo.IntervalType, slotInfo.Timestamp);
+				break;
+			}
+			case EventType::VBUpdateHotkeySlot:
+			{
+				const Babel::UpdateHotkeySlot& slotInfo = static_cast<const Babel::UpdateHotkeySlot&>(eventData);
+				UpdateHoykeySlot(slotInfo.SlotIndex, slotInfo.SlotInfo);
+				break;
+			}
+			case EventType::ActivateFeatureToggle:
+			{
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(1);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::Event), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == eventData.Size);
+				std::string toggleName(strInfo[0].StartPos, strInfo[0].Size);
+				ActivateFeatureToggle(toggleName);
+				break;
+			}
+			case EventType::ClearToggles:
+			{
+				ClearToggles();
 				break;
 			}
 			default:
@@ -1314,6 +1337,28 @@ namespace Babel
 		evtData.Size = sizeof(evtData);
 		mEventBuffer.AddEvent((uint8_t*)&evtData, sizeof(evtData));
 	}
+
+	void JSBridge::UpdateHoykeySlotInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 4)
+		{
+			return;
+		}
+		Babel::UpdateHotkeySlot eventData;
+		int SlotIndex, Index, LastSlot, Type;
+		SlotIndex = args[0];
+		Index = args[1];
+		LastSlot = args[2];
+		Type = args[3];
+		eventData.SlotIndex = SlotIndex;
+		eventData.SlotInfo.Index = Index;
+		eventData.SlotInfo.LastKnownslot = LastSlot;
+		eventData.SlotInfo.Type = Type;
+
+		eventData.Size = sizeof(eventData);
+		eventData.EventType = Babel::EventType::JSUpdateHotkeySlot;
+		mEventBuffer.AddEvent((uint8_t*)&eventData, sizeof(eventData));
+	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
 	{
@@ -1539,6 +1584,24 @@ namespace Babel
 			}
 		}
 	}
+	void JSBridge::ClearToggles()
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		CallJsFunction(ctx, "APicallbacks.ClearToggles", nullptr, 0);
+	}
+
+	void JSBridge::ActivateFeatureToggle(const std::string& toggleName)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		using namespace std::chrono;
+		JSRetainPtr<JSStringRef> msg =
+			adopt(JSStringCreateWithUTF8CString(toggleName.c_str()));
+		const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()) };
+		CallJsFunction(ctx, "APicallbacks.ActivateFeatureToggle", args, 1);
+	}
+
 	void JSBridge::UpdateStats(const UserStats& userStats)
 	{
 		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
@@ -1736,7 +1799,7 @@ namespace Babel
 				SetObjectNumber(ctx, ret, "cdType", slotInfo.CDType);
 				SetObjectNumber(ctx, ret, "cdMask", slotInfo.CDMask);
 				SetObjectNumber(ctx, ret, "amunition", slotInfo.Amunition);
-
+				SetObjectBoolean(ctx, ret, "isBindable", slotInfo.IsBindable > 0);
 				const JSValueRef args[] = { ret };
 				size_t num_args = 1;
 				JSValueRef exception = 0;
@@ -1772,6 +1835,7 @@ namespace Babel
 				SetObjectNumber(ctx, ret, "spellIndex", slotInfo.SpellIndex);
 				SetObjectNumber(ctx, ret, "grh", slotInfo.IconIndex);
 				SetObjectNumber(ctx, ret, "cooldown", slotInfo.Cooldown);
+				SetObjectBoolean(ctx, ret, "isBindable", slotInfo.IsBindable > 0);
 
 				const JSValueRef args[] = { ret };
 				size_t num_args = 1;
@@ -2132,6 +2196,19 @@ namespace Babel
 		const JSValueRef args[] = { JSValueMakeNumber(ctx, duration),
 									JSValueMakeNumber(ctx, currentTimestamp - timeStamp) };
 		CallJsFunction(ctx, "APicallbacks.StartStunTime", args, 2);
+	}
+
+	void JSBridge::UpdateHoykeySlot(int slotIndex, const HotkeySlot& slotInfo)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		using namespace std::chrono;
+		int64_t currentTimestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, slotIndex),
+									JSValueMakeNumber(ctx, slotInfo.Index),
+									JSValueMakeNumber(ctx, slotInfo.LastKnownslot),
+									JSValueMakeNumber(ctx, slotInfo.Type) };
+		CallJsFunction(ctx, "APicallbacks.UpdateHotkeySlot", args, 4);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

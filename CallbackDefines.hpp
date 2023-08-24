@@ -1,5 +1,5 @@
 #pragma once
-
+#include "CommonDefines.hpp"
 namespace Babel
 {
 	struct LogInInfo {
@@ -88,6 +88,7 @@ namespace Babel
 	typedef void(__stdcall* TSingleIntParam)(int);
 	typedef void(__stdcall* TSingleBoolParam)(int);
 	typedef void(__stdcall* TDoubleIntParam)(int, int);
+	typedef void(__stdcall* TUpdateHoykeySlot)(int,const Babel::HotkeySlot*);
 
 	struct GameplayCallbacks
 	{
@@ -109,5 +110,6 @@ namespace Babel
 		TSingleIntParam ScrollSpell;
 		TDoubleIntParam TeleportToMiniMapPos;
 		TDoubleIntParam UpdateCombatAndGlobalChatSettings;
+		TUpdateHoykeySlot UpdateHotKeySlot;
 	};
 }

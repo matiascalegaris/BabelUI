@@ -64,6 +64,7 @@ namespace Babel
 		void InformSpellListScroll(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void ClickMiniMapPos(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void UpdateCombatAndGlobatChatState(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void UpdateHoykeySlotInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
@@ -73,6 +74,8 @@ namespace Babel
 		void HandleLoginCharList(const CharacterListEvent& messageData);
 		void DeleteCharacterFromList(int characterIndex);
 		void RequestDeleteCode();
+		void ClearToggles();
+		void ActivateFeatureToggle(const std::string& toggleName);
 
 		//gameplay
 		void UpdateStats(const UserStats& userStats);
@@ -114,7 +117,7 @@ namespace Babel
 		void StartSpellCd(int spellId, int cdTime);
 		void UpdateCombatAndGlobalChatSettings(int combatValue, int globalValue);
 		void StartStunTime(int duration, int64_t timeStamp);
-
+		void UpdateHoykeySlot(int slotIndex, const HotkeySlot& slotInfo);
 	private:
 		void CallJsFunction(JSContextRef& context, const char* functionName, const JSValueRef* args, int argCount);
 		EventBuffer& mEventBuffer;

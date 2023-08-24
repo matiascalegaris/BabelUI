@@ -70,4 +70,7 @@ extern "C"
 	LIBRARY_API void _stdcall StartSpellCd(int spellIndex, int cdTime);
 	LIBRARY_API void _stdcall UpdateCombatAndGlobalChatSettings(int combatValue, int globalValue);
 	LIBRARY_API void _stdcall ActivateStunTimer(int duration);
+	LIBRARY_API void _stdcall UpdateHoykeySlot(int slotIndex, void* slotInfo);
+	LIBRARY_API void _stdcall ActivateFeatureToggle(const char* toggleName);
+	LIBRARY_API void _stdcall ClearToggles();
 }

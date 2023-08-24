@@ -59,4 +59,7 @@ EXPORTS
     StartSpellCd @56
     UpdateCombatAndGlobalChatSettings @57
     ActivateStunTimer @58
+    UpdateHoykeySlot @59
+    ActivateFeatureToggle @60
+    ClearToggles @61
 

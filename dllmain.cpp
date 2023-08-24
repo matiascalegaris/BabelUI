@@ -290,6 +290,7 @@ void _stdcall SetInvSlot(void* invData)
 	slotMessage.CDType = invDataPtr->CDType;
 	slotMessage.CDMask = invDataPtr->CDMask;
 	slotMessage.Amunition = invDataPtr->Amunition;
+	slotMessage.IsBindable = invDataPtr->IsBindable;
 	
 	slotMessage.EventType = Babel::EventType::UpdateInvSlot;
 	std::vector<Babel::StringInBuffer> strInfo(2);
@@ -307,6 +308,7 @@ void _stdcall SetSpellSlot(void* spellData)
 	slotMessage.SpellIndex = spellDataPtr->SpellIndex;
 	slotMessage.IconIndex = spellDataPtr->Icon;
 	slotMessage.Cooldown = spellDataPtr->Cooldown;
+	slotMessage.IsBindable = spellDataPtr->IsBindable;
 	slotMessage.EventType = Babel::EventType::UpdateSpellSlot;
 
 	std::vector<Babel::StringInBuffer> strInfo(1);
@@ -471,6 +473,7 @@ void _stdcall SetKeySlot(void* slotData)
 	slotMessage.Cooldown = invDataPtr->Cooldown;
 	slotMessage.CDType = invDataPtr->CDType;
 	slotMessage.Amunition = invDataPtr->Amunition;
+	slotMessage.IsBindable = invDataPtr->IsBindable;
 
 	slotMessage.EventType = Babel::EventType::UpdateKeySlot;
 	std::vector<Babel::StringInBuffer> strInfo(2);
@@ -654,4 +657,34 @@ void _stdcall ActivateStunTimer(int duration)
 	eventData.Size = sizeof(eventData);
 	eventData.EventType = Babel::EventType::StartStunTime;
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&eventData, eventData.Size);
+}
+
+void _stdcall UpdateHoykeySlot(int slotIndex, void* slotInfo)
+{
+	Babel::HotkeySlot* slotInfoPtr = static_cast<Babel::HotkeySlot*>(slotInfo);
+	Babel::UpdateHotkeySlot eventData;
+	eventData.SlotIndex = slotIndex;
+	eventData.SlotInfo = *slotInfoPtr;
+	eventData.SlotInfo.LastKnownslot = eventData.SlotInfo.LastKnownslot - 1;
+	eventData.Size = sizeof(eventData);
+	eventData.EventType = Babel::EventType::VBUpdateHotkeySlot;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&eventData, eventData.Size);
+}
+
+void _stdcall ActivateFeatureToggle(const char* toggleName)
+{
+	Babel::Event evtData;
+	evtData.EventType = Babel::EventType::ActivateFeatureToggle;
+	std::vector<Babel::StringInBuffer> strInfo(1);
+	strInfo[0].StartPos = toggleName;
+	evtData.Size = sizeof(evtData) + PrepareDynamicStrings(strInfo);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evtData, sizeof(evtData), strInfo);
+}
+
+void _stdcall ClearToggles()
+{
+	Babel::Event evt;
+	evt.EventType = Babel::EventType::ClearToggles;
+	evt.Size = sizeof(evt);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, evt.Size);
 }

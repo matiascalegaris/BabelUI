@@ -59,6 +59,7 @@ int main(int argc, char* argv[])
     catch (std::exception& err)
     {
         auto error = err.what();
+        Babel::LOGGER->log(error);
     }
     signal(SIGABRT, SIG_DFL);
     signal(SIGFPE, SIG_DFL);
