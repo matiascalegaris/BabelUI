@@ -111,5 +111,6 @@ namespace Babel
 		TDoubleIntParam TeleportToMiniMapPos;
 		TDoubleIntParam UpdateCombatAndGlobalChatSettings;
 		TUpdateHoykeySlot UpdateHotKeySlot;
+		TSingleIntParam UpdateHideHotkeyState;
 	};
 }

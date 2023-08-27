@@ -73,4 +73,5 @@ extern "C"
 	LIBRARY_API void _stdcall UpdateHoykeySlot(int slotIndex, void* slotInfo);
 	LIBRARY_API void _stdcall ActivateFeatureToggle(const char* toggleName);
 	LIBRARY_API void _stdcall ClearToggles();
+	LIBRARY_API void _stdcall SetHotkeyHideState(int newState);
 }

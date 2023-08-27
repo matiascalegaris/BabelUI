@@ -387,6 +387,12 @@ namespace Babel
             mGameplayVBcallbacks.UpdateHotKeySlot(evtInfo.SlotIndex, &slotInfo);
             break;
         }
+        case EventType::UpdateHideHotkeyState:
+        {
+            const SingleIntEvent& evtData = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.UpdateHideHotkeyState(evtData.Value);
+            break;
+        }
         }
     }
 

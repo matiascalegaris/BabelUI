@@ -65,6 +65,7 @@ namespace Babel
 		void ClickMiniMapPos(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void UpdateCombatAndGlobatChatState(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void UpdateHoykeySlotInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void JSUpdateHideHotkeyState(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
@@ -118,6 +119,7 @@ namespace Babel
 		void UpdateCombatAndGlobalChatSettings(int combatValue, int globalValue);
 		void StartStunTime(int duration, int64_t timeStamp);
 		void UpdateHoykeySlot(int slotIndex, const HotkeySlot& slotInfo);
+		void UpdateHideHotkeyState(int newState);
 	private:
 		void CallJsFunction(JSContextRef& context, const char* functionName, const JSValueRef* args, int argCount);
 		EventBuffer& mEventBuffer;

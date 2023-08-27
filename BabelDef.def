@@ -62,4 +62,5 @@ EXPORTS
     UpdateHoykeySlot @59
     ActivateFeatureToggle @60
     ClearToggles @61
+    SetHotkeyHideState @62
 

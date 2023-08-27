@@ -94,7 +94,8 @@ namespace Babel
 		VBUpdateHotkeySlot,
 		JSUpdateHotkeySlot,
 		ActivateFeatureToggle,
-		ClearToggles
+		ClearToggles,
+		UpdateHideHotkeyState
 	};
 
 	struct Event

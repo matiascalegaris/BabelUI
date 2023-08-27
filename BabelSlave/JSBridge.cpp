@@ -211,7 +211,8 @@ namespace Babel
 		Api["UpdateCombatAndGlobatChatState"] = BindJSCallback(&JSBridge::UpdateCombatAndGlobatChatState);
 		Api["Copytext"] = BindJSCallback(&JSBridge::Copytext);
 		Api["UpdateHoykeySlotInfo"] = BindJSCallback(&JSBridge::UpdateHoykeySlotInfo);
-		
+		Api["UpdateHideHotkeyState"] = BindJSCallback(&JSBridge::JSUpdateHideHotkeyState);
+
 		global["BabelUI"] = JSValue(Api);
 	}
 	void JSBridge::HandleEvent(const Event& eventData)
@@ -600,6 +601,12 @@ namespace Babel
 			case EventType::ClearToggles:
 			{
 				ClearToggles();
+				break;
+			}
+			case EventType::UpdateHideHotkeyState:
+			{
+				const Babel::SingleIntEvent& evtInfo = static_cast<const Babel::SingleIntEvent&>(eventData);
+				UpdateHideHotkeyState(evtInfo.Value);
 				break;
 			}
 			default:
@@ -1358,6 +1365,22 @@ namespace Babel
 		eventData.Size = sizeof(eventData);
 		eventData.EventType = Babel::EventType::JSUpdateHotkeySlot;
 		mEventBuffer.AddEvent((uint8_t*)&eventData, sizeof(eventData));
+	}
+
+	void JSBridge::JSUpdateHideHotkeyState(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+
+		AO::ObjectData objData;
+
+		SingleIntEvent hideHKState;
+		hideHKState.Value = args[0];
+		hideHKState.EventType = EventType::UpdateHideHotkeyState;
+		hideHKState.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&hideHKState, sizeof(hideHKState));
 	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
@@ -2209,6 +2232,16 @@ namespace Babel
 									JSValueMakeNumber(ctx, slotInfo.LastKnownslot),
 									JSValueMakeNumber(ctx, slotInfo.Type) };
 		CallJsFunction(ctx, "APicallbacks.UpdateHotkeySlot", args, 4);
+	}
+
+	void JSBridge::UpdateHideHotkeyState(int newState)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		using namespace std::chrono;
+		int64_t currentTimestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+		const JSValueRef args[] = { JSValueMakeBoolean(ctx, newState > 0) };
+		CallJsFunction(ctx, "APicallbacks.SetHideHotkeyState", args, 1);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

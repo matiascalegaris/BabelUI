@@ -688,3 +688,12 @@ void _stdcall ClearToggles()
 	evt.Size = sizeof(evt);
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, evt.Size);
 }
+
+void _stdcall SetHotkeyHideState(int newState)
+{
+	Babel::SingleIntEvent invEvt;
+	invEvt.Value = newState;
+	invEvt.Size = sizeof(invEvt);
+	invEvt.EventType = Babel::EventType::UpdateHideHotkeyState;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
+}
