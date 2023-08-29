@@ -212,6 +212,7 @@ namespace Babel
 		Api["Copytext"] = BindJSCallback(&JSBridge::Copytext);
 		Api["UpdateHoykeySlotInfo"] = BindJSCallback(&JSBridge::UpdateHoykeySlotInfo);
 		Api["UpdateHideHotkeyState"] = BindJSCallback(&JSBridge::JSUpdateHideHotkeyState);
+		Api["GetNpcName"] = BindJSCallbackWithRetval(&JSBridge::GetNpcName);
 
 		global["BabelUI"] = JSValue(Api);
 	}
@@ -1381,6 +1382,18 @@ namespace Babel
 		hideHKState.EventType = EventType::UpdateHideHotkeyState;
 		hideHKState.Size = sizeof(SingleIntEvent);
 		mEventBuffer.AddEvent((uint8_t*)&hideHKState, sizeof(hideHKState));
+	}
+
+	ultralight::JSValue JSBridge::GetNpcName(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return "";
+		}
+		int npcId = args[0];
+		AO::NpcInfo npcInfo;
+		mResources->GetNpcInfo(npcInfo, npcId);
+		return npcInfo.Name.c_str();
 	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)

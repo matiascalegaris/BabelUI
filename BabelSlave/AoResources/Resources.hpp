@@ -41,6 +41,11 @@ namespace AO
 		int Cooldown;
 	};
 
+	struct NpcInfo
+	{
+		std::string Name;
+	};
+
 	struct ObjectData
 	{
 		long grhindex; // Graphic index representing the object
@@ -88,6 +93,7 @@ namespace AO
 		void GetGrhInfo(GrhDetails& grhInfo, int grhIndex);
 		void GetSpellDetails(SpellData& spellInfo, int spellIndex);
 		void GetObjectDetails(ObjectData& destObj, int itemIndex);
+		void GetNpcInfo(NpcInfo& destInfo, int npcIndex);
 	private:
 		std::unique_ptr<ResourceLoader> mResources;
 	};

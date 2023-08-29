@@ -111,6 +111,7 @@ namespace AO
         void SetGrhDetails(GrhDetails& dest, int grhIndex);
         void GetSpellData(SpellData& dest, int spellIndex);
         void GetObjectData(ObjectData& dest, int objIndex);
+        void GetNpcinfo(NpcInfo& dest, int npcIndex);
     private:
         void InitGrh(Grh& grhObj, int GrhIndex, int Started = -1, int16_t Loops = -1);
         void InitGrhWithBody(GrhData& dest, const MoldeCuerpo& bodyData, int16_t fileNum, int16_t x, int16_t y, int index);
@@ -122,6 +123,7 @@ namespace AO
         void LoadWeaponAnimations();
         void LoadShields();
         void LoadLocalIndex();
+        void LoadNpcData(INIReader& reader);
         void LoadSpellData(INIReader& reader);
         void LoadItemData(INIReader& reader);
         bool GetFile(const char* fileName, std::vector<uint8_t>& fileData);
@@ -136,6 +138,7 @@ namespace AO
         std::vector<WeaponAnimData> mWeaponAnimData;
         std::vector<ShieldAnimData> mShieldAnimData;
         std::vector<SpellData> mSpellInfo;
+        std::vector<NpcInfo> mNpcInfo;
         std::vector<ObjectData> mObjData;
         std::map<std::string, std::unique_ptr<Compressor>> mCompressedFiles;
         E_Heading mBodyHeading[4];
@@ -373,6 +376,17 @@ namespace AO
         }
     }
 
+    void ResourceLoader::LoadNpcData(INIReader& reader)
+    {
+        int npcCount = reader.GetInteger("INIT", "NUMNPCS", 0); //NumHechizos = Val(Leer.GetValue("INIT", "NumeroHechizo"))
+        mNpcInfo.resize(npcCount);
+        for (int i = 0; i < npcCount; i++)
+        {
+            std::string spellEntry = "Npc" + std::to_string(i + 1);
+            mNpcInfo[i].Name = reader.Get(spellEntry, "NAME", "");
+        }
+    }
+
     void ResourceLoader::LoadSpellData(INIReader& reader)
     {
         int spellCount = reader.GetInteger("INIT", "NUMEROHECHIZO", 0); //NumHechizos = Val(Leer.GetValue("INIT", "NumeroHechizo"))
@@ -442,6 +456,7 @@ namespace AO
         auto error = Loader.ParseError();
         LoadSpellData(Loader);
         LoadItemData(Loader);
+        LoadNpcData(Loader);
     }
 
     void ResourceLoader::LoadBodyStruct()
@@ -887,6 +902,14 @@ namespace AO
         }
     }
 
+    void ResourceLoader::GetNpcinfo(NpcInfo& destInfo, int npcIndex)
+    {
+        if (npcIndex >= 0 && npcIndex < mNpcInfo.size())
+        {
+            destInfo = mNpcInfo[npcIndex];
+        }
+    }
+
 
     Resources::Resources(bool compressed)
     {
@@ -921,6 +944,11 @@ namespace AO
     void Resources::GetObjectDetails(ObjectData& destObj, int itemIndex)
     {
         mResources->GetObjectData(destObj, itemIndex - 1);
+    }
+
+    void Resources::GetNpcInfo(NpcInfo& destInfo, int npcIndex)
+    {
+        mResources->GetNpcinfo(destInfo, npcIndex - 1);
     }
 
 }

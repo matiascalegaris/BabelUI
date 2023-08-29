@@ -66,6 +66,7 @@ namespace Babel
 		void UpdateCombatAndGlobatChatState(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void UpdateHoykeySlotInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void JSUpdateHideHotkeyState(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue GetNpcName(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
