@@ -194,11 +194,15 @@
     <ClInclude Include="JSBridge.hpp" />
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Utils\Encoding.h" />
     <ClInclude Include="Utils\FileUtils.h" />
     <ClInclude Include="Utils\IniReader.h" />
     <ClInclude Include="Utils\md5.h" />
     <ClInclude Include="Utils\StringUtils.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

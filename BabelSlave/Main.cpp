@@ -4,6 +4,8 @@
 #include "AoResources/Resources.hpp"
 #include "Utils/FileUtils.h"
 #include <csignal>
+#include <windows.h>
+#include "resource.h"
 
 void signalHandler(int signum) {
     
@@ -33,6 +35,11 @@ void signalHandler(int signum) {
     }
 }
 
+void TestEmbebed()
+{
+    
+}
+
 int main(int argc, char* argv[])
 {
     if (argc < 6) return -1;
@@ -42,7 +49,7 @@ int main(int argc, char* argv[])
         signal(SIGFPE, signalHandler);
         signal(SIGILL, signalHandler);
         signal(SIGSEGV, signalHandler);
-
+        TestEmbebed();
         Babel::AppSettings settings;
         Babel::LOGGER->init(CallerPath() + "/Logs/BabelUI.log", "BabelUI");
         Babel::LOGGER->log("Slave initialize");

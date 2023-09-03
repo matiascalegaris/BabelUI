@@ -17,10 +17,24 @@
 #include <filesystem>
 #include "AoResources/Compresor.hpp"
 #include "Utils//FileUtils.h"
+#include "resource.h"
 
 namespace Babel {
 
     using namespace ultralight;
+
+    std::map<std::string, int> EmbebedFiles = { 
+        {"BabelUI/index.html", IDB_INDEX},
+        {"BabelUI/asset-manifest.json", IDB_ASSET_MANIFEST},
+        {"BabelUI/manifest.json", IDB_MANIFEST_JSON},
+        {"BabelUI/robots.txt", IDB_ROBOTS},
+        {"BabelUI/static/css/main.css", IDB_MAINCSS},
+        {"BabelUI/static/js/27.chunk.js", IDB_CHUNKJS},
+        {"BabelUI/static/js/main.js", IDB_MAINJS},
+        {"BabelUI/static/js/main.js.LICENSE.txt", IDB_JSLICENSE},
+        {"resources/cacert.pem", IDB_PEM},
+        {"resources/icudt67l.dat", IDB_ICUDAT}
+    };
     static bool getFindData(LPCWSTR path, WIN32_FIND_DATAW& findData) 
     {
         HANDLE handle = FindFirstFileW(path, &findData);
@@ -82,6 +96,10 @@ namespace Babel {
 
     bool BabelFileSystemWin::FileExists(const String& path) 
     {
+        if (EmbebedFiles.find(path.utf8().data()) != EmbebedFiles.end())
+        {
+            return true;
+        }
         WIN32_FIND_DATAW findData;
         if (mCompressedGraphics)
         {
@@ -130,6 +148,9 @@ namespace Babel {
         CloseHandle(buffer_data->hFile);
         delete buffer_data;
     }
+    void Empty_DestroyBufferCallback(void* user_data, void* data)
+    {
+    }
 
     void FileSystemWin_DestroyDecompressedFileData(void* user_data, void* data)
     {
@@ -144,6 +165,15 @@ namespace Babel {
         HANDLE hMap;
         LPVOID lpBasePtr;
         LARGE_INTEGER liFileSize;
+        auto it = EmbebedFiles.find(file_path.utf8().data());
+        if (it != EmbebedFiles.end())
+        {
+            HRSRC hResource = FindResource(NULL, MAKEINTRESOURCE(it->second), "BINARY");
+            HGLOBAL hGlobal = LoadResource(NULL, hResource);
+            size_t exeSiz = SizeofResource(NULL, hResource); // Size of the embedded data
+            void* exeBuf = LockResource(hGlobal);
+            return Buffer::Create(exeBuf, exeSiz, nullptr, Empty_DestroyBufferCallback);
+        }
         if (mCompressedGraphics)
         {
             std::string file = file_path.utf8().data();

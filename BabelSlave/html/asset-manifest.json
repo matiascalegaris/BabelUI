@@ -1,0 +1,29 @@
+{
+  "files": {
+    "main.css": "./static/css/main.css",
+    "main.js": "./static/js/main.js",
+    "static/js/27.chunk.js": "./static/js/27.chunk.js",
+    "static/media/Alegreya-Sans-AO-Italic.ttf": "./static/media/Alegreya-Sans-AO-Italic..ttf",
+    "static/media/Cardo-Regular.ttf": "./static/media/Cardo-Regular..ttf",
+    "static/media/Alegreya-Sans-AO-Bold.ttf": "./static/media/Alegreya-Sans-AO-Bold..ttf",
+    "static/media/Alegreya-Sans-AO-Regular.ttf": "./static/media/Alegreya-Sans-AO-Regular..ttf",
+    "static/media/Cardo-Bold.ttf": "./static/media/Cardo-Bold..ttf",
+    "static/media/leather_brown.png": "./static/media/leather_brown..png",
+    "static/media/Cardo-Italic.ttf": "./static/media/Cardo-Italic..ttf",
+    "static/media/leather_black.png": "./static/media/leather_black..png",
+    "static/media/inventory-bg.png": "./static/media/inventory-bg..png",
+    "static/media/main_chat.png": "./static/media/main_chat..png",
+    "static/media/stats-bg.png": "./static/media/stats-bg..png",
+    "static/media/ao20_logo_med.png": "./static/media/ao20_logo_med..png",
+    "static/media/info-area-center.png": "./static/media/info-area-center..png",
+    "static/media/frame.png": "./static/media/frame..png",
+    "static/media/main_top.png": "./static/media/main_top..png",
+    "static/media/main_pj_info.png": "./static/media/main_pj_info..png",
+    "static/media/titulo_pergamino.png": "./static/media/titulo_pergamino..png",
+    "index.html": "./index.html"
+  },
+  "entrypoints": [
+    "static/css/main.css",
+    "static/js/main.js"
+  ]
+}

@@ -1,0 +1,72 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+//RESOURCES
+IDB_INDEX    BINARY      "html\\index.html"
+IDB_ASSET_MANIFEST    BINARY      "html\\asset-manifest.json"
+IDB_MANIFEST_JSON    BINARY      "html\\manifest.json"
+IDB_ROBOTS    BINARY      "html\\robots.txt"
+IDB_MAINCSS    BINARY      "html\\static\\css\\main.css"
+IDB_CHUNKJS    BINARY      "html\\static\\js\\27.chunk.js"
+IDB_MAINJS    BINARY      "html\\static\\js\\main.js"
+IDB_JSLICENSE    BINARY      "html\\static\\js\\main.js.LICENSE.txt"
+IDB_PEM    BINARY      "html\\resources\\cacert.pem"
+IDB_ICUDAT    BINARY      "html\\resources\\icudt67l.dat"
+
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Inglés (Estados Unidos) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ESS)
+LANGUAGE 10, 11
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE  
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE  
+BEGIN
+    "#include ""winres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE  
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Inglés (Estados Unidos) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
