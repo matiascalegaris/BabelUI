@@ -393,6 +393,35 @@ namespace Babel
             mGameplayVBcallbacks.UpdateHideHotkeyState(evtData.Value);
             break;
         }
+        case EventType::SendQuestionResponse:
+        {
+            const SingleIntEvent& evtData = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.SendQuestionResponse(evtData.Value);
+            break;
+        }
+        case EventType::MoveMerchantSlot:
+        {
+            const DoubleIntEvent& evtData = static_cast<const DoubleIntEvent&>(eventData);
+            mGameplayVBcallbacks.MoveMerchantSlot(evtData.Value1 + 1, evtData.Value2 + 1);
+            break;
+        }
+        case EventType::CloseMerchant:
+        {
+            mGameplayVBcallbacks.CloseMerchant();
+            break;
+        }
+        case EventType::ButItem:
+        {
+            const DoubleIntEvent& evtData = static_cast<const DoubleIntEvent&>(eventData);
+            mGameplayVBcallbacks.BuyItem(evtData.Value1 + 1, evtData.Value2);
+            break;
+        }
+        case EventType::SellItem:
+        {
+            const DoubleIntEvent& evtData = static_cast<const DoubleIntEvent&>(eventData);
+            mGameplayVBcallbacks.SellItem(evtData.Value1 + 1, evtData.Value2);
+            break;
+        }
         }
     }
 

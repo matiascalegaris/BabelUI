@@ -213,7 +213,12 @@ namespace Babel
 		Api["UpdateHoykeySlotInfo"] = BindJSCallback(&JSBridge::UpdateHoykeySlotInfo);
 		Api["UpdateHideHotkeyState"] = BindJSCallback(&JSBridge::JSUpdateHideHotkeyState);
 		Api["GetNpcName"] = BindJSCallbackWithRetval(&JSBridge::GetNpcName);
-
+		Api["SendQuestionResponse"] = BindJSCallback(&JSBridge::SendQuestionResponse);
+		Api["MoveMerchantItem"] = BindJSCallback(&JSBridge::MoveMerchantItem);
+		Api["CloseMerchant"] = BindJSCallback(&JSBridge::CloseMerchant);
+		Api["SellItem"] = BindJSCallback(&JSBridge::SellItem);
+		Api["BuyItem"] = BindJSCallback(&JSBridge::BuyItem);
+		
 		global["BabelUI"] = JSValue(Api);
 	}
 	void JSBridge::HandleEvent(const Event& eventData)
@@ -608,6 +613,35 @@ namespace Babel
 			{
 				const Babel::SingleIntEvent& evtInfo = static_cast<const Babel::SingleIntEvent&>(eventData);
 				UpdateHideHotkeyState(evtInfo.Value);
+				break;
+			}
+			case EventType::ShowQuestion:
+			{
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(1);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::Event), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == eventData.Size);
+				std::string questionText(strInfo[0].StartPos, strInfo[0].Size);
+				ShowQuestion(questionText);
+				break;
+			}
+			case EventType::OpenMerchant:
+			{
+				OpenMerchant();
+				break;
+			}
+			case EventType::UpdateMerchantSlot:
+			{
+				const Babel::UpdateInvSlot& slotInfo = static_cast<const Babel::UpdateInvSlot&>(eventData);
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(2);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::UpdateInvSlot), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == slotInfo.Size);
+				std::string objName(strInfo[0].StartPos, strInfo[0].Size);
+				std::string objDesc(strInfo[1].StartPos, strInfo[1].Size);
+				UpdateMerchantSlot(objName, objDesc, slotInfo);
 				break;
 			}
 			default:
@@ -1175,7 +1209,7 @@ namespace Babel
 		moveItem.Value1 = args[0];
 		moveItem.Value2 = args[1];
 		moveItem.EventType = EventType::MoveInvSlot;
-		moveItem.Size = sizeof(Event);
+		moveItem.Size = sizeof(moveItem);
 		mEventBuffer.AddEvent((uint8_t*)&moveItem, sizeof(moveItem));
 		return;
 	}
@@ -1394,6 +1428,73 @@ namespace Babel
 		AO::NpcInfo npcInfo;
 		mResources->GetNpcInfo(npcInfo, npcId);
 		return npcInfo.Name.c_str();
+	}
+
+	void JSBridge::SendQuestionResponse(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+		bool result = args[0];
+		SingleIntEvent eventInfo;
+		eventInfo.Value = result;
+		eventInfo.EventType = EventType::SendQuestionResponse;
+		eventInfo.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&eventInfo, sizeof(eventInfo));
+	}
+
+	void JSBridge::MoveMerchantItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return;
+		}
+
+		DoubleIntEvent moveItem;
+		moveItem.Value1 = args[0];
+		moveItem.Value2 = args[1];
+		moveItem.EventType = EventType::MoveMerchantSlot;
+		moveItem.Size = sizeof(DoubleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&moveItem, sizeof(moveItem));
+	}
+
+	void JSBridge::CloseMerchant(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		Event evt;
+		evt.EventType = EventType::CloseMerchant;
+		evt.Size = sizeof(Event);
+		mEventBuffer.AddEvent((uint8_t*)&evt, sizeof(evt));
+	}
+
+	void JSBridge::SellItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return;
+		}
+
+		DoubleIntEvent moveItem;
+		moveItem.Value1 = args[0];
+		moveItem.Value2 = args[1];
+		moveItem.EventType = EventType::SellItem;
+		moveItem.Size = sizeof(DoubleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&moveItem, sizeof(moveItem));
+	}
+
+	void JSBridge::BuyItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return;
+		}
+
+		DoubleIntEvent moveItem;
+		moveItem.Value1 = args[0];
+		moveItem.Value2 = args[1];
+		moveItem.EventType = EventType::ButItem;
+		moveItem.Size = sizeof(DoubleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&moveItem, sizeof(moveItem));
 	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
@@ -2255,6 +2356,75 @@ namespace Babel
 		int64_t currentTimestamp = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 		const JSValueRef args[] = { JSValueMakeBoolean(ctx, newState > 0) };
 		CallJsFunction(ctx, "APicallbacks.SetHideHotkeyState", args, 1);
+	}
+
+	void JSBridge::ShowQuestion(const std::string& questionText)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> msg =
+			adopt(JSStringCreateWithUTF8CString(ascii_to_utf8(questionText).c_str()));
+		const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()) };
+		CallJsFunction(ctx, "APicallbacks.ShowQuestion", args, 1);
+	}
+
+	void JSBridge::OpenMerchant()
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		const JSValueRef args{};
+		CallJsFunction(ctx, "APicallbacks.OpenMerchant", &args, 0);
+	}
+
+	void JSBridge::UpdateMerchantSlot(const std::string& objName, const std::string& objDesc, const Babel::UpdateInvSlot& slotInfo)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		JSRetainPtr<JSStringRef> str = adopt(
+			JSStringCreateWithUTF8CString("APicallbacks.UpdateMerchantSlot"));
+		JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
+		if (JSValueIsObject(ctx, func))
+		{
+			// Cast 'func' to an Object, will return null if typecast failed.
+			JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
+
+			// Check if 'funcObj' is a Function and not null
+			if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
+
+				// Create a JS string from null-terminated UTF8 C-string, store it
+				// in a smart pointer to release it when it goes out of scope.
+
+				JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+
+				JSObjectRef senderColorObj = JSObjectMake(ctx, nullptr, nullptr);
+				SetObjectString(ctx, ret, "name", ascii_to_utf8(objName).c_str());
+				SetObjectString(ctx, ret, "description", ascii_to_utf8(objDesc).c_str());
+				SetObjectNumber(ctx, ret, "count", slotInfo.Amount);
+				SetObjectNumber(ctx, ret, "cantUse", slotInfo.CantUse);
+				SetObjectBoolean(ctx, ret, "equipped", slotInfo.Equipped > 0);
+				SetObjectNumber(ctx, ret, "grh", slotInfo.GrhIndex);
+				SetObjectNumber(ctx, ret, "maxDef", slotInfo.MaxDef);
+				SetObjectNumber(ctx, ret, "minDef", slotInfo.MinDef);
+				SetObjectNumber(ctx, ret, "maxHit", slotInfo.MaxHit);
+				SetObjectNumber(ctx, ret, "minHit", slotInfo.MinHit);
+				SetObjectNumber(ctx, ret, "objIndex", slotInfo.ObjIndex);
+				SetObjectNumber(ctx, ret, "index", slotInfo.Slot);
+				SetObjectNumber(ctx, ret, "type", slotInfo.ObjType);
+				SetObjectNumber(ctx, ret, "value", slotInfo.Value);
+				SetObjectNumber(ctx, ret, "cooldown", slotInfo.Cooldown);
+				SetObjectNumber(ctx, ret, "cdType", slotInfo.CDType);
+				SetObjectNumber(ctx, ret, "cdMask", slotInfo.CDMask);
+				SetObjectNumber(ctx, ret, "amunition", slotInfo.Amunition);
+				SetObjectBoolean(ctx, ret, "isBindable", slotInfo.IsBindable > 0);
+				const JSValueRef args[] = { ret };
+				size_t num_args = 1;
+				JSValueRef exception = 0;
+				JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0,
+					num_args, args,
+					&exception);
+			}
+		}
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

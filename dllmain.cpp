@@ -697,3 +697,51 @@ void _stdcall SetHotkeyHideState(int newState)
 	invEvt.EventType = Babel::EventType::UpdateHideHotkeyState;
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&invEvt, invEvt.Size);
 }
+
+void _stdcall ShowQuestion(char* questionText)
+{
+	Babel::Event evtData;
+	evtData.EventType = Babel::EventType::ShowQuestion;
+	std::vector<Babel::StringInBuffer> strInfo(1);
+	strInfo[0].StartPos = questionText;
+	evtData.Size = sizeof(evtData) + PrepareDynamicStrings(strInfo);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evtData, sizeof(evtData), strInfo);
+}
+
+void _stdcall OpenMerchant()
+{
+	Babel::Event evt;
+	evt.EventType = Babel::EventType::OpenMerchant;
+	evt.Size = sizeof(evt);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, evt.Size);	
+}
+
+void _stdcall UpdateMerchantSlot(void* invData)
+{
+	Babel::InvItem* invDataPtr = static_cast<Babel::InvItem*>(invData);
+	Babel::UpdateInvSlot slotMessage;
+	slotMessage.Slot = invDataPtr->Slot - 1;
+	slotMessage.ObjIndex = invDataPtr->ObjIndex;
+	slotMessage.GrhIndex = invDataPtr->GrhIndex;
+	slotMessage.ObjType = invDataPtr->ObjType;
+	slotMessage.Equipped = invDataPtr->Equipped;
+	slotMessage.CantUse = invDataPtr->CantUse;
+	slotMessage.Amount = invDataPtr->Amount;
+	slotMessage.MinHit = invDataPtr->MinHit;
+	slotMessage.MaxHit = invDataPtr->MaxHit;
+	slotMessage.MinDef = invDataPtr->MinDef;
+	slotMessage.MaxDef = invDataPtr->MaxDef;
+	slotMessage.Value = invDataPtr->Value;
+	slotMessage.Cooldown = invDataPtr->Cooldown;
+	slotMessage.CDType = invDataPtr->CDType;
+	slotMessage.CDMask = invDataPtr->CDMask;
+	slotMessage.Amunition = invDataPtr->Amunition;
+	slotMessage.IsBindable = invDataPtr->IsBindable;
+
+	slotMessage.EventType = Babel::EventType::UpdateMerchantSlot;
+	std::vector<Babel::StringInBuffer> strInfo(2);
+	strInfo[0].StartPos = invDataPtr->Name;
+	strInfo[1].StartPos = invDataPtr->Desc;
+	slotMessage.Size = sizeof(slotMessage) + PrepareDynamicStrings(strInfo);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&slotMessage, sizeof(slotMessage), strInfo);
+}

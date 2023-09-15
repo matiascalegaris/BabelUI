@@ -95,7 +95,15 @@ namespace Babel
 		JSUpdateHotkeySlot,
 		ActivateFeatureToggle,
 		ClearToggles,
-		UpdateHideHotkeyState
+		UpdateHideHotkeyState,
+		SendQuestionResponse,
+		ShowQuestion,
+		OpenMerchant,
+		UpdateMerchantSlot,
+		MoveMerchantSlot,
+		CloseMerchant,
+		ButItem,
+		SellItem
 	};
 
 	struct Event

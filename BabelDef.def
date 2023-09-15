@@ -63,4 +63,7 @@ EXPORTS
     ActivateFeatureToggle @60
     ClearToggles @61
     SetHotkeyHideState @62
+    ShowQuestion @63
+    OpenMerchant @64
+    UpdateMerchantSlot @65
 

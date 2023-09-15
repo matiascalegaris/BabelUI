@@ -74,4 +74,8 @@ extern "C"
 	LIBRARY_API void _stdcall ActivateFeatureToggle(const char* toggleName);
 	LIBRARY_API void _stdcall ClearToggles();
 	LIBRARY_API void _stdcall SetHotkeyHideState(int newState);
+	LIBRARY_API void _stdcall ShowQuestion(char* questionText);
+	LIBRARY_API void _stdcall OpenMerchant();
+	LIBRARY_API void _stdcall UpdateMerchantSlot(void* invData);
+
 }

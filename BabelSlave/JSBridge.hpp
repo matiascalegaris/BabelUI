@@ -67,6 +67,11 @@ namespace Babel
 		void UpdateHoykeySlotInfo(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void JSUpdateHideHotkeyState(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		ultralight::JSValue GetNpcName(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void SendQuestionResponse(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void MoveMerchantItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void CloseMerchant(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void SellItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void BuyItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
@@ -121,6 +126,9 @@ namespace Babel
 		void StartStunTime(int duration, int64_t timeStamp);
 		void UpdateHoykeySlot(int slotIndex, const HotkeySlot& slotInfo);
 		void UpdateHideHotkeyState(int newState);
+		void ShowQuestion(const std::string& questionText);
+		void OpenMerchant();
+		void UpdateMerchantSlot(const std::string& objName, const std::string& objDesc, const Babel::UpdateInvSlot& slotInfo);
 	private:
 		void CallJsFunction(JSContextRef& context, const char* functionName, const JSValueRef* args, int argCount);
 		EventBuffer& mEventBuffer;

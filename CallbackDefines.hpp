@@ -112,5 +112,10 @@ namespace Babel
 		TDoubleIntParam UpdateCombatAndGlobalChatSettings;
 		TUpdateHoykeySlot UpdateHotKeySlot;
 		TSingleIntParam UpdateHideHotkeyState;
+		TSingleIntParam SendQuestionResponse;
+		TDoubleIntParam MoveMerchantSlot;
+		TVoidParam CloseMerchant;
+		TDoubleIntParam BuyItem;
+		TDoubleIntParam SellItem;
 	};
 }
