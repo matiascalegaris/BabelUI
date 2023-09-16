@@ -72,6 +72,7 @@ namespace Babel
 		void CloseMerchant(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void SellItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void BuyItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void BuyAoShopItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
@@ -129,6 +130,7 @@ namespace Babel
 		void ShowQuestion(const std::string& questionText);
 		void OpenMerchant();
 		void UpdateMerchantSlot(const std::string& objName, const std::string& objDesc, const Babel::UpdateInvSlot& slotInfo);
+		void OpenAOShop(int32_t AvailableCredits, int32_t itemCount, const Babel::AOShopItem* shopList);
 	private:
 		void CallJsFunction(JSContextRef& context, const char* functionName, const JSValueRef* args, int argCount);
 		EventBuffer& mEventBuffer;

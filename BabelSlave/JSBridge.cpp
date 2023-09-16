@@ -108,6 +108,7 @@ namespace Babel
 		void SetObjectInfo(JSContextRef& ctx, JSObjectRef& objectRef, const AO::ObjectData& objData)
 		{
 			SetObjectString(ctx, objectRef, "name", ascii_to_utf8(objData.Name).c_str());
+			SetObjectString(ctx, objectRef, "text", ascii_to_utf8(objData.Description).c_str());
 			SetObjectNumber(ctx, objectRef, "grhIndex", objData.grhindex);
 			SetObjectNumber(ctx, objectRef, "cooldown", objData.Cooldown);
 			SetObjectNumber(ctx, objectRef, "minDef", objData.MinDef);
@@ -218,7 +219,7 @@ namespace Babel
 		Api["CloseMerchant"] = BindJSCallback(&JSBridge::CloseMerchant);
 		Api["SellItem"] = BindJSCallback(&JSBridge::SellItem);
 		Api["BuyItem"] = BindJSCallback(&JSBridge::BuyItem);
-		
+		Api["BuyPatronItem"] = BindJSCallback(&JSBridge::BuyAoShopItem);		
 		global["BabelUI"] = JSValue(Api);
 	}
 	void JSBridge::HandleEvent(const Event& eventData)
@@ -642,6 +643,17 @@ namespace Babel
 				std::string objName(strInfo[0].StartPos, strInfo[0].Size);
 				std::string objDesc(strInfo[1].StartPos, strInfo[1].Size);
 				UpdateMerchantSlot(objName, objDesc, slotInfo);
+				break;
+			}
+			case EventType::OpenAoShop:
+			{
+				const Babel::AoShop& evtInfo = static_cast<const Babel::AoShop&>(eventData);
+				int32_t elementCount = 0;
+				Babel::AOShopItem* listStart = nullptr;
+				const char* bufferEnd = GetArrayData((char*)(&eventData), sizeof(Babel::AoShop), elementCount, &listStart);
+				auto size = bufferEnd - (char*)(&eventData);
+				assert(size == evtInfo.Size);
+				OpenAOShop(evtInfo.AvailableCredits, elementCount, listStart);
 				break;
 			}
 			default:
@@ -1495,6 +1507,19 @@ namespace Babel
 		moveItem.EventType = EventType::ButItem;
 		moveItem.Size = sizeof(DoubleIntEvent);
 		mEventBuffer.AddEvent((uint8_t*)&moveItem, sizeof(moveItem));
+	}
+
+	void JSBridge::BuyAoShopItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+		SingleIntEvent buyItem;
+		buyItem.Value = args[0];
+		buyItem.EventType = EventType::ButAOShopItem;
+		buyItem.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&buyItem, sizeof(buyItem));
 	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
@@ -2425,6 +2450,26 @@ namespace Babel
 					&exception);
 			}
 		}
+	}
+
+	void JSBridge::OpenAOShop(int32_t AvailableCredits, int32_t itemCount, const Babel::AOShopItem* shopList)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		std::vector<JSObjectRef> itemList;
+		itemList.resize(itemCount);
+		for (int i = 0; i < itemCount; i++)
+		{
+			itemList[i] = JSObjectMake(ctx, nullptr, nullptr);
+			SetObjectNumber(ctx, itemList[i], "price", shopList[i].Price);
+			SetObjectNumber(ctx, itemList[i], "objIndex", shopList[i].ObjectId);
+			AO::ObjectData objData;
+			mResources->GetObjectDetails(objData, shopList[i].ObjectId);
+			SetObjectString(ctx, itemList[i], "name", ascii_to_utf8(objData.Name).c_str());
+		}
+		JSObjectRef jsArray = JSObjectMakeArray(ctx, itemCount, itemList.data(), 0);
+		const JSValueRef args[] = { JSValueMakeNumber(ctx, AvailableCredits),  jsArray };
+		CallJsFunction(ctx, "APicallbacks.OpenAoShop", args, 2);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

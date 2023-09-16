@@ -105,4 +105,9 @@ namespace Babel {
 		HotkeySlot SlotInfo;
 		int SlotIndex;
 	};
+
+	struct AoShop : public Event
+	{
+		int32_t AvailableCredits;
+	};
 }

@@ -77,5 +77,6 @@ extern "C"
 	LIBRARY_API void _stdcall ShowQuestion(char* questionText);
 	LIBRARY_API void _stdcall OpenMerchant();
 	LIBRARY_API void _stdcall UpdateMerchantSlot(void* invData);
+	LIBRARY_API void _stdcall OpenAo20Shop(int32_t availableCredits, int32_t itemCount, void* itemList);
 
 }

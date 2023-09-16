@@ -50,6 +50,7 @@ namespace AO
 	{
 		long grhindex; // Graphic index representing the object
 		std::string Name;
+		std::string Description;
 		int MinDef; // Minimum defense
 		int MaxDef; // Maximum defense
 		int MinHit; // Minimum hit

@@ -422,6 +422,12 @@ namespace Babel
             mGameplayVBcallbacks.SellItem(evtData.Value1 + 1, evtData.Value2);
             break;
         }
+        case EventType::ButAOShopItem:
+        {
+            const SingleIntEvent& evtData = static_cast<const SingleIntEvent&>(eventData);
+            mGameplayVBcallbacks.BuyAOShopItem(evtData.Value);
+            break;
+        }
         }
     }
 

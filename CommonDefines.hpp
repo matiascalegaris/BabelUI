@@ -119,4 +119,11 @@ namespace Babel
 		int16_t Index;
 		int16_t LastKnownslot;
 	};
+
+#pragma pack(push, 1) // Set struct packing to 1 byte alignment
+	struct AOShopItem {
+		int32_t ObjectId;
+		int32_t Price;
+	};
+#pragma pack(pop)
 }

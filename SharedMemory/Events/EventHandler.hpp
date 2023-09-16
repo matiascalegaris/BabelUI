@@ -103,7 +103,9 @@ namespace Babel
 		MoveMerchantSlot,
 		CloseMerchant,
 		ButItem,
-		SellItem
+		SellItem,
+		OpenAoShop,
+		ButAOShopItem
 	};
 
 	struct Event
@@ -232,6 +234,17 @@ namespace Babel
 	};
 	const char* GetStringPtrInEvent(const char* memPtr, int32_t eventSize, std::vector<StringInBuffer>& result);
 	int32_t PrepareDynamicStrings(std::vector<StringInBuffer>& result, size_t maxSize = 255);
+
+	template<typename T>
+	const char* GetArrayData(const char* memPtr, int32_t eventSize, int32_t& size, T** dataStart)
+	{
+		memPtr += eventSize;
+		size = *((int32_t*)(memPtr));
+		memPtr += sizeof(int32_t);
+		*dataStart = (T*)memPtr;
+		memPtr += size * sizeof(T);
+		return memPtr;
+	}
 
 	class EventListener
 	{

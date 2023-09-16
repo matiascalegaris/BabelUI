@@ -745,3 +745,17 @@ void _stdcall UpdateMerchantSlot(void* invData)
 	slotMessage.Size = sizeof(slotMessage) + PrepareDynamicStrings(strInfo);
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&slotMessage, sizeof(slotMessage), strInfo);
 }
+
+void _stdcall OpenAo20Shop(int32_t availableCredits, int32_t itemCount, void* itemList)
+{
+	Babel::AOShopItem* shopItemList = static_cast<Babel::AOShopItem*>(itemList);
+	std::vector<Babel::AOShopItem> itemBuffer;
+	itemBuffer.resize(itemCount);
+	CopyMemory(itemBuffer.data(), itemList, VectorSizeOf(itemBuffer));
+
+	Babel::AoShop evt;
+	evt.AvailableCredits = availableCredits;
+	evt.EventType = Babel::EventType::OpenAoShop;
+	evt.Size = sizeof(evt) + + sizeof(int32_t) + VectorSizeOf(itemBuffer);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt), itemBuffer);
+}

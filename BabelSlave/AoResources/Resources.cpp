@@ -411,7 +411,8 @@ namespace AO
         for (int i = 0; i < itemCount; i++)
         {
             std::string object = "OBJ" + std::to_string(i + 1);
-            mObjData[i].Name = reader.Get(object, "NOMBRE", "");
+            mObjData[i].Name = reader.Get(object, "NAME", "");
+            mObjData[i].Description = reader.Get(object, "TEXTO", "");
             mObjData[i].grhindex = reader.GetInteger(object, "GRHINDEX", 0);
             mObjData[i].MinDef = reader.GetInteger(object, "MINDEF", 0);
             mObjData[i].MaxDef = reader.GetInteger(object, "MAXDEF", 0);

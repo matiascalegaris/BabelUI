@@ -117,5 +117,6 @@ namespace Babel
 		TVoidParam CloseMerchant;
 		TDoubleIntParam BuyItem;
 		TDoubleIntParam SellItem;
+		TSingleIntParam BuyAOShopItem;
 	};
 }
