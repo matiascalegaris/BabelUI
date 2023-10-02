@@ -118,5 +118,6 @@ namespace Babel
 		TDoubleIntParam BuyItem;
 		TDoubleIntParam SellItem;
 		TSingleIntParam BuyAOShopItem;
+		TDoubleIntParam UpdateIntSetting;
 	};
 }

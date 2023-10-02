@@ -12,6 +12,8 @@
 #include "AoResources/Resources.hpp"
 #include "Core/Logger.hpp"
 #include "Utils/StringUtils.hpp"
+#include "Utils/JSUtils.hpp"
+#include "GameSettings.hpp"
 
 namespace Babel
 {
@@ -22,68 +24,6 @@ namespace Babel
 			vbCtrl = 2,
 			vbAlt = 4
 		};
-		std::string ascii_to_utf8(const std::string& ascii_string) 
-		{
-			int num_wchars = MultiByteToWideChar(CP_ACP, 0, ascii_string.c_str(), -1, NULL, 0);
-			std::unique_ptr<wchar_t[]> wide_string(new wchar_t[num_wchars]);
-			MultiByteToWideChar(CP_ACP, 0, ascii_string.c_str(), -1, wide_string.get(), num_wchars);
-
-			int num_chars = WideCharToMultiByte(CP_UTF8, 0, wide_string.get(), -1, NULL, 0, NULL, NULL);
-			std::unique_ptr<char[]> utf8_string(new char[num_chars]);
-			WideCharToMultiByte(CP_UTF8, 0, wide_string.get(), -1, utf8_string.get(), num_chars, NULL, NULL);
-
-			return std::string(utf8_string.get());
-		}
-
-		std::string utf8_to_ascii(const std::string& utf8_string) 
-		{
-			int num_wchars = MultiByteToWideChar(CP_UTF8, 0, utf8_string.c_str(), -1, NULL, 0);
-			std::unique_ptr<wchar_t[]> wide_string(new wchar_t[num_wchars]);
-			MultiByteToWideChar(CP_UTF8, 0, utf8_string.c_str(), -1, wide_string.get(), num_wchars);
-
-			int num_chars = WideCharToMultiByte(CP_ACP, 0, wide_string.get(), -1, NULL, 0, NULL, NULL);
-			std::unique_ptr<char[]> ascii_string(new char[num_chars]);
-			WideCharToMultiByte(CP_ACP, 0, wide_string.get(), -1, ascii_string.get(), num_chars, NULL, NULL);
-
-			return std::string(ascii_string.get());
-		}
-
-		void SetObjectString(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, const char* value)
-		{			
-			JSRetainPtr<JSStringRef> valueStr =
-				adopt(JSStringCreateWithUTF8CString(value));
-			JSRetainPtr<JSStringRef> paramStr =
-				adopt(JSStringCreateWithUTF8CString(paramName));
-			auto jparam = JSValueMakeString(ctx, paramStr.get());
-			auto jvalue = JSValueMakeString(ctx, valueStr.get());
-			JSObjectSetProperty(ctx, objectRef, paramStr.get(), jvalue, 0, nullptr);
-		}
-		template<typename T>
-		void SetObjectNumber(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, T& value)
-		{
-			JSRetainPtr<JSStringRef> paramStr =
-				adopt(JSStringCreateWithUTF8CString(paramName));
-			auto jparam = JSValueMakeString(ctx, paramStr.get());
-			auto jvalue = JSValueMakeNumber(ctx, value);
-			JSObjectSetProperty(ctx, objectRef, paramStr.get(), jvalue, 0, nullptr);
-		}
-
-		void SetObjectBoolean(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, bool value)
-		{
-			JSRetainPtr<JSStringRef> paramStr =
-				adopt(JSStringCreateWithUTF8CString(paramName));
-			auto jparam = JSValueMakeString(ctx, paramStr.get());
-			auto jvalue = JSValueMakeBoolean(ctx, value);
-			JSObjectSetProperty(ctx, objectRef, paramStr.get(), jvalue, 0, nullptr);
-		}
-
-		void SetChildObject(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, JSObjectRef& value)
-		{
-			JSRetainPtr<JSStringRef> paramStr =
-				adopt(JSStringCreateWithUTF8CString(paramName));
-			auto jparam = JSValueMakeString(ctx, paramStr.get());
-			JSObjectSetProperty(ctx, objectRef, paramStr.get(), value, 0, nullptr);
-		}
 
 		void SetGrhJsObject(JSContextRef& ctx, JSObjectRef& objectRef, const AO::GrhDetails& grhData)
 		{
@@ -219,7 +159,8 @@ namespace Babel
 		Api["CloseMerchant"] = BindJSCallback(&JSBridge::CloseMerchant);
 		Api["SellItem"] = BindJSCallback(&JSBridge::SellItem);
 		Api["BuyItem"] = BindJSCallback(&JSBridge::BuyItem);
-		Api["BuyPatronItem"] = BindJSCallback(&JSBridge::BuyAoShopItem);		
+		Api["BuyPatronItem"] = BindJSCallback(&JSBridge::BuyAoShopItem);
+		Api["UpdateIntSetting"] = BindJSCallback(&JSBridge::UpdateIntSetting);		
 		global["BabelUI"] = JSValue(Api);
 	}
 	void JSBridge::HandleEvent(const Event& eventData)
@@ -1517,9 +1458,23 @@ namespace Babel
 		}
 		SingleIntEvent buyItem;
 		buyItem.Value = args[0];
-		buyItem.EventType = EventType::ButAOShopItem;
+		buyItem.EventType = EventType::BuyAOShopItem;
 		buyItem.Size = sizeof(SingleIntEvent);
 		mEventBuffer.AddEvent((uint8_t*)&buyItem, sizeof(buyItem));
+	}
+
+	void JSBridge::UpdateIntSetting(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return;
+		}
+		DoubleIntEvent evtData;
+		evtData.Value1 = args[0];
+		evtData.Value2 = args[1];
+		evtData.EventType = EventType::UpdateIntSetting;
+		evtData.Size = sizeof(SingleIntEvent);
+		mEventBuffer.AddEvent((uint8_t*)&evtData, sizeof(evtData));
 	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
@@ -2271,21 +2226,14 @@ namespace Babel
 
 	void JSBridge::UpdateGameSettings()
 	{
-		auto path = GetFilePath("OUTPUT/Configuracion.ini");
-		INIReader Reader(path.u8string());
-		auto chatBombat = Reader.GetInteger("OPCIONES", "CHATCOMBATE", 1);
-		auto spellMode = Reader.GetInteger("OPCIONES", "ModoHechizos", 1); 
-		auto inventoryFullNumbers = Reader.GetInteger("OPCIONES", "NumerosCompletosInventario", 1);
-		auto scrollDrag = Reader.GetInteger("OPCIONES", "ScrollArrastrar", 1); 
 		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
 		JSContextRef ctx = context->ctx();
-		
-		JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
-		SetObjectNumber(ctx, ret, "combatChat", chatBombat);
-		SetObjectNumber(ctx, ret, "spellMode", spellMode);
-		SetObjectNumber(ctx, ret, "inventoryFullNumbers", inventoryFullNumbers);
-		SetObjectNumber(ctx, ret, "scrollDrag", scrollDrag);
 
+		GameSettings settings;
+		settings.Load();
+		JSObjectRef ret = JSObjectMake(ctx, nullptr, nullptr);
+		settings.GetJsSettings(ctx, ret);
+		
 		const JSValueRef args[] = { ret };
 		CallJsFunction(ctx, "APicallbacks.ReloadSettings", args, 1);
 	}

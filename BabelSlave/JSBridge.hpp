@@ -73,6 +73,7 @@ namespace Babel
 		void SellItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void BuyItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void BuyAoShopItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void UpdateIntSetting(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);

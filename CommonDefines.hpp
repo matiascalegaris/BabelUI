@@ -64,7 +64,7 @@ namespace Babel
 		int16_t MaxHit;
 		int16_t MinDef;
 		int16_t MaxDef;
-		int32_t Value;
+		float Value;
 		int32_t Cooldown;
 		int16_t CDType;
 		int32_t CDMask;

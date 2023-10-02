@@ -105,7 +105,8 @@ namespace Babel
 		ButItem,
 		SellItem,
 		OpenAoShop,
-		ButAOShopItem
+		BuyAOShopItem,
+		UpdateIntSetting
 	};
 
 	struct Event
