@@ -89,6 +89,8 @@ namespace Babel
 	typedef void(__stdcall* TSingleBoolParam)(int);
 	typedef void(__stdcall* TDoubleIntParam)(int, int);
 	typedef void(__stdcall* TUpdateHoykeySlot)(int,const Babel::HotkeySlot*);
+	typedef void(__stdcall* NewScenario)(const ScenarioSettings*, DoubleStringParam*);
+	typedef void(__stdcall* JoinScenario)(int, SingleStringParam*);
 
 	struct GameplayCallbacks
 	{
@@ -119,5 +121,7 @@ namespace Babel
 		TDoubleIntParam SellItem;
 		TSingleIntParam BuyAOShopItem;
 		TDoubleIntParam UpdateIntSetting;
+		NewScenario CreateNewScenario;
+		JoinScenario JoinSceneario;
 	};
 }

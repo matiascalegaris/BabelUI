@@ -120,10 +120,39 @@ namespace Babel
 		int16_t LastKnownslot;
 	};
 
+	struct LobbyData
+	{
+		int16_t Index;
+		int16_t Id;
+		char * Description;
+		char* ScenarioType;
+		int16_t MinLevel;
+		int16_t MaxLevel;
+		int16_t MinPlayers;
+		int16_t MaxPlayers;
+		int16_t RegisteredPlayers;
+		int16_t TeamSize;
+		int16_t TeamType;
+		int32_t InscriptionPrice;
+		uint8_t IsPrivate;
+	};
+
 #pragma pack(push, 1) // Set struct packing to 1 byte alignment
 	struct AOShopItem {
 		int32_t ObjectId;
 		int32_t Price;
 	};
 #pragma pack(pop)
+	struct ScenarioSettings
+	{
+		uint8_t MinLevel;
+		uint8_t MaxLevel;
+		uint8_t MinPlayers;
+		uint8_t MaxPlayers;
+		uint8_t TeamSize;
+		uint8_t TeamType;
+		int32_t InscriptionPrice;
+		uint8_t ScenarioType;
+		uint8_t RoundAmount;
+	};
 }

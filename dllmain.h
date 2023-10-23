@@ -48,7 +48,7 @@ extern "C"
 	LIBRARY_API void _stdcall UpdateExp(int32_t current, int32_t target);
 	LIBRARY_API void _stdcall OpenChat(int32_t mode);
 	LIBRARY_API void _stdcall UpdateStrAndAgiBuff(uint8_t str, uint8_t agi, uint8_t strState, uint8_t agiState);
-	LIBRARY_API void _stdcall UpdateMapInfo(int32_t mapNumber, const char * mapName, int16_t npcCount, void* npcList, uint8_t isSafeMap);
+	LIBRARY_API void _stdcall UpdateMapInfo(int32_t mapNumber, int32_t miniMapFile, const char * mapName, int16_t npcCount, void* npcList, uint8_t isSafeMap);
 	LIBRARY_API void _stdcall UpdateUserPos(int16_t PosX, int16_t PosY, void *mapPos);
 	LIBRARY_API void _stdcall UpdateGroupPos(void* mapPos, int16_t groupIndex);
 	LIBRARY_API void _stdcall SetKeySlot(void* slotData);
@@ -78,5 +78,6 @@ extern "C"
 	LIBRARY_API void _stdcall OpenMerchant();
 	LIBRARY_API void _stdcall UpdateMerchantSlot(void* invData);
 	LIBRARY_API void _stdcall OpenAo20Shop(int32_t availableCredits, int32_t itemCount, void* itemList);
-
+	LIBRARY_API void _stdcall OpenLobbyList();
+	LIBRARY_API void _stdcall UpdateLobby(void *LobbyInfo);
 }

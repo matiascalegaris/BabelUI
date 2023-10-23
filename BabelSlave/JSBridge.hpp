@@ -74,6 +74,8 @@ namespace Babel
 		void BuyItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void BuyAoShopItem(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void UpdateIntSetting(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void CreateNewEvent(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void JoinEvent(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
@@ -103,7 +105,7 @@ namespace Babel
 		void UpdateExp(int32_t current, int32_t maxExp);
 		void OpenChat(int32_t mode);
 		void UpdateStrAndAgi(const UpdateAgiAndStr& updatedInfo);
-		void UpdateMapName(int32_t mapNumber, const std::string& mapName, int32_t isSafe);
+		void UpdateMapName(int32_t mapNumber, int32_t miniMapNumber, const std::string& mapName, int32_t isSafe);
 		void UpdateMapNpc(int32_t npcCount, const Babel::QuestNpc* npcList);
 		void UpdateUserPos(const Babel::UpdateUserPosEvt& updatePos);
 		void UpdateGroupMemberPos(const Babel::UpdateGroupMemberPosEvt& memberPos);
@@ -132,6 +134,8 @@ namespace Babel
 		void OpenMerchant();
 		void UpdateMerchantSlot(const std::string& objName, const std::string& objDesc, const Babel::UpdateInvSlot& slotInfo);
 		void OpenAOShop(int32_t AvailableCredits, int32_t itemCount, const Babel::AOShopItem* shopList);
+		void OpenLobbyList();
+		void Updatelobby(const LobbyDataUpdate& lobbyInfo, std::string description, std::string eventType);
 	private:
 		void CallJsFunction(JSContextRef& context, const char* functionName, const JSValueRef* args, int argCount);
 		EventBuffer& mEventBuffer;

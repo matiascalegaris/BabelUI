@@ -404,11 +404,12 @@ void _stdcall UpdateStrAndAgiBuff(uint8_t str, uint8_t agi, uint8_t strState, ui
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evtData, evtData.Size);
 }
 
-void _stdcall UpdateMapInfo(int32_t mapNumber, const char* mapName, int16_t npcCount, void* npcList, uint8_t isSafeMap)
+void _stdcall UpdateMapInfo(int32_t mapNumber, int32_t miniMapFile, const char* mapName, int16_t npcCount, void* npcList, uint8_t isSafeMap)
 {
-	Babel::DoubleIntEvent evtData;
+	Babel::TripleIntEvent evtData;
 	evtData.Value1 = mapNumber;
 	evtData.Value2 = isSafeMap;
+	evtData.Value3 = miniMapFile;
 	evtData.EventType = Babel::EventType::UpdateMapName;
 
 	std::vector<Babel::StringInBuffer> strInfo(1);
@@ -756,6 +757,38 @@ void _stdcall OpenAo20Shop(int32_t availableCredits, int32_t itemCount, void* it
 	Babel::AoShop evt;
 	evt.AvailableCredits = availableCredits;
 	evt.EventType = Babel::EventType::OpenAoShop;
-	evt.Size = sizeof(evt) + + sizeof(int32_t) + VectorSizeOf(itemBuffer);
+	evt.Size = sizeof(evt) + sizeof(int32_t) + VectorSizeOf(itemBuffer);
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt), itemBuffer);
+}
+
+void _stdcall OpenLobbyList()
+{
+	Babel::Event evt;
+	evt.EventType = Babel::EventType::OpenLobbyList;
+	evt.Size = sizeof(evt);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt));
+}
+
+void _stdcall UpdateLobby(void* LobbyInfo)
+{
+	Babel::LobbyData* lobbyDataPtr = static_cast<Babel::LobbyData*>(LobbyInfo);
+	Babel::LobbyDataUpdate evt;
+	evt.Index = lobbyDataPtr->Index;
+	evt.Id = lobbyDataPtr->Id;
+	evt.InscriptionPrice = lobbyDataPtr->InscriptionPrice;
+	evt.MaxLevel = lobbyDataPtr->MaxLevel;
+	evt.MaxPlayers = lobbyDataPtr->MaxPlayers;
+	evt.MinLevel = lobbyDataPtr->MinLevel;
+	evt.MinPlayers = lobbyDataPtr->MinPlayers;
+	evt.RegisteredPlayers = lobbyDataPtr->RegisteredPlayers;
+	evt.TeamSize = lobbyDataPtr->TeamSize;
+	evt.TeamType = lobbyDataPtr->TeamType;
+	evt.IsPrivate = lobbyDataPtr->IsPrivate;
+
+	evt.EventType = Babel::EventType::UpdateLobbyInfo;
+	std::vector<Babel::StringInBuffer> strInfo(2);
+	strInfo[0].StartPos = lobbyDataPtr->ScenarioType;
+	strInfo[1].StartPos = lobbyDataPtr->Description;
+	evt.Size = sizeof(evt) + PrepareDynamicStrings(strInfo);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt), strInfo);
 }
