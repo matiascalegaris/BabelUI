@@ -67,4 +67,6 @@ EXPORTS
     OpenMerchant @64
     UpdateMerchantSlot @65
     OpenAo20Shop @66
+    OpenLobbyList @67
+    UpdateLobby @68
 

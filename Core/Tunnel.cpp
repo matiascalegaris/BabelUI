@@ -5,6 +5,7 @@
 #include "Core/Logger.hpp"
 #include <windows.h>
 #include <algorithm> 
+#include <cassert>
 
 namespace Babel
 {
@@ -433,6 +434,33 @@ namespace Babel
             const DoubleIntEvent& evtData = static_cast<const DoubleIntEvent&>(eventData);
             mGameplayVBcallbacks.UpdateIntSetting(evtData.Value1, evtData.Value2);
             break;
+        }
+        case EventType::CreateNewScenario:
+        {
+            const CreateNewEvent& evtData = static_cast<const CreateNewEvent&>(eventData);
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(2);
+            const char* output = GetStringPtrInEvent((char*)(&evtData), sizeof(CreateNewEvent), strInfo);
+            DoubleStringParam strParam;
+            strParam.FirstLen = strInfo[0].Size;
+            strParam.FirstStr = strInfo[0].StartPos;
+            strParam.SecondLen = strInfo[1].Size;
+            strParam.SecondStr = strInfo[1].StartPos;
+            mGameplayVBcallbacks.CreateNewScenario(&(evtData.Settings), &strParam);
+            break;
+        }
+        case EventType::JoinScenario:
+        {
+            const SingleIntEvent& evtData = static_cast<const SingleIntEvent&>(eventData);
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(1);
+            const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(SingleIntEvent), strInfo);
+            auto size = output - (char*)(&eventData);
+            assert(size == evtData.Size);
+            SingleStringParam strParam;
+            strParam.Len = strInfo[0].Size;
+            strParam.Str = strInfo[0].StartPos;
+            mGameplayVBcallbacks.JoinSceneario(evtData.Value, &strParam);
         }
         }
     }

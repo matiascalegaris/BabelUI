@@ -106,7 +106,11 @@ namespace Babel
 		SellItem,
 		OpenAoShop,
 		BuyAOShopItem,
-		UpdateIntSetting
+		UpdateIntSetting,
+		OpenLobbyList,
+		UpdateLobbyInfo,
+		CreateNewScenario,
+		JoinScenario
 	};
 
 	struct Event

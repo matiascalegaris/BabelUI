@@ -160,7 +160,9 @@ namespace Babel
 		Api["SellItem"] = BindJSCallback(&JSBridge::SellItem);
 		Api["BuyItem"] = BindJSCallback(&JSBridge::BuyItem);
 		Api["BuyPatronItem"] = BindJSCallback(&JSBridge::BuyAoShopItem);
-		Api["UpdateIntSetting"] = BindJSCallback(&JSBridge::UpdateIntSetting);		
+		Api["UpdateIntSetting"] = BindJSCallback(&JSBridge::UpdateIntSetting);
+		Api["CreateEvent"] = BindJSCallback(&JSBridge::CreateNewEvent);
+		Api["JoinLobby"] = BindJSCallback(&JSBridge::JoinEvent);
 		global["BabelUI"] = JSValue(Api);
 	}
 	void JSBridge::HandleEvent(const Event& eventData)
@@ -366,14 +368,14 @@ namespace Babel
 			}
 			case EventType::UpdateMapName:
 			{
-				const Babel::DoubleIntEvent& evtData = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				const Babel::TripleIntEvent& evtData = static_cast<const Babel::TripleIntEvent&>(eventData);
 				std::vector<StringInBuffer> strInfo;
 				strInfo.resize(1);
-				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::DoubleIntEvent), strInfo);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::TripleIntEvent), strInfo);
 				auto size = output - (char*)(&eventData);
 				assert(size == evtData.Size);
 				std::string mapName(strInfo[0].StartPos, strInfo[0].Size);
-				UpdateMapName(evtData.Value1, mapName, evtData.Value2);
+				UpdateMapName(evtData.Value1, evtData.Value3, mapName, evtData.Value2);
 				break;
 			}
 			case EventType::UpdateMapNpc:
@@ -595,6 +597,24 @@ namespace Babel
 				auto size = bufferEnd - (char*)(&eventData);
 				assert(size == evtInfo.Size);
 				OpenAOShop(evtInfo.AvailableCredits, elementCount, listStart);
+				break;
+			}
+			case EventType::OpenLobbyList:
+			{
+				OpenLobbyList();
+				break;
+			}
+			case EventType::UpdateLobbyInfo:
+			{
+				const Babel::LobbyDataUpdate& evtInfo = static_cast<const Babel::LobbyDataUpdate&>(eventData);
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(2);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::LobbyDataUpdate), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == evtInfo.Size);
+				std::string scenarioName(strInfo[0].StartPos, strInfo[0].Size);
+				std::string description(strInfo[1].StartPos, strInfo[1].Size);
+				Updatelobby(evtInfo, description, scenarioName);
 				break;
 			}
 			default:
@@ -1476,6 +1496,54 @@ namespace Babel
 		evtData.Size = sizeof(SingleIntEvent);
 		mEventBuffer.AddEvent((uint8_t*)&evtData, sizeof(evtData));
 	}
+
+	void JSBridge::CreateNewEvent(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 10)
+		{
+			return;
+		}
+		Babel::CreateNewEvent evt;
+		evt.Settings.ScenarioType = (int)args[1];
+		evt.Settings.MinLevel = (int)args[2];
+		evt.Settings.TeamSize = (int)args[3];
+		evt.Settings.MaxLevel = (int)args[4];
+		evt.Settings.MinPlayers = (int)args[5];
+		evt.Settings.MaxPlayers = (int)args[6];
+		evt.Settings.InscriptionPrice = (int)args[8];
+		evt.Settings.TeamType = (int)args[9];
+		evt.Settings.RoundAmount = 1;
+		ultralight::String jenv = args[0];
+		auto description = utf8_to_ascii(jenv.utf8().data());
+		jenv = args[7];
+		auto password = utf8_to_ascii(jenv.utf8().data());
+
+		evt.EventType = Babel::EventType::CreateNewScenario;
+		std::vector<StringInBuffer> strInfo(2);
+		strInfo[0].StartPos = description.c_str();
+		strInfo[1].StartPos = password.c_str();
+		evt.Size = sizeof(evt) + PrepareDynamicStrings(strInfo);
+		mEventBuffer.AddEvent((uint8_t*)&evt, sizeof(evt), strInfo);
+	}
+
+	void JSBridge::JoinEvent(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return;
+		}
+		SingleIntEvent evtInfo;
+		evtInfo.Value = args[0];
+		evtInfo.EventType = EventType::JoinScenario;
+		
+		ultralight::String jenv = args[1];
+		auto pwd = utf8_to_ascii(jenv.utf8().data());
+		std::vector<StringInBuffer> strInfo(1);
+		strInfo[0].StartPos = pwd.c_str();
+		
+		evtInfo.Size = sizeof(evtInfo) + PrepareDynamicStrings(strInfo);
+		mEventBuffer.AddEvent((uint8_t*)&evtInfo, sizeof(evtInfo), strInfo);
+	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
 	{
@@ -2039,7 +2107,7 @@ namespace Babel
 		CallJsFunction(ctx, "APicallbacks.UpdateStrAndAgi", args, 4);
 	}
 
-	void JSBridge::UpdateMapName(int32_t mapNumber, const std::string& mapName, int32_t isSafe)
+	void JSBridge::UpdateMapName(int32_t mapNumber, int32_t miniMapNumber, const std::string& mapName, int32_t isSafe)
 	{
 		
 		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
@@ -2048,8 +2116,9 @@ namespace Babel
 			adopt(JSStringCreateWithUTF8CString(mapName.c_str()));
 		const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()),
 									JSValueMakeNumber(ctx, mapNumber),
+									JSValueMakeNumber(ctx, miniMapNumber),
 									JSValueMakeBoolean(ctx, isSafe > 0)};
-		CallJsFunction(ctx, "APicallbacks.UpdateMapNumber", args, 3);
+		CallJsFunction(ctx, "APicallbacks.UpdateMapNumber", args, 4);
 	}
 
 	void JSBridge::UpdateMapNpc(int32_t npcCount, const Babel::QuestNpc* npcList)
@@ -2418,6 +2487,39 @@ namespace Babel
 		JSObjectRef jsArray = JSObjectMakeArray(ctx, itemCount, itemList.data(), 0);
 		const JSValueRef args[] = { JSValueMakeNumber(ctx, AvailableCredits),  jsArray };
 		CallJsFunction(ctx, "APicallbacks.OpenAoShop", args, 2);
+	}
+
+	void JSBridge::OpenLobbyList()
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		const JSValueRef args{};
+		CallJsFunction(ctx, "APicallbacks.OpenLobbyList", &args, 0);
+	}
+
+	void JSBridge::Updatelobby(const LobbyDataUpdate& lobbyInfo, std::string description, std::string eventType)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		JSObjectRef lobby = JSObjectMake(ctx, nullptr, nullptr);
+		SetObjectString(ctx, lobby, "description", ascii_to_utf8(description).c_str());
+		SetObjectString(ctx, lobby, "eventType", ascii_to_utf8(eventType).c_str());
+
+		SetObjectNumber(ctx, lobby, "index", lobbyInfo.Index);
+		SetObjectNumber(ctx, lobby, "id", lobbyInfo.Id);
+		SetObjectNumber(ctx, lobby, "minLevel", lobbyInfo.MinLevel);
+		SetObjectNumber(ctx, lobby, "maxLevel", lobbyInfo.MaxLevel);
+		SetObjectNumber(ctx, lobby, "minPlayers", lobbyInfo.MinPlayers);
+		SetObjectNumber(ctx, lobby, "maxPlayers", lobbyInfo.MaxPlayers);
+		SetObjectNumber(ctx, lobby, "registeredPlayers", lobbyInfo.RegisteredPlayers);
+		SetObjectNumber(ctx, lobby, "teamSize", lobbyInfo.TeamSize);
+		SetObjectNumber(ctx, lobby, "teamType", lobbyInfo.TeamType);
+		SetObjectNumber(ctx, lobby, "inscriptionFee", lobbyInfo.InscriptionPrice);
+		SetObjectBoolean(ctx, lobby, "isPrivate", lobbyInfo.IsPrivate>0);
+
+		const JSValueRef args{ lobby };
+		CallJsFunction(ctx, "APicallbacks.UpdatelobbySlot", &args, 1);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

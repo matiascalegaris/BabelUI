@@ -110,4 +110,24 @@ namespace Babel {
 	{
 		int32_t AvailableCredits;
 	};
+
+	struct LobbyDataUpdate : public Event
+	{
+		int16_t Index;
+		int16_t Id;
+		int16_t MinLevel;
+		int16_t MaxLevel;
+		int16_t MinPlayers;
+		int16_t MaxPlayers;
+		int16_t RegisteredPlayers;
+		int16_t TeamSize;
+		int16_t TeamType;
+		uint8_t IsPrivate;
+		int32_t InscriptionPrice;
+	};
+
+	struct CreateNewEvent : public Event
+	{
+		ScenarioSettings Settings;
+	};
 }

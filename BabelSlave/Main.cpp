@@ -62,6 +62,8 @@ int main(int argc, char* argv[])
         Babel::Application app;
         app.Initialize(settings);
         app.Run();
+        Babel::LOGGER->log("Normal Exit");
+
     }
     catch (std::exception& err)
     {
