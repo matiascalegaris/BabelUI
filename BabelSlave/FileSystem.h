@@ -44,6 +44,8 @@ namespace Babel {
 		std::unique_ptr<AO::Compressor> mCompressedGraphics;
 		std::unique_ptr<AO::Compressor> mCompressedInit;
 		std::unique_ptr<AO::Compressor> mCompressedMiniMaps;
+		std::unique_ptr<AO::Compressor> mCompressedMaps;
+		std::unique_ptr<AO::Compressor> mCompressedInterface;
 		int mNextIndex = { 0 };
 		std::map<int, std::unique_ptr<CompressedData>> mOpenFileMap;
 	};
