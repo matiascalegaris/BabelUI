@@ -69,4 +69,5 @@ EXPORTS
     OpenAo20Shop @66
     OpenLobbyList @67
     UpdateLobby @68
-
+    ShowClanCall @69
+    OpenSkillDialog @70

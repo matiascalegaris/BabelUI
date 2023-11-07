@@ -334,8 +334,8 @@ namespace Babel
         }
         case EventType::RequestAction:
         {
-            const SingleIntEvent& slotsInfo = static_cast<const SingleIntEvent&>(eventData);
-            mGameplayVBcallbacks.RequestAction(slotsInfo.Value);
+            const DoubleIntEvent& slotsInfo = static_cast<const DoubleIntEvent&>(eventData);
+            mGameplayVBcallbacks.RequestAction(slotsInfo.Value1, slotsInfo.Value2);
             break;
         }
         case EventType::UseKey:
@@ -461,6 +461,17 @@ namespace Babel
             strParam.Len = strInfo[0].Size;
             strParam.Str = strInfo[0].StartPos;
             mGameplayVBcallbacks.JoinSceneario(evtData.Value, &strParam);
+            break;
+        }
+        case EventType::UpdateSkills:
+        {
+            int32_t elementCount = 0;
+            int32_t* listStart = nullptr;
+            const char* bufferEnd = GetArrayData((char*)(&eventData), sizeof(Event), elementCount, &listStart);
+            auto size = bufferEnd - (char*)(&eventData);
+            assert(size == eventData.Size);
+            mGameplayVBcallbacks.UpdateSkillList(elementCount, listStart);
+            break;
         }
         }
     }

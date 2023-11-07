@@ -28,6 +28,7 @@ namespace Babel
 		bool DisplayFloorItemInfo{ false };
 		bool DisplayFullNumbersInventory{ false };
 		int LightSettings{ 0 };
+		bool DisableDungeonLighting{ false };
 	};
 
 	struct AudioSettings

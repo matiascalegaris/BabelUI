@@ -91,6 +91,7 @@ namespace Babel
 	typedef void(__stdcall* TUpdateHoykeySlot)(int,const Babel::HotkeySlot*);
 	typedef void(__stdcall* NewScenario)(const ScenarioSettings*, DoubleStringParam*);
 	typedef void(__stdcall* JoinScenario)(int, SingleStringParam*);
+	typedef void(__stdcall* TUpdateSkillList)(int, int*);
 
 	struct GameplayCallbacks
 	{
@@ -105,7 +106,7 @@ namespace Babel
 		TSingleStringParam OpenLink;
 		TVoidParam ClickGold;
 		TDoubleIntParam MoveInvItem;
-		TSingleIntParam RequestAction;
+		TDoubleIntParam RequestAction;
 		TSingleIntParam UseKey;
 		TDoubleIntParam MoveSpellSlot;
 		TSingleIntParam DeleteItem;
@@ -123,5 +124,6 @@ namespace Babel
 		TDoubleIntParam UpdateIntSetting;
 		NewScenario CreateNewScenario;
 		JoinScenario JoinSceneario;
+		TUpdateSkillList UpdateSkillList;
 	};
 }

@@ -88,6 +88,48 @@ namespace Babel
 			SetObjectNumber(ctx, objectRef, "B", colorData.B);
 		}
 
+		void SetNpcInfo(JSContextRef& ctx, JSObjectRef& objectRef, const AO::NpcInfo& npcData)
+		{
+			SetObjectString(ctx, objectRef, "name", ascii_to_utf8(npcData.Name).c_str());
+			SetObjectNumber(ctx, objectRef, "body", npcData.Body);
+			SetObjectNumber(ctx, objectRef, "head", npcData.Head);
+			SetObjectNumber(ctx, objectRef, "exp", npcData.Exp);
+			SetObjectNumber(ctx, objectRef, "hp", npcData.Hp);
+			SetObjectNumber(ctx, objectRef, "maxDamage", npcData.MaxDamage);
+			SetObjectNumber(ctx, objectRef, "minDamage", npcData.MinDamage);
+			SetObjectNumber(ctx, objectRef, "gold", npcData.Gold);
+			SetObjectNumber(ctx, objectRef, "clanExp", npcData.ClanExp);
+
+			if (npcData.DropCount > 0)
+			{				
+				float rateForEveryItem = npcData.DropRate / npcData.DropCount;
+				std::map<int, float> differentItems;
+				for (int i = 0; i < npcData.DropCount; i++)
+				{
+					auto it = differentItems.find(npcData.DropList[i]);
+					if (it != differentItems.end())
+					{
+						it->second += rateForEveryItem;
+					}
+					else
+					{
+						differentItems.insert(std::make_pair(npcData.DropList[i], rateForEveryItem));
+					}
+				}
+				JSObjectRef dropArray = JSObjectMakeArray(ctx, 0, nullptr, nullptr);
+				int dropIndex = 0;
+				for (auto it = differentItems.begin(); it != differentItems.end(); it++)
+				{
+					JSObjectRef drop = JSObjectMake(ctx, nullptr, nullptr);
+					SetObjectNumber(ctx, drop, "itemIndex", it->first);
+					SetObjectNumber(ctx, drop, "dropRate", it->second);
+					JSObjectSetPropertyAtIndex(ctx, dropArray, dropIndex, drop, nullptr);
+					dropIndex++;
+				}
+				SetChildObject(ctx, objectRef, "dropList", dropArray);
+			}
+		}
+
 		uint32_t ConvertKeyModifiers(int16_t vbModifiers)
 		{
 			uint32_t ret = 0;
@@ -163,6 +205,10 @@ namespace Babel
 		Api["UpdateIntSetting"] = BindJSCallback(&JSBridge::UpdateIntSetting);
 		Api["CreateEvent"] = BindJSCallback(&JSBridge::CreateNewEvent);
 		Api["JoinLobby"] = BindJSCallback(&JSBridge::JoinEvent);
+		Api["GetWorldGrid"] = BindJSCallbackWithRetval(&JSBridge::GetWorldGrid);
+		Api["GetNpcDetails"] = BindJSCallbackWithRetval(&JSBridge::GetNpcDetails);
+		Api["UpdateSkills"] = BindJSCallback(&JSBridge::UpdatePlayerSkills);
+		
 		global["BabelUI"] = JSValue(Api);
 	}
 	void JSBridge::HandleEvent(const Event& eventData)
@@ -615,6 +661,19 @@ namespace Babel
 				std::string scenarioName(strInfo[0].StartPos, strInfo[0].Size);
 				std::string description(strInfo[1].StartPos, strInfo[1].Size);
 				Updatelobby(evtInfo, description, scenarioName);
+				break;
+			}
+			case EventType::ShowClanCall:
+			{
+				const Babel::TripleIntEvent& evtInfo = static_cast<const Babel::TripleIntEvent&>(eventData);
+				ShowClanCall(evtInfo.Value1, evtInfo.Value2, evtInfo.Value3);
+				break;
+			}
+			case EventType::OpenSkillDialog:
+			{
+				const Babel::DoubleIntEvent& evtInfo = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				uint8_t* listStart = ((uint8_t*)&eventData) + sizeof(Babel::DoubleIntEvent);
+				OpenSkillDialog(evtInfo.Value1, listStart, evtInfo.Value2);
 				break;
 			}
 			default:
@@ -1189,15 +1248,21 @@ namespace Babel
 
 	void JSBridge::RequestAction(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
 	{
-		if (args.size() != 1)
+		if (args.size() < 1 || args.size() > 2)
 		{
 			return;
 		}
+		int extraParameter = -1;
+		if (args.size() == 2)
+		{
+			extraParameter = args[1];
+		}
 
-		SingleIntEvent requestActionEvent;
-		requestActionEvent.Value = args[0];
+		DoubleIntEvent requestActionEvent;
+		requestActionEvent.Value1 = args[0];
+		requestActionEvent.Value2 = extraParameter;
 		requestActionEvent.EventType = EventType::RequestAction;
-		requestActionEvent.Size = sizeof(SingleIntEvent);
+		requestActionEvent.Size = sizeof(DoubleIntEvent);
 		mEventBuffer.AddEvent((uint8_t*)&requestActionEvent, sizeof(requestActionEvent));
 		return;
 	}
@@ -1544,6 +1609,99 @@ namespace Babel
 		evtInfo.Size = sizeof(evtInfo) + PrepareDynamicStrings(strInfo);
 		mEventBuffer.AddEvent((uint8_t*)&evtInfo, sizeof(evtInfo), strInfo);
 	}
+
+	ultralight::JSValue JSBridge::GetWorldGrid(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 0)
+		{
+			return ultralight::JSValue();
+		}
+		AO::WorldMap worldMap;
+		mResources->GetWorldMap(worldMap);
+
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+		
+		JSObjectRef worlds = JSObjectMakeArray(ctx, 0, nullptr, nullptr);
+		for (int i = 0; i < worldMap.Worlds.size(); i++)
+		{
+			JSObjectRef world = JSObjectMake(ctx, nullptr, nullptr);
+
+			SetObjectNumber(ctx, world, "width", worldMap.Worlds[i].Width);
+			SetObjectNumber(ctx, world, "height", worldMap.Worlds[i].Height);
+			JSObjectRef mapDetails = JSObjectMake(ctx, nullptr, nullptr);
+			for (auto it = worldMap.Worlds[i].MapDetails.begin();
+				it != worldMap.Worlds[i].MapDetails.end(); it++)
+			{
+				JSObjectRef detail = JSObjectMake(ctx, nullptr, nullptr);
+				SetObjectBoolean(ctx, detail, "isSafe", it->second.IsSafe);
+				SetObjectString(ctx, detail, "name", ascii_to_utf8(it->second.Name).c_str());
+				JSObjectRef npcArray = JSObjectMakeArray(ctx, 0, nullptr, nullptr);
+				int npcI = 0;
+				for (auto mapIt = it->second.NpcList.begin(); mapIt != it->second.NpcList.end(); mapIt++)
+				{
+					JSObjectRef npcDetail = JSObjectMake(ctx, nullptr, nullptr);
+					SetObjectNumber(ctx, npcDetail, "count", mapIt->second.Count);
+					SetObjectString(ctx, npcDetail, "name", ascii_to_utf8(mapIt->second.Details.Name).c_str());
+					SetObjectNumber(ctx, npcDetail, "index", mapIt->second.NpcIndex);
+					JSObjectSetPropertyAtIndex(ctx, npcArray, npcI, npcDetail, nullptr);
+					npcI++;
+				}
+				SetChildObject(ctx, detail, "npcList", npcArray);
+				SetChildObject(ctx, mapDetails, std::to_string(it->first), detail);
+			}
+			SetChildObject(ctx, world, "mapDetails", mapDetails);
+			JSObjectRef mapArray = JSObjectMakeArray(ctx, 0, nullptr, nullptr);
+			for (auto mapI = 0; mapI < worldMap.Worlds[i].MapList.size(); mapI++)
+			{
+				JSValueRef indexValue = JSValueMakeNumber(ctx, worldMap.Worlds[i].MapList[mapI]);
+				JSObjectSetPropertyAtIndex(ctx, mapArray, mapI, indexValue, nullptr);
+			}
+			SetChildObject(ctx, world, "mapList", mapArray);
+			JSObjectSetPropertyAtIndex(ctx, worlds, i, world, nullptr);
+		}
+		JSObjectRef wMap = JSObjectMake(ctx, nullptr, nullptr);
+		SetChildObject(ctx, wMap, "worlds", worlds);
+		return wMap;
+	}
+
+	ultralight::JSValue JSBridge::GetNpcDetails(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return ultralight::JSValue();
+		}
+		int npcId = args[0];
+		AO::NpcInfo npcInfo;
+		mResources->GetNpcInfo(npcInfo, npcId);
+
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		JSObjectRef jsNpc = JSObjectMake(ctx, nullptr, nullptr);
+		SetNpcInfo(ctx, jsNpc, npcInfo);
+		return jsNpc;
+	}
+
+	void JSBridge::UpdatePlayerSkills(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 1)
+		{
+			return;
+		}
+		auto skillList = args[0].ToArray();
+		int elementCount = skillList.length();
+		std::vector<int32_t> sendList;
+		sendList.resize(elementCount);
+		for (int i = 0; i < elementCount; i++)
+		{
+			sendList[i] = skillList[i];
+		}
+		Babel::Event evt;
+		evt.EventType = Babel::EventType::UpdateSkills;
+		evt.Size = sizeof(evt) + sizeof(int32_t) + VectorSizeOf(sendList);
+		mEventBuffer.AddEvent((uint8_t*)&evt, sizeof(evt), sendList);
+	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
 	{
@@ -1780,7 +1938,6 @@ namespace Babel
 	{
 		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
 		JSContextRef ctx = context->ctx();
-		using namespace std::chrono;
 		JSRetainPtr<JSStringRef> msg =
 			adopt(JSStringCreateWithUTF8CString(toggleName.c_str()));
 		const JSValueRef args[] = { JSValueMakeString(ctx, msg.get()) };
@@ -2520,6 +2677,32 @@ namespace Babel
 
 		const JSValueRef args{ lobby };
 		CallJsFunction(ctx, "APicallbacks.UpdatelobbySlot", &args, 1);
+	}
+
+	void JSBridge::ShowClanCall(int map, int posX, int posY)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		const JSValueRef args[] { JSValueMakeNumber(ctx, map),
+								  JSValueMakeNumber(ctx, posX), 
+								  JSValueMakeNumber(ctx, posY) };
+		CallJsFunction(ctx, "APicallbacks.ShowClanCall", args, 3);
+	}
+
+	void JSBridge::OpenSkillDialog(int freeSkills, uint8_t* currentSkillsList, int skillCount)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		JSObjectRef skillArray = JSObjectMakeArray(ctx, 0, nullptr, nullptr);
+		for (auto i = 0; i < skillCount; i++)
+		{
+			JSObjectSetPropertyAtIndex(ctx, skillArray, i, JSValueMakeNumber(ctx, currentSkillsList[i]), nullptr);
+		}
+		const JSValueRef args[]{ JSValueMakeNumber(ctx, freeSkills),
+								  skillArray};
+		CallJsFunction(ctx, "APicallbacks.OpenSkillDialog", args, 2);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

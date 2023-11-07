@@ -110,7 +110,10 @@ namespace Babel
 		OpenLobbyList,
 		UpdateLobbyInfo,
 		CreateNewScenario,
-		JoinScenario
+		JoinScenario,
+		ShowClanCall,
+		OpenSkillDialog,
+		UpdateSkills
 	};
 
 	struct Event

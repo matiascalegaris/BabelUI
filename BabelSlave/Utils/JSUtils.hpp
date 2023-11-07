@@ -22,4 +22,5 @@ namespace Babel
 
 	void SetObjectBoolean(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, bool value);
 	void SetChildObject(JSContextRef& ctx, JSObjectRef& objectRef, const char* paramName, JSObjectRef& value);
+	void SetChildObject(JSContextRef& ctx, JSObjectRef& objectRef,const std::string& paramName, JSObjectRef& value);
 }

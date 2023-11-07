@@ -792,3 +792,33 @@ void _stdcall UpdateLobby(void* LobbyInfo)
 	evt.Size = sizeof(evt) + PrepareDynamicStrings(strInfo);
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt), strInfo);
 }
+
+void _stdcall ShowClanCall(int map, int posX, int posY)
+{
+	Babel::TripleIntEvent evt;
+	evt.Value1 = map;
+	evt.Value2 = posX;
+	evt.Value3 = posY;
+	evt.EventType = Babel::EventType::ShowClanCall;
+	evt.Size = sizeof(evt);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt));
+}
+
+void _stdcall OpenSkillDialog(int availableSkills, uint8_t* skillList, int16_t listSize)
+{
+	Babel::DoubleIntEvent evt;
+	evt.Value1 = availableSkills;
+	evt.Value2 = listSize;
+
+	int32_t size = sizeof(uint8_t) * listSize;
+	evt.EventType = Babel::EventType::OpenSkillDialog;
+	evt.Size = sizeof(uint8_t) + size;
+
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt), [size, skillList](void* buffer) {
+		if (size > 0)
+		{
+			CopyMemory(buffer, skillList, size);
+		}
+		return size;
+	});
+}

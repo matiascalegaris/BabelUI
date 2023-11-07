@@ -1,5 +1,7 @@
 #pragma once
 #include <memory>
+#include <map>
+
 
 namespace AO
 {
@@ -44,6 +46,43 @@ namespace AO
 	struct NpcInfo
 	{
 		std::string Name;
+		int Body;
+		int Head;
+		int Exp;
+		int Hp;
+		int MaxDamage;
+		int MinDamage;
+		int Gold;
+		int DropCount;
+		std::vector<int> DropList;
+		int ClanExp;
+		float DropRate;
+	};
+
+	struct MapNpcInfo
+	{
+		int32_t Count;
+		int16_t NpcIndex;
+		NpcInfo Details;
+	};
+	struct MapInfo
+	{
+		bool IsSafe;
+		std::map<int, MapNpcInfo> NpcList;
+		std::string Name;
+	};
+
+	struct World
+	{
+		std::map<int, MapInfo> MapDetails;
+		std::vector<int> MapList;
+		int Width;
+		int Height;
+	};
+
+	struct WorldMap
+	{
+		std::vector<World> Worlds;
 	};
 
 	struct ObjectData
@@ -95,6 +134,7 @@ namespace AO
 		void GetSpellDetails(SpellData& spellInfo, int spellIndex);
 		void GetObjectDetails(ObjectData& destObj, int itemIndex);
 		void GetNpcInfo(NpcInfo& destInfo, int npcIndex);
+		void GetWorldMap(WorldMap& destWorld);
 	private:
 		std::unique_ptr<ResourceLoader> mResources;
 	};

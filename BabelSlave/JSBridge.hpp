@@ -76,6 +76,9 @@ namespace Babel
 		void UpdateIntSetting(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void CreateNewEvent(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 		void JoinEvent(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue GetWorldGrid(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		ultralight::JSValue GetNpcDetails(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
+		void UpdatePlayerSkills(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args);
 
 	private: //c++ events functions
 		void HandlekeyData(const KeyEvent& keyData);
@@ -136,6 +139,8 @@ namespace Babel
 		void OpenAOShop(int32_t AvailableCredits, int32_t itemCount, const Babel::AOShopItem* shopList);
 		void OpenLobbyList();
 		void Updatelobby(const LobbyDataUpdate& lobbyInfo, std::string description, std::string eventType);
+		void ShowClanCall(int map, int posX, int posY);
+		void OpenSkillDialog(int freeSkills, uint8_t* currentSkillsList, int skillCount);
 	private:
 		void CallJsFunction(JSContextRef& context, const char* functionName, const JSValueRef* args, int argCount);
 		EventBuffer& mEventBuffer;

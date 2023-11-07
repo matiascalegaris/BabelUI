@@ -56,4 +56,13 @@ namespace Babel
 		auto jparam = JSValueMakeString(ctx, paramStr.get());
 		JSObjectSetProperty(ctx, objectRef, paramStr.get(), value, 0, nullptr);
 	}
+
+	void SetChildObject(JSContextRef& ctx, JSObjectRef& objectRef, const std::string& paramName, JSObjectRef& value)
+	{
+		JSRetainPtr<JSStringRef> paramStr =
+			adopt(JSStringCreateWithUTF8CString(paramName.c_str()));
+		auto jparam = JSValueMakeString(ctx, paramStr.get());
+		JSObjectSetProperty(ctx, objectRef, paramStr.get(), value, 0, nullptr);
+	}
+
 }

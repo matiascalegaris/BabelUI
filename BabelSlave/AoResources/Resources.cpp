@@ -28,6 +28,8 @@ namespace AO
         const char* HelmDataPath = "init/cascos.ind";
         const char* WeaponDataPath = "init/armas.dat";
         const char* ShieldDataPath = "init/escudos.dat";
+        const char* WorldMapDefinitionPath = "init/mapsworlddata.dat";
+        const char* MapFolder = "Mapas/Mapa";
 
         const int TilePixelHeight = 32;
         const int TilePixelWidth = 32;
@@ -99,6 +101,112 @@ namespace AO
         Position BodyOffset;
     };
 
+    struct MapHeader
+    {
+        int32_t BloqNumber;
+        int32_t Layers[4];
+        int32_t TriggerCount;
+        int32_t LightCount;
+        int32_t ParticleCount;
+        int32_t NpcCount;
+        int32_t ObjectCount;
+        int32_t TeleportCount;
+    };
+
+    struct MapSize
+    {
+        int16_t MaxX;
+        int16_t MaxY;
+        int16_t MinX;
+        int16_t MinY;
+    };
+
+    struct MapDat
+    {
+        std::string MapName;
+        uint8_t BackupMode;
+        std::string RestrictMode;
+        int32_t MusicNumberHi;
+        int32_t MusicNumberLow;
+        uint8_t Safe;
+        std::string Zone;
+        std::string Terrain;
+        std::string Ambient;
+        int32_t BaseLight;
+        int32_t LetterGrh;
+        int32_t Extra1;
+        int32_t Extra2;
+        std::string Extra3;
+        uint8_t Rain;
+        uint8_t Snow;
+        uint8_t Fog;
+    };
+
+    struct TileBlock
+    {
+        int16_t X;
+        int16_t Y;
+        uint8_t Side;
+    };
+
+    struct TileGrh
+    {
+        int16_t X;
+        int16_t Y;
+        int32_t GrhIndex;
+    };
+
+    struct TriggerData
+    {
+        int16_t X;
+        int16_t Y;
+        int16_t Trigger;
+    };
+
+    struct RGBA
+    {
+        uint8_t B;
+        uint8_t G;
+        uint8_t R;
+        uint8_t A;
+    };
+
+    struct LightData
+    {
+        int16_t X;
+        int16_t Y;
+        RGBA Color;
+        uint8_t Range;
+    };
+
+    struct MapParticles
+    {
+        int16_t X;
+        int16_t Y;
+        int32_t Particle;
+    };
+
+    struct MapObj
+    {
+        int16_t X;
+        int16_t Y;
+        int16_t ObjIndex;
+        int16_t ObjCount;
+    };
+    struct MapTeleport
+    {
+        int16_t X;
+        int16_t Y;
+        int16_t TargetMap;
+        int16_t TargetX;
+        int16_t TargetY;
+    };
+    struct MapNpc
+    {
+        int16_t X;
+        int16_t Y;
+        int16_t NpcIndex;
+    };
 #pragma pack(pop) // restore previous packing setting
 
     class ResourceLoader {
@@ -112,6 +220,7 @@ namespace AO
         void GetSpellData(SpellData& dest, int spellIndex);
         void GetObjectData(ObjectData& dest, int objIndex);
         void GetNpcinfo(NpcInfo& dest, int npcIndex);
+        void GetWorldMap(WorldMap& dest) { dest = mWorldMap; }
     private:
         void InitGrh(Grh& grhObj, int GrhIndex, int Started = -1, int16_t Loops = -1);
         void InitGrhWithBody(GrhData& dest, const MoldeCuerpo& bodyData, int16_t fileNum, int16_t x, int16_t y, int index);
@@ -127,6 +236,8 @@ namespace AO
         void LoadSpellData(INIReader& reader);
         void LoadItemData(INIReader& reader);
         bool GetFile(const char* fileName, std::vector<uint8_t>& fileData);
+        void LoadWorldMap();
+        void LoadMapDetails(int mapNumber, MapInfo& dest);
         void UnloadCompressedFiles();
     private:
         std::vector<GrhData> mGrhData;
@@ -140,6 +251,7 @@ namespace AO
         std::vector<SpellData> mSpellInfo;
         std::vector<NpcInfo> mNpcInfo;
         std::vector<ObjectData> mObjData;
+        WorldMap mWorldMap;
         std::map<std::string, std::unique_ptr<Compressor>> mCompressedFiles;
         E_Heading mBodyHeading[4];
         bool mCompressed;
@@ -233,7 +345,7 @@ namespace AO
             *lineEnd = 0;
 
             // Buscamos la clave "NumGrh"
-            if ( std::string(lineStart, value - lineStart) == "NumGrh")
+            if (std::string(lineStart, value - lineStart) == "NumGrh")
             {
                 lineEnd = GetLineEnd(lineStart);
                 value++;
@@ -369,7 +481,7 @@ namespace AO
             if (mHeadList[i].Head[0] >= 0)
             {
                 InitGrh(mHeadData[i].Head[E_Heading_NORTH], mHeadList[i].Head[E_Heading_NORTH], 0);
-                InitGrh(mHeadData[i].Head[E_Heading_EAST], mHeadList[i].Head[E_Heading_EAST] , 0);
+                InitGrh(mHeadData[i].Head[E_Heading_EAST], mHeadList[i].Head[E_Heading_EAST], 0);
                 InitGrh(mHeadData[i].Head[E_Heading_SOUTH], mHeadList[i].Head[E_Heading_SOUTH], 0);
                 InitGrh(mHeadData[i].Head[E_Heading_WEST], mHeadList[i].Head[E_Heading_WEST], 0);
             }
@@ -384,6 +496,21 @@ namespace AO
         {
             std::string spellEntry = "Npc" + std::to_string(i + 1);
             mNpcInfo[i].Name = reader.Get(spellEntry, "NAME", "");
+            mNpcInfo[i].Body = reader.GetInteger(spellEntry, "BODY", 0);
+            mNpcInfo[i].Head = reader.GetInteger(spellEntry, "HEAD", 0);
+            mNpcInfo[i].Hp = reader.GetInteger(spellEntry, "HP", 0);
+            mNpcInfo[i].MaxDamage = reader.GetInteger(spellEntry, "MAXHIT", 0);
+            mNpcInfo[i].MinDamage = reader.GetInteger(spellEntry, "MINHIT", 0);
+            mNpcInfo[i].Gold = reader.GetInteger(spellEntry, "ORO", 0);
+            mNpcInfo[i].Exp = reader.GetInteger(spellEntry, "EXP", 0);
+            mNpcInfo[i].DropCount = reader.GetInteger(spellEntry, "NUMQUIZA", 0);
+            mNpcInfo[i].ClanExp = reader.GetInteger(spellEntry, "GIVEEXPCLAN", 0);
+            mNpcInfo[i].DropRate = 1.0f / reader.GetInteger(spellEntry, "QuizaProb", 0);
+            mNpcInfo[i].DropList.resize(mNpcInfo[i].DropCount);
+            for (int j = 0; j < mNpcInfo[i].DropCount; j++)
+            {
+                mNpcInfo[i].DropList[j] = reader.GetInteger(spellEntry, "QuizaDropea" + std::to_string(j + 1), 0);
+            }
         }
     }
 
@@ -509,7 +636,7 @@ namespace AO
         currentPos += sizeof(MyHeader);
         memcpy_s(&HelmCount, sizeof(int16_t), fileData.data() + currentPos, sizeof(int16_t));
         currentPos += sizeof(int16_t);
-       
+
         // Resize array
         headData.resize(HelmCount);
         mHelmAnimData.resize(HelmCount);
@@ -517,7 +644,7 @@ namespace AO
         for (i = 0; i < HelmCount; i++) {
             for (int j = 0; j < 4; j++) headData[i].Head[j] = headData[i].Head[j] - 1;
             if (headData[i].Head[0] >= 0)
-            {                
+            {
                 InitGrh(mHelmAnimData[i].Head[0], headData[i].Head[0], 0);
                 InitGrh(mHelmAnimData[i].Head[1], headData[i].Head[1], 0);
                 InitGrh(mHelmAnimData[i].Head[2], headData[i].Head[2], 0);
@@ -551,7 +678,7 @@ namespace AO
         mBodyData.resize(NumCuerpos);
 
         for (i = 0; i < NumCuerpos; i++) {
-            BodyKey = "BODY" + to_string(i+1);
+            BodyKey = "BODY" + to_string(i + 1);
 
             Std = Loader.GetInteger(BodyKey, "Std", 0) - 1;
 
@@ -646,10 +773,10 @@ namespace AO
             ArmaKey = "ARMA" + std::to_string(wI + 1);
             Std = Loader.GetInteger(ArmaKey, "Std", 0) - 1;
             if (Std < 0) {
-                InitGrh(mWeaponAnimData[wI].WeaponWalk[0], Loader.GetInteger(ArmaKey, "Dir1", 0) -1, 0);
-                InitGrh(mWeaponAnimData[wI].WeaponWalk[1], Loader.GetInteger(ArmaKey, "Dir2", 0) -1, 0);
-                InitGrh(mWeaponAnimData[wI].WeaponWalk[2], Loader.GetInteger(ArmaKey, "Dir3", 0) -1, 0);
-                InitGrh(mWeaponAnimData[wI].WeaponWalk[3], Loader.GetInteger(ArmaKey, "Dir4", 0) -1, 0);
+                InitGrh(mWeaponAnimData[wI].WeaponWalk[0], Loader.GetInteger(ArmaKey, "Dir1", 0) - 1, 0);
+                InitGrh(mWeaponAnimData[wI].WeaponWalk[1], Loader.GetInteger(ArmaKey, "Dir2", 0) - 1, 0);
+                InitGrh(mWeaponAnimData[wI].WeaponWalk[2], Loader.GetInteger(ArmaKey, "Dir3", 0) - 1, 0);
+                InitGrh(mWeaponAnimData[wI].WeaponWalk[3], Loader.GetInteger(ArmaKey, "Dir4", 0) - 1, 0);
             }
             else {
                 FileNum = Loader.GetInteger(ArmaKey, "FileNum", 0);
@@ -776,8 +903,8 @@ namespace AO
                 mCompressedFiles.insert(std::make_pair(paths[0], std::make_unique<Compressor>()));
                 it = mCompressedFiles.find(paths[0]);
                 auto filePath = GetCompressedPath(paths[0]);
-                it->second->Open( GetFilePath(filePath.c_str()).u8string().c_str(),
-                                "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
+                it->second->Open(GetFilePath(filePath.c_str()).u8string().c_str(),
+                    "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
             }
             it->second->GetFileData(paths[1].c_str(), fileData);
             return true;
@@ -799,8 +926,158 @@ namespace AO
         }
     }
 
+    void ResourceLoader::LoadWorldMap()
+    {
+        std::vector<uint8_t> fileData;
+        if (!GetFile(WorldMapDefinitionPath, fileData))
+        {
+            return;
+        }
+        INIReader Loader(reinterpret_cast<char*>(fileData.data()), fileData.size());
+        int worldCount = Loader.GetInteger("INIT", "TOTALWORLDS", 0);
+        mWorldMap.Worlds.resize(worldCount);
+
+        for (int i = 0; i < worldCount; i++)
+        {
+            std::string worldIndex = "WORLDMAP" + std::to_string(i + 1);
+            mWorldMap.Worlds[i].Height = Loader.GetInteger(worldIndex, "ALTO", 0);
+            mWorldMap.Worlds[i].Width = Loader.GetInteger(worldIndex, "ANCHO", 0);
+            int mapCount = mWorldMap.Worlds[i].Height * mWorldMap.Worlds[i].Width;
+            mWorldMap.Worlds[i].MapList.resize(mapCount);
+            for (int j = 0; j < mapCount; j++)
+            {
+                int mapNumber = Loader.GetInteger(worldIndex, std::to_string(j + 1), 0);
+                mWorldMap.Worlds[i].MapList[j] = mapNumber;
+                if (mapNumber > 0)
+                {
+                    auto it = mWorldMap.Worlds[i].MapDetails.find(mapNumber);
+                    if (it == mWorldMap.Worlds[i].MapDetails.end())
+                    {
+                        auto ret = mWorldMap.Worlds[i].MapDetails.insert(std::make_pair(mapNumber, MapInfo()));
+                        LoadMapDetails(mapNumber, ret.first->second);
+                    }
+                }
+            }
+        }
+    }
+
+    template<typename T, typename = std::enable_if_t<!std::is_pointer<T>::value>>
+    const uint8_t* Read(const uint8_t* buffer, T& dest)
+    {
+        memcpy(&dest, buffer, sizeof(dest));
+        buffer += sizeof(dest);
+        return buffer;
+    }
+
+    const uint8_t* ReadString(const uint8_t* data, std::string& dest)
+    {
+        int16_t strLen;
+        data = Read(data, strLen);
+        const char* strPos = reinterpret_cast<const char*>(data);
+        dest = std::string(strPos, strLen);
+        return data + strLen;
+    }
+
+    const uint8_t* ReadMapDat(const uint8_t* data, MapDat& dest)
+    {
+        data = ReadString(data, dest.MapName);
+        data = Read(data, dest.BackupMode);
+        data = ReadString(data, dest.RestrictMode);
+        data = Read(data, dest.MusicNumberHi);
+        data = Read(data, dest.MusicNumberLow);
+        data = Read(data, dest.Safe);
+        data = ReadString(data, dest.Zone);
+        data = ReadString(data, dest.Terrain);
+        data = ReadString(data, dest.Ambient);
+        data = Read(data, dest.BaseLight);
+        data = Read(data, dest.LetterGrh);
+        data = Read(data, dest.Extra1);
+        data = Read(data, dest.Extra2);
+        data = ReadString(data, dest.Extra3);
+        data = Read(data, dest.Rain);
+        data = Read(data, dest.Snow);
+        data = Read(data, dest.Fog);
+        return data;
+    }
+
+    void ResourceLoader::LoadMapDetails(int mapNumber, MapInfo& dest)
+    {
+        std::string filePath = MapFolder + std::to_string(mapNumber) + ".csm";
+        std::vector<uint8_t> fileData;
+        if (!GetFile(filePath.c_str(), fileData))
+        {
+            return;
+        }
+        MapHeader header;
+        MapDat mapDat;
+        MapSize mapSize;
+        memcpy_s(&header, sizeof(MapHeader), fileData.data(), sizeof(MapHeader));
+        const uint8_t* readPos  = fileData.data() + sizeof(MapHeader);
+        memcpy_s(&mapSize, sizeof(MapSize), readPos, sizeof(MapSize));
+        readPos += sizeof(MapSize);
+        readPos = ReadMapDat(readPos, mapDat);
+        std::vector<TileBlock> bloqData;
+        std::vector<TileGrh> layer1;
+        std::vector<TileGrh> layer2;
+        std::vector<TileGrh> layer3;
+        std::vector<TileGrh> layer4;
+        std::vector<TriggerData> trigers;
+        std::vector<MapParticles> particles;
+        std::vector<LightData> lights;
+        std::vector<MapObj> objects;
+        bloqData.resize(header.BloqNumber);
+        layer1.resize(header.Layers[0]);
+        layer2.resize(header.Layers[1]);
+        layer3.resize(header.Layers[2]);
+        layer4.resize(header.Layers[3]);
+        trigers.resize(header.TriggerCount);
+        particles.resize(header.ParticleCount);
+        lights.resize(header.LightCount);
+        objects.resize(header.ObjectCount);
+        memcpy_s(bloqData.data(), sizeof(TileBlock) * header.BloqNumber, readPos, sizeof(TileBlock) * header.BloqNumber);
+        readPos += sizeof(TileBlock) * header.BloqNumber;
+        if (header.Layers[0] > 0) memcpy_s(layer1.data(), sizeof(TileGrh) * header.Layers[0], readPos, sizeof(TileGrh) * header.Layers[0]);
+        readPos += sizeof(TileGrh) * header.Layers[0];
+        if (header.Layers[1] > 0) memcpy_s(layer2.data(), sizeof(TileGrh) * header.Layers[1], readPos, sizeof(TileGrh) * header.Layers[1]);
+        readPos += sizeof(TileGrh) * header.Layers[1];
+        if (header.Layers[2] > 0) memcpy_s(layer3.data(), sizeof(TileGrh) * header.Layers[2], readPos, sizeof(TileGrh) * header.Layers[2]);
+        readPos += sizeof(TileGrh) * header.Layers[2];
+        if (header.Layers[3] > 0) memcpy_s(layer4.data(), sizeof(TileGrh) * header.Layers[3], readPos, sizeof(TileGrh) * header.Layers[3]);
+        readPos += sizeof(TileGrh) * header.Layers[3];
+        memcpy_s(trigers.data(), sizeof(TriggerData) * header.TriggerCount, readPos, sizeof(TriggerData) * header.TriggerCount);
+        readPos += sizeof(TriggerData) * header.TriggerCount;
+        memcpy_s(particles.data(), sizeof(MapParticles) * header.ParticleCount, readPos, sizeof(MapParticles) * header.ParticleCount);
+        readPos += sizeof(MapParticles) * header.ParticleCount;
+        memcpy_s(lights.data(), sizeof(LightData) * header.LightCount, readPos, sizeof(LightData) * header.LightCount);
+        readPos += sizeof(LightData) * header.LightCount;
+        memcpy_s(objects.data(), sizeof(MapObj) * header.ObjectCount, readPos, sizeof(MapObj) * header.ObjectCount);
+        readPos += sizeof(MapObj) * header.ObjectCount;
+        std::vector<MapNpc> npcList;
+        npcList.resize(header.NpcCount);
+        memcpy_s(npcList.data(), sizeof(MapNpc) * header.NpcCount, readPos, sizeof(MapNpc) * header.NpcCount);
+        for (auto it = npcList.begin(); it != npcList.end(); it++)
+        {
+            auto mapIt = dest.NpcList.find(it->NpcIndex);
+            if (mapIt != dest.NpcList.end())
+            {
+                mapIt->second.Count++;
+            }
+            else
+            {
+                MapNpcInfo info;
+                info.Count = 1;
+                info.NpcIndex = it->NpcIndex;
+                info.Details = mNpcInfo[info.NpcIndex - 1];
+                dest.NpcList.insert(std::make_pair(info.NpcIndex, info));
+            }
+        }
+        dest.IsSafe = mapDat.Safe > 0;
+        dest.Name = mapDat.MapName;
+    }
+
     void ResourceLoader::UnloadCompressedFiles()
     {
+
     }
 
     void ResourceLoader::StartLoading(bool compressed)
@@ -815,6 +1092,7 @@ namespace AO
             LoadWeaponAnimations();
             LoadShields();
             LoadLocalIndex();
+            LoadWorldMap();
             });
     }
 
@@ -950,6 +1228,11 @@ namespace AO
     void Resources::GetNpcInfo(NpcInfo& destInfo, int npcIndex)
     {
         mResources->GetNpcinfo(destInfo, npcIndex - 1);
+    }
+
+    void Resources::GetWorldMap(WorldMap& destWorld)
+    {
+        mResources->GetWorldMap(destWorld);
     }
 
 }

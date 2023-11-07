@@ -33,6 +33,7 @@ namespace Babel
 		mVideoSettings.DisplayFloorItemInfo = Reader.GetInteger("VIDEO", "InfoItemsEnRender", 0) > 0;
 		mVideoSettings.DisplayFullNumbersInventory = Reader.GetInteger("OPCIONES", "NumerosCompletosInventario", 0) > 0;
 		mVideoSettings.LightSettings = Reader.GetInteger("VIDEO", "LuzGlobal", 0);
+		mVideoSettings.DisableDungeonLighting = Reader.GetInteger("VIDEO", "DisableDungeonLighting", 0);
 
 		mAudioSettings.EnableMusic = Reader.GetInteger("AUDIO", "Musica", 0) > 0;
 		mAudioSettings.EnableFx = Reader.GetInteger("AUDIO", "Fx", 0) > 0;
@@ -99,6 +100,7 @@ namespace Babel
 		SetObjectBoolean(ctx, video, "displayFullNumbersInventory", mVideoSettings.DisplayFullNumbersInventory);
 		SetObjectBoolean(ctx, video, "enableBabelUI", mGameplaySettings.EnableBabelUI);
 		SetObjectNumber(ctx, video, "lightSettings", mVideoSettings.LightSettings);
+		SetObjectBoolean(ctx, video, "disableDungeonLighting", mVideoSettings.DisableDungeonLighting);
 
 		JSObjectRef audio = JSObjectMake(ctx, nullptr, nullptr);
 		SetObjectBoolean(ctx, audio, "enableMusic", mAudioSettings.EnableMusic);
