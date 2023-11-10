@@ -473,6 +473,23 @@ namespace Babel
             mGameplayVBcallbacks.UpdateSkillList(elementCount, listStart);
             break;
         }
+        case EventType::SendGuildRequest:
+        {
+            
+            const Event& evtData = static_cast<const Event&>(eventData);
+            std::vector<StringInBuffer> strInfo;
+            strInfo.resize(2);
+            const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(evtData), strInfo);
+            auto size = output - (char*)(&eventData);
+            assert(size == evtData.Size);
+            DoubleStringParam strParam;
+            strParam.FirstLen = strInfo[0].Size;
+            strParam.FirstStr = strInfo[0].StartPos;
+            strParam.SecondLen = strInfo[1].Size;
+            strParam.SecondStr = strInfo[1].StartPos;
+            mGameplayVBcallbacks.SendGuildRequest(&strParam);
+            break;
+        }
         }
     }
 

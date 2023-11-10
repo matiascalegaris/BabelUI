@@ -208,6 +208,7 @@ namespace Babel
 		Api["GetWorldGrid"] = BindJSCallbackWithRetval(&JSBridge::GetWorldGrid);
 		Api["GetNpcDetails"] = BindJSCallbackWithRetval(&JSBridge::GetNpcDetails);
 		Api["UpdateSkills"] = BindJSCallback(&JSBridge::UpdatePlayerSkills);
+		Api["SendGuildRequest"] = BindJSCallback(&JSBridge::SendGuildRequest);
 		
 		global["BabelUI"] = JSValue(Api);
 	}
@@ -675,6 +676,34 @@ namespace Babel
 				uint8_t* listStart = ((uint8_t*)&eventData) + sizeof(Babel::DoubleIntEvent);
 				OpenSkillDialog(evtInfo.Value1, listStart, evtInfo.Value2);
 				break;
+			}
+			case EventType::DisplayClanList:
+			{
+				const Babel::SingleIntEvent& evtInfo = static_cast<const Babel::SingleIntEvent&>(eventData);
+				OpenClanList(evtInfo.Value);
+				break;
+			}
+			case EventType::SetClanInfo:
+			{
+				const Babel::TripleIntEvent& evtInfo = static_cast<const Babel::TripleIntEvent&>(eventData);
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(1);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::TripleIntEvent), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == evtInfo.Size);
+				std::string guildName(strInfo[0].StartPos, strInfo[0].Size);
+				SetGuildInfo(evtInfo.Value1, evtInfo.Value2, evtInfo.Value3, guildName);
+				break;
+			}
+			case EventType::DisplayGuildDetails:
+			{
+				const Babel::DoubleIntEvent& evtInfo = static_cast<const Babel::DoubleIntEvent&>(eventData);
+				std::vector<StringInBuffer> strInfo;
+				strInfo.resize(6);
+				const char* output = GetStringPtrInEvent((char*)(&eventData), sizeof(Babel::DoubleIntEvent), strInfo);
+				auto size = output - (char*)(&eventData);
+				assert(size == evtInfo.Size);
+				DisplayGuildDetail(evtInfo.Value1, evtInfo.Value2, strInfo);
 			}
 			default:
 				break;
@@ -1702,6 +1731,26 @@ namespace Babel
 		evt.Size = sizeof(evt) + sizeof(int32_t) + VectorSizeOf(sendList);
 		mEventBuffer.AddEvent((uint8_t*)&evt, sizeof(evt), sendList);
 	}
+
+	void JSBridge::SendGuildRequest(const ultralight::JSObject& thisObject, const ultralight::JSArgs& args)
+	{
+		if (args.size() != 2)
+		{
+			return;
+		}
+		ultralight::String jguild = args[0];
+		ultralight::String jtext = args[1];
+		auto targetGuild = utf8_to_ascii(jguild.utf8().data());
+		auto requestText = utf8_to_ascii(jtext.utf8().data());
+
+		Babel::Event evt;
+		evt.EventType = Babel::EventType::SendGuildRequest;
+		std::vector<StringInBuffer> strInfo(2);
+		strInfo[0].StartPos = targetGuild.c_str();
+		strInfo[1].StartPos = requestText.c_str();
+		evt.Size = sizeof(evt) + PrepareDynamicStrings(strInfo);
+		mEventBuffer.AddEvent((uint8_t*)&evt, sizeof(evt), strInfo);
+	}
 	
 	void JSBridge::HandlekeyData(const KeyEvent& keyData)
 	{
@@ -2703,6 +2752,48 @@ namespace Babel
 		const JSValueRef args[]{ JSValueMakeNumber(ctx, freeSkills),
 								  skillArray};
 		CallJsFunction(ctx, "APicallbacks.OpenSkillDialog", args, 2);
+	}
+
+	void JSBridge::OpenClanList(int clanCount)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		const JSValueRef args[]{ JSValueMakeNumber(ctx, clanCount) };
+		CallJsFunction(ctx, "APicallbacks.OpenClanList", args, 1);
+	}
+
+	void JSBridge::SetGuildInfo(int arrayIndex, int clanIndex, int aligment, const std::string& name)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		JSObjectRef guild = JSObjectMake(ctx, nullptr, nullptr);
+		SetObjectString(ctx, guild, "name", ascii_to_utf8(name).c_str());
+		SetObjectNumber(ctx, guild, "aligment", aligment);
+		SetObjectNumber(ctx, guild, "index", clanIndex);
+
+		const JSValueRef args[]{ JSValueMakeNumber(ctx, arrayIndex) , guild };
+		CallJsFunction(ctx, "APicallbacks.SetGuildInfo", args, 2);
+	}
+
+	void JSBridge::DisplayGuildDetail(int memberCount, int level, const std::vector<StringInBuffer>& guildStrings)
+	{
+		RefPtr<JSContext> context = mRenderer.GetMainView()->LockJSContext();
+		JSContextRef ctx = context->ctx();
+
+		JSObjectRef guild = JSObjectMake(ctx, nullptr, nullptr);
+		SetObjectString(ctx, guild, "name", ascii_to_utf8(std::string(guildStrings[0].StartPos, guildStrings[0].Size)).c_str());
+		SetObjectString(ctx, guild, "founderName", ascii_to_utf8(std::string(guildStrings[1].StartPos, guildStrings[1].Size)).c_str());
+		SetObjectString(ctx, guild, "creationDate", ascii_to_utf8(std::string(guildStrings[2].StartPos, guildStrings[2].Size)).c_str());
+		SetObjectString(ctx, guild, "leaderName", ascii_to_utf8(std::string(guildStrings[3].StartPos, guildStrings[3].Size)).c_str());
+		SetObjectString(ctx, guild, "aligment", ascii_to_utf8(std::string(guildStrings[4].StartPos, guildStrings[4].Size)).c_str());
+		SetObjectString(ctx, guild, "description", ascii_to_utf8(std::string(guildStrings[5].StartPos, guildStrings[5].Size)).c_str());
+		SetObjectNumber(ctx, guild, "memberCount", memberCount);
+		SetObjectNumber(ctx, guild, "level", level);
+
+		const JSValueRef args[]{ guild };
+		CallJsFunction(ctx, "APicallbacks.DisplayGuildDetail", args, 1);
 	}
 
 	void JSBridge::CallJsFunction(JSContextRef& ctx, const char* functionName, const JSValueRef* args, int argCount)

@@ -85,6 +85,7 @@ namespace Babel
 	};
 
 	typedef void(__stdcall* TSingleStringParam)(SingleStringParam*);
+	typedef void(__stdcall* TDoubleStringParam)(DoubleStringParam*);
 	typedef void(__stdcall* TSingleIntParam)(int);
 	typedef void(__stdcall* TSingleBoolParam)(int);
 	typedef void(__stdcall* TDoubleIntParam)(int, int);
@@ -125,5 +126,6 @@ namespace Babel
 		NewScenario CreateNewScenario;
 		JoinScenario JoinSceneario;
 		TUpdateSkillList UpdateSkillList;
+		TDoubleStringParam SendGuildRequest;
 	};
 }

@@ -1,13 +1,12 @@
 #include "dllmain.h"
-#include <Windows.h>
-#include <chrono>
 #include "Core/Tunnel.h"
 #include "SharedMemory/Events/GameplayEvents.hpp"
 #include "Core/Logger.hpp"
 #include "CallbackDefines.hpp"
 #include "AOToolsApi.h"
 #include "CommonDefines.hpp"
-
+#include <Windows.h>
+#include <chrono>
 
 namespace {
 	Babel::Tunnel BabelTunnel;
@@ -793,7 +792,7 @@ void _stdcall UpdateLobby(void* LobbyInfo)
 	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt), strInfo);
 }
 
-void _stdcall ShowClanCall(int map, int posX, int posY)
+void _stdcall ShowGuildCall(int map, int posX, int posY)
 {
 	Babel::TripleIntEvent evt;
 	evt.Value1 = map;
@@ -822,3 +821,47 @@ void _stdcall OpenSkillDialog(int availableSkills, uint8_t* skillList, int16_t l
 		return size;
 	});
 }
+
+void _stdcall OpenGuildList(int clanCount)
+{
+	Babel::SingleIntEvent evt;
+	evt.Value = clanCount;
+	evt.EventType = Babel::EventType::DisplayClanList;
+	
+	evt.Size = sizeof(evt);
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt));
+}
+
+void _stdcall SetGuildInfo(int index, void* guildInfo)
+{
+	Babel::Tclan* guildDataPtr = (Babel::Tclan*)(guildInfo);
+	Babel::TripleIntEvent evt;
+	evt.Value1 = index;
+	evt.Value2 = guildDataPtr->Index;
+	evt.Value3 = guildDataPtr->Aligmnent;
+	std::vector<Babel::StringInBuffer> strInfo(1);
+	strInfo[0].StartPos = guildDataPtr->Name;
+	evt.Size = sizeof(evt) + PrepareDynamicStrings(strInfo);
+	evt.EventType = Babel::EventType::SetClanInfo;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt), strInfo);
+}
+
+void _stdcall SetGuildBrief(void* guildInfo)
+{
+	Babel::GuildDetails* guildDataPtr = (Babel::GuildDetails*)(guildInfo);
+	Babel::DoubleIntEvent evt;
+	evt.Value1 = guildDataPtr->MemberCount;
+	evt.Value2 = guildDataPtr->Level;
+	std::vector<Babel::StringInBuffer> strInfo(6);
+	strInfo[0].StartPos = guildDataPtr->Name;
+	strInfo[1].StartPos = guildDataPtr->FounderName;
+	strInfo[2].StartPos = guildDataPtr->CreationDate;
+	strInfo[3].StartPos = guildDataPtr->LeaderName;
+	strInfo[4].StartPos = guildDataPtr->Aligment;
+	strInfo[5].StartPos = guildDataPtr->Description;
+	evt.Size = sizeof(evt) + PrepareDynamicStrings(strInfo);
+	evt.EventType = Babel::EventType::DisplayGuildDetails;
+	BabelTunnel.GetSyncData().GetApiMessenger().AddEvent((uint8_t*)&evt, sizeof(evt), strInfo);
+}
+
+

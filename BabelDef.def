@@ -69,5 +69,8 @@ EXPORTS
     OpenAo20Shop @66
     OpenLobbyList @67
     UpdateLobby @68
-    ShowClanCall @69
+    ShowGuildCall @69
     OpenSkillDialog @70
+    OpenGuildList @71
+    SetGuildInfo @72
+    SetGuildBrief @73

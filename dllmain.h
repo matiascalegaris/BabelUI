@@ -80,6 +80,9 @@ extern "C"
 	LIBRARY_API void _stdcall OpenAo20Shop(int32_t availableCredits, int32_t itemCount, void* itemList);
 	LIBRARY_API void _stdcall OpenLobbyList();
 	LIBRARY_API void _stdcall UpdateLobby(void *LobbyInfo);
-	LIBRARY_API void _stdcall ShowClanCall(int map, int posX, int posY);
+	LIBRARY_API void _stdcall ShowGuildCall(int map, int posX, int posY);
 	LIBRARY_API void _stdcall OpenSkillDialog(int availableSkills, uint8_t* skillList, int16_t listSize);
+	LIBRARY_API void _stdcall OpenGuildList(int clanCount);
+	LIBRARY_API void _stdcall SetGuildInfo(int index, void* guildInfo);
+	LIBRARY_API void _stdcall SetGuildBrief(void* guildInfo);
 }

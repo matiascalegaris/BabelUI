@@ -141,7 +141,7 @@ namespace Babel
 	struct AOShopItem {
 		int32_t ObjectId;
 		int32_t Price;
-	};
+	};	
 #pragma pack(pop)
 	struct ScenarioSettings
 	{
@@ -154,5 +154,30 @@ namespace Babel
 		int32_t InscriptionPrice;
 		uint8_t ScenarioType;
 		uint8_t RoundAmount;
+	};
+
+	struct Tclan
+	{
+		uint8_t Aligmnent;
+		int16_t Index;		
+		char* Name;
+	};
+
+	struct ClanInfo
+	{
+		int16_t Index;
+		uint8_t Aligment;
+	};
+
+	struct GuildDetails
+	{
+		const char* Name;
+		const char* FounderName;
+		const char* CreationDate;
+		const char* LeaderName;
+		int16_t MemberCount;
+		const char* Aligment;
+		const char* Description;
+		uint8_t Level;
 	};
 }

@@ -113,7 +113,11 @@ namespace Babel
 		JoinScenario,
 		ShowClanCall,
 		OpenSkillDialog,
-		UpdateSkills
+		UpdateSkills,
+		DisplayClanList,
+		SetClanInfo,
+		DisplayGuildDetails,
+		SendGuildRequest
 	};
 
 	struct Event
