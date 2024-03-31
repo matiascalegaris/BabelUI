@@ -78,20 +78,19 @@ namespace Babel {
         StringCchCopyW(baseDir_.get(), MAX_PATH, baseDir);
         if (compressedResources)
         {
+            std::string password = ReadPasswordFromAOBin();
+
             mCompressedGraphics = std::make_unique<AO::Compressor>();
-            mCompressedGraphics->Open(GetFilePath("OUTPUT/Graficos").u8string().c_str(),
-                                      "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
+            mCompressedGraphics->Open(GetFilePath("OUTPUT/Graficos").u8string().c_str(), password);
+
             mCompressedInit = std::make_unique<AO::Compressor>();
-            mCompressedInit->Open(GetFilePath("OUTPUT/init").u8string().c_str(),
-                "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
+            mCompressedInit->Open(GetFilePath("OUTPUT/init").u8string().c_str(), password);
             
             mCompressedMiniMaps = std::make_unique<AO::Compressor>();
-            mCompressedMiniMaps->Open(GetFilePath("OUTPUT/MiniMapas").u8string().c_str(),
-                "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
+            mCompressedMiniMaps->Open(GetFilePath("OUTPUT/MiniMapas").u8string().c_str(), password);
             
             mCompressedInterface = std::make_unique<AO::Compressor>();
-            mCompressedInterface->Open(GetFilePath("OUTPUT/Interface").u8string().c_str(),
-                "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
+            mCompressedInterface->Open(GetFilePath("OUTPUT/Interface").u8string().c_str(), password);
         }
         sActiveFS = this;
     }
