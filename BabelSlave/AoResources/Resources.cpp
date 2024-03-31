@@ -903,8 +903,9 @@ namespace AO
                 mCompressedFiles.insert(std::make_pair(paths[0], std::make_unique<Compressor>()));
                 it = mCompressedFiles.find(paths[0]);
                 auto filePath = GetCompressedPath(paths[0]);
-                it->second->Open(GetFilePath(filePath.c_str()).u8string().c_str(),
-                    "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
+
+                std::string password = ReadPasswordFromAOBin();
+                it->second->Open(GetFilePath(filePath.c_str()).u8string().c_str(), password);
             }
             it->second->GetFileData(paths[1].c_str(), fileData);
             return true;
