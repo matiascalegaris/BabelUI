@@ -7,8 +7,7 @@
 #include <thread>
 #include "Resources.hpp"
 #include "Compresor.hpp"
-#include "Core/Logger.hpp"
-
+     
 using namespace std;
 namespace AO
 {
