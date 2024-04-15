@@ -135,7 +135,6 @@ namespace AO
 		void GetObjectDetails(ObjectData& destObj, int itemIndex);
 		void GetNpcInfo(NpcInfo& destInfo, int npcIndex);
 		void GetWorldMap(WorldMap& destWorld);
-		std::string GetPasswordFromAOBin();
 	private:
 		std::unique_ptr<ResourceLoader> mResources;
 	};

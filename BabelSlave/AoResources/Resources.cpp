@@ -221,7 +221,6 @@ namespace AO
         void GetObjectData(ObjectData& dest, int objIndex);
         void GetNpcinfo(NpcInfo& dest, int npcIndex);
         void GetWorldMap(WorldMap& dest) { dest = mWorldMap; }
-        string GetPasswordFromAOBin();
     private:
         void InitGrh(Grh& grhObj, int GrhIndex, int Started = -1, int16_t Loops = -1);
         void InitGrhWithBody(GrhData& dest, const MoldeCuerpo& bodyData, int16_t fileNum, int16_t x, int16_t y, int index);
@@ -906,8 +905,7 @@ namespace AO
                 it = mCompressedFiles.find(paths[0]);
                 auto filePath = GetCompressedPath(paths[0]);
 
-                string password = GetPasswordFromAOBin();
-                it->second->Open(GetFilePath(filePath.c_str()).u8string().c_str(), password);
+                it->second->Open(GetFilePath(filePath.c_str()).u8string().c_str());
             }
             it->second->GetFileData(paths[1].c_str(), fileData);
             return true;
@@ -1192,41 +1190,6 @@ namespace AO
         }
     }
 
-    string ResourceLoader::GetPasswordFromAOBin()
-    {
-        // Directly specify the path to the AO.bin file
-        auto filePath = GetFilePath("OUTPUT/AO.bin").u8string();
-
-        // Open the file in binary mode at the end to get the file size
-        std::ifstream file(filePath, std::ios::binary | std::ios::ate);
-        if (!file.is_open()) {
-            Babel::LOGGER->log("Failed to open AO.bin");
-            return "";
-        }
-
-        // Get the size of the file
-        std::streamsize size = file.tellg();
-        file.seekg(0, std::ios::beg); // Move back to the start of the file
-
-        // Read the file into a buffer
-        std::vector<unsigned char> buffer(size);
-        if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
-            Babel::LOGGER->log("Failed to read AO.bin");
-            return "";
-        }
-
-        // Calculate the password length from the last two bytes of the buffer
-        int length = buffer.back() + buffer[buffer.size() - 2] * 256;
-
-        // Construct the password
-        std::string passwordTemp;
-        for (int i = 0; i < length; ++i) {
-            passwordTemp += static_cast<char>(buffer[i * 3 - 1] ^ 37);
-        }
-
-        return passwordTemp;
-    }
-
 
     Resources::Resources(bool compressed)
     {
@@ -1271,11 +1234,6 @@ namespace AO
     void Resources::GetWorldMap(WorldMap& destWorld)
     {
         mResources->GetWorldMap(destWorld);
-    }
-
-    string Resources::GetPasswordFromAOBin()
-    {
-        return mResources->GetPasswordFromAOBin();
     }
 
 }

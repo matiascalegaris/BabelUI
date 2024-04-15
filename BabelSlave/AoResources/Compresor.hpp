@@ -11,7 +11,7 @@ namespace AO
 	public:
 		Compressor();
 		~Compressor();
-		void Open(const char* fileName, const std::string passoword);
+		void Open(const char* fileName);
 		void GetFileData(const char* fileName, std::vector<uint8_t>& data);
 		bool HasFile(const char* fileName);
 	private:

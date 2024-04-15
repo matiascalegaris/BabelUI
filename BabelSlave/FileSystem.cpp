@@ -79,19 +79,17 @@ namespace Babel {
         StringCchCopyW(baseDir_.get(), MAX_PATH, baseDir);
         if (compressedResources)
         {
-            std::string password = mResources->GetPasswordFromAOBin();
-
             mCompressedGraphics = std::make_unique<AO::Compressor>();
-            mCompressedGraphics->Open(GetFilePath("OUTPUT/Graficos").u8string().c_str(), password);
+            mCompressedGraphics->Open(GetFilePath("OUTPUT/Graficos").u8string().c_str());
 
             mCompressedInit = std::make_unique<AO::Compressor>();
-            mCompressedInit->Open(GetFilePath("OUTPUT/init").u8string().c_str(), password);
+            mCompressedInit->Open(GetFilePath("OUTPUT/init").u8string().c_str());
 
             mCompressedMiniMaps = std::make_unique<AO::Compressor>();
-            mCompressedMiniMaps->Open(GetFilePath("OUTPUT/MiniMapas").u8string().c_str(), password);
+            mCompressedMiniMaps->Open(GetFilePath("OUTPUT/MiniMapas").u8string().c_str());
 
             mCompressedInterface = std::make_unique<AO::Compressor>();
-            mCompressedInterface->Open(GetFilePath("OUTPUT/Interface").u8string().c_str(), password);
+            mCompressedInterface->Open(GetFilePath("OUTPUT/Interface").u8string().c_str());
         }
         sActiveFS = this;
     }
