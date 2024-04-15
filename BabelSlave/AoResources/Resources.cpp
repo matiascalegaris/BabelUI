@@ -7,7 +7,7 @@
 #include <thread>
 #include "Resources.hpp"
 #include "Compresor.hpp"
-
+     
 using namespace std;
 namespace AO
 {
@@ -213,7 +213,6 @@ namespace AO
     public:
         ~ResourceLoader() { if (mLoadingThread.joinable()) mLoadingThread.join(); }
         void StartLoading(bool compressed);
-
         void GetBodyInfo(CharacterRenderInfo& charInfo, int bodyIndex, int headIndex, int helmIndex, int shieldIndex, int weaponIndex);
         void GetHeadInfo(GrhDetails& headInfo, int headIndex);
         void SetGrhDetails(GrhDetails& dest, int grhIndex);
@@ -903,8 +902,8 @@ namespace AO
                 mCompressedFiles.insert(std::make_pair(paths[0], std::make_unique<Compressor>()));
                 it = mCompressedFiles.find(paths[0]);
                 auto filePath = GetCompressedPath(paths[0]);
-                it->second->Open(GetFilePath(filePath.c_str()).u8string().c_str(),
-                    "ht5PutasTdyRk6BSJcucumelo234583013lalivn2FRjYYBzPhnMrkmUfLMgm4TDX");
+
+                it->second->Open(GetFilePath(filePath.c_str()).u8string().c_str());
             }
             it->second->GetFileData(paths[1].c_str(), fileData);
             return true;

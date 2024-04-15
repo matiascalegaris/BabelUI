@@ -5,15 +5,52 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-
 #include "Utils/md5.h"
 #include "Utils/StringUtils.hpp"
 #include "zlib.h"
 #include "tomcrypt.h"
 #include <algorithm>
+#include "Utils/FileUtils.h"
+#include "Core/Logger.hpp"
 
 namespace AO {
 namespace {
+
+	std::string GetPasswordFromAOBin()
+	{
+		// Directly specify the path to the AO.bin file
+		auto filePath = GetFilePath("OUTPUT/AO.bin").u8string();
+
+		// Open the file in binary mode at the end to get the file size
+		std::ifstream file(filePath, std::ios::binary | std::ios::ate);
+		if (!file.is_open()) {
+			Babel::LOGGER->log("Failed to open AO.bin");
+			return "";
+		}
+
+		// Get the size of the file
+		std::streamsize size = file.tellg();
+		file.seekg(0, std::ios::beg); // Move back to the start of the file
+
+		// Read the file into a buffer
+		std::vector<unsigned char> buffer(size);
+		if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
+			Babel::LOGGER->log("Failed to read AO.bin");
+			return "";
+		}
+
+		// Calculate the password length from the last two bytes of the buffer
+		int length = buffer.back() + buffer[buffer.size() - 2] * 256;
+
+		// Construct the password
+		std::string passwordTemp;
+		for (int i = 0; i < length; ++i) {
+			passwordTemp += static_cast<char>(buffer[i * 3 - 1] ^ 37);
+		}
+
+		return passwordTemp;
+	}
+
 	void DoCrypt_Data(std::vector<uint8_t>& data, const std::string& password)
 	{
 		int i, c;
@@ -93,10 +130,11 @@ namespace {
 	{
 	}
 
-	void Compressor::Open(const char* fileName, const std::string passoword)
+	void Compressor::Open(const char* fileName)
 	{
+		std::string password = GetPasswordFromAOBin();
 		mCompressedFile = std::make_unique<CompressedFile>();
-		mCompressedFile->Open(fileName, passoword);
+		mCompressedFile->Open(fileName, password);
 	}
 
 	void Compressor::GetFileData(const char* fileName, std::vector<uint8_t>& data)
@@ -175,6 +213,4 @@ namespace {
 		if (it == mFileMap.end()) return false;
 		return true;
 	}
-
-
 }

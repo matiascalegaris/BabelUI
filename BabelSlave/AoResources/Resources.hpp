@@ -2,7 +2,6 @@
 #include <memory>
 #include <map>
 
-
 namespace AO
 {
 	struct Vector2
