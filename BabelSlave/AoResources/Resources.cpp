@@ -251,7 +251,6 @@ namespace AO
         std::vector<SpellData> mSpellInfo;
         std::vector<NpcInfo> mNpcInfo;
         std::vector<ObjectData> mObjData;
-        std::string mPasswordAOBin;
         WorldMap mWorldMap;
         std::map<std::string, std::unique_ptr<Compressor>> mCompressedFiles;
         E_Heading mBodyHeading[4];
