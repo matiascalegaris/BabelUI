@@ -10,6 +10,7 @@
 #include "zlib.h"
 #include "tomcrypt.h"
 #include <algorithm>
+#include "Utils/FileUtils.hpp"
 
 namespace AO {
 namespace {

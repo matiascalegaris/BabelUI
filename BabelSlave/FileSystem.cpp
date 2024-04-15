@@ -16,7 +16,6 @@
 #include <Strsafe.h>
 #include <filesystem>
 #include "AoResources/Compresor.hpp"
-#include "AoResources/Resources.hpp"
 #include "Utils//FileUtils.h"
 #include "resource.h"
 
